@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { parseUA } from "./user-agent";
+import { ruleMatches, platformFromOs, nowMinutesInTz } from "./rules-eval";
 
 /**
  * Resolve a tag by public id, enforce access guards, log the read, and return
@@ -31,15 +32,29 @@ export const resolveTag = createServerFn({ method: "POST" })
     if (tag.expire_at && now > new Date(tag.expire_at).getTime())
       return { ok: false as const, reason: "expired" as const };
 
-    // Scan limit: count prior reads before logging this one.
-    if (tag.max_scans && tag.max_scans > 0) {
+    // Dynamic redirect rules for this tag (evaluated below, after we know the UA).
+    const { data: rules } = await supabaseAdmin
+      .from("tag_rules")
+      .select("condition_type, condition_value, destination_url")
+      .eq("tag_id", tag.id)
+      .order("priority", { ascending: true });
+
+    // Compute the read count once if any guard/rule needs it.
+    const needsCount =
+      (tag.max_scans != null && tag.max_scans > 0) ||
+      (rules ?? []).some((r) => r.condition_type === "scan_count");
+    let scanCount: number | null = null;
+    if (needsCount) {
       const { count } = await supabaseAdmin
         .from("reads")
         .select("id", { count: "exact", head: true })
         .eq("tag_id", tag.id);
-      if ((count ?? 0) >= tag.max_scans)
-        return { ok: false as const, reason: "limit_reached" as const };
+      scanCount = count ?? 0;
     }
+
+    // Scan limit guard.
+    if (tag.max_scans && tag.max_scans > 0 && (scanCount ?? 0) >= tag.max_scans)
+      return { ok: false as const, reason: "limit_reached" as const };
 
     // Password gate (soft): require the correct password before revealing the destination.
     if (tag.access_password) {
@@ -59,12 +74,27 @@ export const resolveTag = createServerFn({ method: "POST" })
       null;
     const { os, browser, device } = parseUA(ua);
 
-    // A/B test: choose a variant server-side and route to its URL, so the
-    // variant can be recorded on the read for later analysis.
     const dest = (tag.destination ?? {}) as Record<string, string>;
     let variant: string | null = null;
     let effectiveDestination = dest;
-    if (tag.destination_type === "ab_test") {
+    let outType = tag.destination_type;
+
+    // 1) Dynamic rules take precedence: first matching rule (by priority) wins.
+    const ctx = {
+      platform: platformFromOs(os),
+      country,
+      scanCount,
+      nowMinutes: nowMinutesInTz("America/Sao_Paulo"),
+    };
+    const matched = (rules ?? []).find((r) =>
+      ruleMatches(r.condition_type, (r.condition_value ?? {}) as Record<string, unknown>, ctx),
+    );
+
+    if (matched) {
+      outType = "url";
+      effectiveDestination = { url: matched.destination_url };
+    } else if (tag.destination_type === "ab_test") {
+      // 2) A/B test: choose a variant server-side and route to its URL.
       const weightA = Math.min(100, Math.max(0, parseFloat(dest.weight_a ?? "50") || 50));
       const pickA = Math.random() * 100 < weightA;
       variant = pickA ? "A" : "B";
@@ -100,7 +130,7 @@ export const resolveTag = createServerFn({ method: "POST" })
 
     return {
       ok: true as const,
-      destination_type: tag.destination_type,
+      destination_type: outType,
       destination: effectiveDestination,
     };
   });

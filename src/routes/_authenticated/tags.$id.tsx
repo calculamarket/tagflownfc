@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getTag } from "@/lib/tags.functions";
 import { TagForm } from "@/components/tag-form";
+import { TagRulesEditor } from "@/components/tag-rules-editor";
 
 export const Route = createFileRoute("/_authenticated/tags/$id")({
   head: () => ({ meta: [{ title: "Editar tag · TagFlow" }] }),
@@ -49,6 +50,9 @@ function EditTag() {
           editing
           onSaved={() => navigate({ to: "/tags" })}
         />
+        <div className="mt-6">
+          <TagRulesEditor tagId={tag.id} />
+        </div>
       </div>
     </div>
   );

@@ -218,6 +218,47 @@ export type Database = {
           },
         ]
       }
+      tag_rules: {
+        Row: {
+          condition_type: string
+          condition_value: Json
+          created_at: string
+          destination_url: string
+          id: string
+          priority: number
+          tag_id: string
+          user_id: string
+        }
+        Insert: {
+          condition_type: string
+          condition_value?: Json
+          created_at?: string
+          destination_url: string
+          id?: string
+          priority?: number
+          tag_id: string
+          user_id: string
+        }
+        Update: {
+          condition_type?: string
+          condition_value?: Json
+          created_at?: string
+          destination_url?: string
+          id?: string
+          priority?: number
+          tag_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tag_rules_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       tags: {
         Row: {
           access_password: string | null
