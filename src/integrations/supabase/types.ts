@@ -322,7 +322,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "webhooks"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       webhooks: {
