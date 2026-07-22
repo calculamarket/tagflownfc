@@ -1,0 +1,15 @@
+-- FIX: restore EXECUTE on has_role() for the `authenticated` role.
+--
+-- Migration 20260722132215 revoked EXECUTE from PUBLIC, anon AND authenticated.
+-- Nearly every RLS policy on user-scoped tables (profiles, user_roles, tags,
+-- reads, subscriptions, landing_pages, webhooks, webhook_deliveries, tag_rules)
+-- calls public.has_role(auth.uid(), 'admin') in its USING clause. PostgreSQL
+-- checks EXECUTE against the *calling* role even for SECURITY DEFINER functions
+-- used inside policies, so revoking it from `authenticated` made every
+-- authenticated query fail with: "permission denied for function has_role".
+--
+-- Granting EXECUTE to `authenticated` is the standard Supabase pattern and is
+-- safe: has_role is SECURITY DEFINER with a fixed search_path and only returns a
+-- boolean. anon/PUBLIC stay revoked — no anon policy references has_role, and
+-- the public redirector uses the service role (bypasses RLS entirely).
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
