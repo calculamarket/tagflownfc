@@ -6,6 +6,7 @@ import {
   type LandingButton, type LeadForm,
 } from "@/lib/landing.functions";
 import { Switch } from "@/components/ui/switch";
+import { FileUpload } from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,14 +110,17 @@ function LandingEditor() {
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>Logo (URL)</Label>
-                  <Input placeholder="https://…/logo.png" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} />
+                  <Label>Logo</Label>
+                  <FileUpload value={logoUrl} onChange={setLogoUrl} placeholder="https://…/logo.png" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Imagem de capa (URL)</Label>
-                  <Input placeholder="https://…/cover.jpg" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+                  <Label>Imagem de capa</Label>
+                  <FileUpload value={imageUrl} onChange={setImageUrl} placeholder="https://…/cover.jpg" />
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Envie um arquivo (até 10 MB) ou cole uma URL.
+              </p>
             </CardContent>
           </Card>
 

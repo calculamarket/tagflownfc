@@ -12,6 +12,7 @@ import { DESTINATION_LABELS, type DestinationType } from "@/lib/destination";
 import { toast } from "sonner";
 import { QrCode, Copy, Check } from "lucide-react";
 import { TagQrPreview } from "./tag-qr-preview";
+import { FileUpload } from "./file-upload";
 
 export type TagFormValues = {
   id: string;
@@ -276,8 +277,12 @@ export function TagForm({
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Logo (URL)</Label>
-            <Input className="h-8" placeholder="https://…/logo.png" value={v.qr_style.logo_url ?? ""} onChange={(e) => setQr("logo_url", e.target.value)} />
+            <Label className="text-xs">Logo no centro</Label>
+            <FileUpload
+              value={v.qr_style.logo_url ?? ""}
+              onChange={(url) => setQr("logo_url", url)}
+              placeholder="https://…/logo.png"
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Legenda</Label>
@@ -304,11 +309,26 @@ function DestinationFields({
     case "facebook":
     case "tiktok":
     case "youtube":
-    case "pdf":
     case "mercadolivre":
     case "shopee":
     case "amazon":
       return url;
+    case "pdf":
+      return (
+        <div className="space-y-1.5">
+          <Label>Arquivo PDF</Label>
+          <FileUpload
+            value={value.url ?? ""}
+            onChange={(u) => onChange("url", u)}
+            accept="application/pdf"
+            placeholder="https://…/documento.pdf"
+            preview="file"
+          />
+          <p className="text-xs text-muted-foreground">
+            Envie o PDF (até 10 MB) ou cole a URL de um arquivo existente.
+          </p>
+        </div>
+      );
     case "whatsapp":
       return (
         <>
