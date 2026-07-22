@@ -14,8 +14,17 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TIdRouteImport } from './routes/t.$id'
+import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
+import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
+import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedTagsIndexRouteImport } from './routes/_authenticated/tags.index'
 import { Route as AuthenticatedTagsNewRouteImport } from './routes/_authenticated/tags.new'
 import { Route as AuthenticatedTagsIdRouteImport } from './routes/_authenticated/tags.$id'
@@ -44,14 +53,61 @@ const TIdRoute = TIdRouteImport.update({
   path: '/t/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTagsRoute = AuthenticatedTagsRouteImport.update({
   id: '/tags',
   path: '/tags',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQrCodesRoute = AuthenticatedQrCodesRouteImport.update({
+  id: '/qr-codes',
+  path: '/qr-codes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLinksRoute = AuthenticatedLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedIntegrationsRoute =
+  AuthenticatedIntegrationsRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAutomationsRoute =
+  AuthenticatedAutomationsRouteImport.update({
+    id: '/automations',
+    path: '/automations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTagsIndexRoute = AuthenticatedTagsIndexRouteImport.update({
@@ -74,8 +130,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/account': typeof AuthenticatedAccountRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/automations': typeof AuthenticatedAutomationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/integrations': typeof AuthenticatedIntegrationsRoute
+  '/links': typeof AuthenticatedLinksRoute
+  '/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/tags': typeof AuthenticatedTagsRouteWithChildren
+  '/team': typeof AuthenticatedTeamRoute
   '/t/$id': typeof TIdRoute
   '/tags/$id': typeof AuthenticatedTagsIdRoute
   '/tags/new': typeof AuthenticatedTagsNewRoute
@@ -85,7 +150,16 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/account': typeof AuthenticatedAccountRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/automations': typeof AuthenticatedAutomationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/integrations': typeof AuthenticatedIntegrationsRoute
+  '/links': typeof AuthenticatedLinksRoute
+  '/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/team': typeof AuthenticatedTeamRoute
   '/t/$id': typeof TIdRoute
   '/tags/$id': typeof AuthenticatedTagsIdRoute
   '/tags/new': typeof AuthenticatedTagsNewRoute
@@ -97,8 +171,17 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
+  '/_authenticated/links': typeof AuthenticatedLinksRoute
+  '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tags': typeof AuthenticatedTagsRouteWithChildren
+  '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/t/$id': typeof TIdRoute
   '/_authenticated/tags/$id': typeof AuthenticatedTagsIdRoute
   '/_authenticated/tags/new': typeof AuthenticatedTagsNewRoute
@@ -110,8 +193,17 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/account'
+    | '/admin'
+    | '/analytics'
+    | '/automations'
     | '/dashboard'
+    | '/integrations'
+    | '/links'
+    | '/qr-codes'
+    | '/settings'
     | '/tags'
+    | '/team'
     | '/t/$id'
     | '/tags/$id'
     | '/tags/new'
@@ -121,7 +213,16 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/account'
+    | '/admin'
+    | '/analytics'
+    | '/automations'
     | '/dashboard'
+    | '/integrations'
+    | '/links'
+    | '/qr-codes'
+    | '/settings'
+    | '/team'
     | '/t/$id'
     | '/tags/$id'
     | '/tags/new'
@@ -132,8 +233,17 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/account'
+    | '/_authenticated/admin'
+    | '/_authenticated/analytics'
+    | '/_authenticated/automations'
     | '/_authenticated/dashboard'
+    | '/_authenticated/integrations'
+    | '/_authenticated/links'
+    | '/_authenticated/qr-codes'
+    | '/_authenticated/settings'
     | '/_authenticated/tags'
+    | '/_authenticated/team'
     | '/t/$id'
     | '/_authenticated/tags/$id'
     | '/_authenticated/tags/new'
@@ -185,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/team': {
+      id: '/_authenticated/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tags': {
       id: '/_authenticated/tags'
       path: '/tags'
@@ -192,11 +309,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTagsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qr-codes': {
+      id: '/_authenticated/qr-codes'
+      path: '/qr-codes'
+      fullPath: '/qr-codes'
+      preLoaderRoute: typeof AuthenticatedQrCodesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/links': {
+      id: '/_authenticated/links'
+      path: '/links'
+      fullPath: '/links'
+      preLoaderRoute: typeof AuthenticatedLinksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/integrations': {
+      id: '/_authenticated/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AuthenticatedIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/automations': {
+      id: '/_authenticated/automations'
+      path: '/automations'
+      fullPath: '/automations'
+      preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tags/': {
@@ -239,13 +412,31 @@ const AuthenticatedTagsRouteWithChildren =
   AuthenticatedTagsRoute._addFileChildren(AuthenticatedTagsRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
+  AuthenticatedLinksRoute: typeof AuthenticatedLinksRoute
+  AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRouteWithChildren
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
+  AuthenticatedLinksRoute: AuthenticatedLinksRoute,
+  AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTagsRoute: AuthenticatedTagsRouteWithChildren,
+  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -261,3 +452,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
