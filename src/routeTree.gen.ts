@@ -26,8 +26,10 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedTagsIndexRouteImport } from './routes/_authenticated/tags.index'
+import { Route as TIdViewRouteImport } from './routes/t.$id.view'
 import { Route as AuthenticatedTagsNewRouteImport } from './routes/_authenticated/tags.new'
 import { Route as AuthenticatedTagsIdRouteImport } from './routes/_authenticated/tags.$id'
+import { Route as AuthenticatedLandingTagIdRouteImport } from './routes/_authenticated/landing.$tagId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -115,6 +117,11 @@ const AuthenticatedTagsIndexRoute = AuthenticatedTagsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedTagsRoute,
 } as any)
+const TIdViewRoute = TIdViewRouteImport.update({
+  id: '/view',
+  path: '/view',
+  getParentRoute: () => TIdRoute,
+} as any)
 const AuthenticatedTagsNewRoute = AuthenticatedTagsNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -125,6 +132,12 @@ const AuthenticatedTagsIdRoute = AuthenticatedTagsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedTagsRoute,
 } as any)
+const AuthenticatedLandingTagIdRoute =
+  AuthenticatedLandingTagIdRouteImport.update({
+    id: '/landing/$tagId',
+    path: '/landing/$tagId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -141,9 +154,11 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tags': typeof AuthenticatedTagsRouteWithChildren
   '/team': typeof AuthenticatedTeamRoute
-  '/t/$id': typeof TIdRoute
+  '/t/$id': typeof TIdRouteWithChildren
+  '/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
   '/tags/$id': typeof AuthenticatedTagsIdRoute
   '/tags/new': typeof AuthenticatedTagsNewRoute
+  '/t/$id/view': typeof TIdViewRoute
   '/tags/': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -160,9 +175,11 @@ export interface FileRoutesByTo {
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
-  '/t/$id': typeof TIdRoute
+  '/t/$id': typeof TIdRouteWithChildren
+  '/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
   '/tags/$id': typeof AuthenticatedTagsIdRoute
   '/tags/new': typeof AuthenticatedTagsNewRoute
+  '/t/$id/view': typeof TIdViewRoute
   '/tags': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRoutesById {
@@ -182,9 +199,11 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tags': typeof AuthenticatedTagsRouteWithChildren
   '/_authenticated/team': typeof AuthenticatedTeamRoute
-  '/t/$id': typeof TIdRoute
+  '/t/$id': typeof TIdRouteWithChildren
+  '/_authenticated/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
   '/_authenticated/tags/$id': typeof AuthenticatedTagsIdRoute
   '/_authenticated/tags/new': typeof AuthenticatedTagsNewRoute
+  '/t/$id/view': typeof TIdViewRoute
   '/_authenticated/tags/': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRouteTypes {
@@ -205,8 +224,10 @@ export interface FileRouteTypes {
     | '/tags'
     | '/team'
     | '/t/$id'
+    | '/landing/$tagId'
     | '/tags/$id'
     | '/tags/new'
+    | '/t/$id/view'
     | '/tags/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -224,8 +245,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/t/$id'
+    | '/landing/$tagId'
     | '/tags/$id'
     | '/tags/new'
+    | '/t/$id/view'
     | '/tags'
   id:
     | '__root__'
@@ -245,8 +268,10 @@ export interface FileRouteTypes {
     | '/_authenticated/tags'
     | '/_authenticated/team'
     | '/t/$id'
+    | '/_authenticated/landing/$tagId'
     | '/_authenticated/tags/$id'
     | '/_authenticated/tags/new'
+    | '/t/$id/view'
     | '/_authenticated/tags/'
   fileRoutesById: FileRoutesById
 }
@@ -255,7 +280,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  TIdRoute: typeof TIdRoute
+  TIdRoute: typeof TIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -379,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTagsIndexRouteImport
       parentRoute: typeof AuthenticatedTagsRoute
     }
+    '/t/$id/view': {
+      id: '/t/$id/view'
+      path: '/view'
+      fullPath: '/t/$id/view'
+      preLoaderRoute: typeof TIdViewRouteImport
+      parentRoute: typeof TIdRoute
+    }
     '/_authenticated/tags/new': {
       id: '/_authenticated/tags/new'
       path: '/new'
@@ -392,6 +424,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tags/$id'
       preLoaderRoute: typeof AuthenticatedTagsIdRouteImport
       parentRoute: typeof AuthenticatedTagsRoute
+    }
+    '/_authenticated/landing/$tagId': {
+      id: '/_authenticated/landing/$tagId'
+      path: '/landing/$tagId'
+      fullPath: '/landing/$tagId'
+      preLoaderRoute: typeof AuthenticatedLandingTagIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -423,6 +462,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRouteWithChildren
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedLandingTagIdRoute: typeof AuthenticatedLandingTagIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -437,17 +477,28 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTagsRoute: AuthenticatedTagsRouteWithChildren,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedLandingTagIdRoute: AuthenticatedLandingTagIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface TIdRouteChildren {
+  TIdViewRoute: typeof TIdViewRoute
+}
+
+const TIdRouteChildren: TIdRouteChildren = {
+  TIdViewRoute: TIdViewRoute,
+}
+
+const TIdRouteWithChildren = TIdRoute._addFileChildren(TIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  TIdRoute: TIdRoute,
+  TIdRoute: TIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
