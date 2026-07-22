@@ -34,7 +34,7 @@ export const resolveTag = createServerFn({ method: "POST" })
 
     const { data: tag, error } = await supabase
       .from("tags")
-      .select("id, status, destination_type, destination")
+      .select("id, user_id, status, destination_type, destination")
       .eq("id", data.id)
       .maybeSingle();
 
@@ -54,7 +54,7 @@ export const resolveTag = createServerFn({ method: "POST" })
       null;
     const { os, browser, device } = parseUA(ua);
 
-    // fire-and-forget insert; do not block redirect on failure
+    // Record the read (awaited so analytics stay accurate).
     await supabase.from("reads").insert({
       tag_id: tag.id,
       ip,
@@ -67,7 +67,21 @@ export const resolveTag = createServerFn({ method: "POST" })
       user_agent: ua,
     });
 
-    // Update denormalized counter (best-effort; RLS blocks anon UPDATE — ok)
+    // Fire tag.read webhooks without blocking the redirect. The admin client
+    // lives in a server-only module, loaded lazily so it never reaches the
+    // client bundle.
+    void import("./webhook-delivery.server").then(({ deliverWebhooks }) =>
+      deliverWebhooks(tag.user_id, "tag.read", {
+        id: tag.id,
+        country,
+        city,
+        os,
+        browser,
+        device,
+        referrer: data.referrer ?? null,
+      }),
+    );
+
     return {
       ok: true as const,
       destination_type: tag.destination_type,

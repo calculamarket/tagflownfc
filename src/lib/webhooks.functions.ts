@@ -41,6 +41,18 @@ export const deleteWebhook = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const listDeliveries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("webhook_deliveries")
+      .select("id, webhook_id, event, url, status_code, ok, error, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
 export const testWebhook = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)

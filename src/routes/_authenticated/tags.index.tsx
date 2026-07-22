@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, queryOptions, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listTags, deleteTag } from "@/lib/tags.functions";
+import { getMyPlan } from "@/lib/plans.functions";
 import { Button } from "@/components/ui/button";
-import { Plus, MoreHorizontal, ExternalLink, Trash2, Pencil } from "lucide-react";
+import { Plus, ExternalLink, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { DESTINATION_LABELS } from "@/lib/destination";
 import { format } from "date-fns";
@@ -17,24 +18,59 @@ export const Route = createFileRoute("/_authenticated/tags/")({
 
 function TagsPage() {
   const { data: tags } = useSuspenseQuery(tagsQO);
+  const { data: plan } = useQuery({ queryKey: ["my-plan"], queryFn: () => getMyPlan() });
   const qc = useQueryClient();
   const del = useMutation({
     mutationFn: (id: string) => deleteTag({ data: { id } }),
-    onSuccess: () => { toast.success("Tag removida."); qc.invalidateQueries({ queryKey: ["tags"] }); },
+    onSuccess: () => {
+      toast.success("Tag removida.");
+      qc.invalidateQueries({ queryKey: ["tags"] });
+      qc.invalidateQueries({ queryKey: ["my-plan"] });
+    },
     onError: (e) => toast.error((e as Error).message),
   });
 
+  const atLimit = plan ? plan.used >= plan.plan.max_tags : false;
+  const pct = plan && plan.plan.max_tags > 0
+    ? Math.min(100, Math.round((plan.used / plan.plan.max_tags) * 100))
+    : 0;
+
   return (
     <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Minhas Tags</h1>
           <p className="text-sm text-muted-foreground">{tags.length} etiqueta(s).</p>
         </div>
-        <Link to="/tags/new">
-          <Button><Plus className="size-4" /> Nova tag</Button>
-        </Link>
+        <div className="flex items-end gap-4">
+          {plan && (
+            <div className="hidden sm:block w-44 text-right">
+              <div className="text-xs text-muted-foreground">
+                Plano <span className="font-medium text-foreground">{plan.plan.name}</span> ·{" "}
+                {plan.used}/{plan.plan.max_tags} tags
+              </div>
+              <div className="mt-1 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${atLimit ? "bg-destructive" : "bg-primary"}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          )}
+          <Link to="/tags/new" disabled={atLimit}>
+            <Button disabled={atLimit} title={atLimit ? "Limite do plano atingido" : undefined}>
+              <Plus className="size-4" /> Nova tag
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {atLimit && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          Você atingiu o limite de {plan?.plan.max_tags} tags do plano {plan?.plan.name}. Faça
+          upgrade para criar mais.
+        </div>
+      )}
 
       {tags.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border bg-card p-16 text-center">

@@ -45,7 +45,8 @@ Migration executada em `supabase/migrations/20260722110357_fffd4507-1cb8-4213-a8
 | `tags` | Tags/etiquetas com ID curto, destino, status e contador de leituras |
 | `reads` | Registro de cada leitura/escaneamento (IP, país, cidade, SO, navegador, dispositivo, referrer) |
 | `landing_pages` | Página personalizada vinculada a uma tag |
-| `webhooks` | Webhooks do usuário por evento |
+| `webhooks` | Webhooks do usuário por evento (inclui `secret` para HMAC) |
+| `webhook_deliveries` | Log de cada disparo de webhook (status, ok, erro) — migration `20260722120000` |
 | `settings` | Configurações genéricas do usuário em JSONB |
 
 Enums:
@@ -127,20 +128,27 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 
 ### 2.3. Automações, Equipe e Admin (Fase 3) — Parcial
 
-#### Webhooks / Automações
+#### Webhooks / Automações — Concluído (núcleo)
 - Server functions em `src/lib/webhooks.functions.ts`:
-  - `listWebhooks`, `upsertWebhook`, `deleteWebhook`, `testWebhook`.
+  - `listWebhooks`, `upsertWebhook`, `deleteWebhook`, `testWebhook`, `listDeliveries`.
 - Rota `/automations` com:
   - Formulário de cadastro de webhook (URL + evento).
-  - Lista de webhooks com toggle ativo/pausado.
-  - Botão de teste que dispara POST de teste para o webhook.
+  - Lista de webhooks com toggle ativo/pausado, segredo HMAC (mostrar/copiar) e botão de teste.
+  - **Entregas recentes** com status HTTP, evento e erro (atualização automática).
 - Eventos suportados: `tag.read`, `tag.created`, `tag.updated`.
-- **Ainda não implementado:** disparo real automático nos eventos de criação/escaneamento/atualização. Hoje apenas o cadastro e teste manual existem.
+- ✅ **Disparo real automático implementado:**
+  - `tag.created`/`tag.updated` em `upsertTag` (`src/lib/tags.functions.ts`).
+  - `tag.read` em `resolveTag` (fire-and-forget, não bloqueia o redirect).
+  - Assinatura `X-TagFlow-Signature: sha256=<hmac>` por webhook (segredo `webhooks.secret`).
+  - Log de cada entrega em `webhook_deliveries` (status, ok, erro) — base para retry.
+- Helper server-only: `src/lib/webhook-delivery.server.ts` (usa service role via `supabaseAdmin`).
+- **Ainda não implementado:** retry automático das entregas com falha; filtros por tag/tipo.
 
-#### Painel Admin (`/admin`)
-- Rota criada em `src/routes/_authenticated/admin.tsx`.
-- **Ainda não implementado:** interface e server functions específicas para admin (listar/editar/bloquear usuários, gerenciar planos, ver receita, estatísticas globais).
-- Gate por role `admin` já funciona via `has_role()`.
+#### Painel Admin (`/admin`) — Parcial
+- Rota em `src/routes/_authenticated/admin.tsx` com dashboard básico: contagem de usuários,
+  leituras totais e lista de usuários. Gate por role `admin` via `has_role()`.
+- **Ainda não implementado:** busca/filtros de usuários, bloqueio/edição, gestão de planos e
+  receita real (hoje exibe R$ 0).
 
 #### Equipe
 - Rota `/team` criada, mas **ainda não implementada**.
@@ -160,7 +168,7 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 - [ ] **Upload de arquivos:** suporte a PDF e imagens de logo/capa no Storage da Lovable Cloud.
 - [ ] **Domínio customizado:** `app.tagflow.com` ou domínio próprio do usuário.
 - [ ] **Pagamentos:** integração real com Stripe/Paddle para assinaturas Pro/Business.
-- [ ] **Limites de plano:** controle de `max_tags` no cadastro de novas tags e upgrade/downgrade.
+- [x] **Limites de plano (cadastro):** `max_tags` é validado em `upsertTag` ao criar tags; UI mostra uso (`getMyPlan` em `src/lib/plans.functions.ts`). Falta upgrade/downgrade de plano.
 
 ### 3.2. Tipos de Destino
 - [ ] **PDF:** renderizador/apresentador de PDF próprio (hoje apenas redireciona para URL externa).
@@ -171,12 +179,13 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 - [ ] **Landing page:** mapa/ localização no editor (coluna `map` já existe).
 
 ### 3.3. Automações
-- [ ] Disparo automático de webhooks nos eventos reais:
+- [x] Disparo automático de webhooks nos eventos reais:
   - `tag.created` ao criar uma tag.
   - `tag.updated` ao editar uma tag.
   - `tag.read` ao escanear/ler uma tag.
-- [ ] Retry de webhooks com log de entrega (tabela `webhook_deliveries`).
-- [ ] Assinaturas de webhook com segredo (HMAC).
+- [x] Log de entrega de webhooks (tabela `webhook_deliveries`) — visível em `/automations`.
+- [x] Assinaturas de webhook com segredo (HMAC-SHA256, header `X-TagFlow-Signature`).
+- [ ] Retry automático das entregas com falha (a tabela de log já existe).
 - [ ] Filtros por tag ou tipo de destino.
 
 ### 3.4. Equipe e Permissões
@@ -200,7 +209,7 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 - [ ] Exportação de CSV/Excel de analytics.
 
 ### 3.7. Configurações
-- [ ] Perfil do usuário (nome, avatar, e-mail, senha).
+- [~] Perfil do usuário: edição de nome já existe em `/account`. Falta avatar, troca de e-mail/senha.
 - [ ] Preferências de notificação.
 - [ ] Configurações de webhook padrão.
 - [ ] Fechamento/exclusão de conta.
@@ -234,10 +243,13 @@ src/
 │   ├── analytics.functions.ts # Server functions de analytics
 │   ├── destination.ts         # Construtor de URLs por tipo de destino
 │   ├── landing.functions.ts   # Server functions de landing page
-│   ├── tags.functions.ts      # CRUD de tags protegido
-│   ├── tags-public.functions.ts # Redirecionador público + leitura
+│   ├── plans.ts               # Helper puro: plano efetivo + uso de tags
+│   ├── plans.functions.ts     # Server function getMyPlan
+│   ├── tags.functions.ts      # CRUD de tags protegido + limite de plano + eventos
+│   ├── tags-public.functions.ts # Redirecionador público + leitura + evento tag.read
 │   ├── user-agent.ts          # Parser de user-agent
-│   └── webhooks.functions.ts  # CRUD de webhooks
+│   ├── webhook-delivery.server.ts # Dispatcher server-only (HMAC + log)
+│   └── webhooks.functions.ts  # CRUD de webhooks + listDeliveries
 ├── routes/
 │   ├── __root.tsx             # Root layout
 │   ├── index.tsx              # Landing/marketing
@@ -300,13 +312,14 @@ src/
 ## 6. Próximos Passos Recomendados
 
 1. **Finalizar Fase 3:**
-   - Implementar disparo real de webhooks (`tag.read`, `tag.created`, `tag.updated`).
-   - Construir o painel admin funcional.
+   - ✅ Disparo real de webhooks (`tag.read`, `tag.created`, `tag.updated`) com HMAC e log de entregas.
+   - Retry automático das entregas com falha (usar `webhook_deliveries`).
+   - Construir o painel admin funcional (busca, bloqueio, gestão de planos).
    - Implementar convites e gerenciamento de equipe.
 
 2. **Ativar monetização:**
-   - Integrar Stripe/Paddle.
-   - Aplicar limites de `max_tags` e features por plano.
+   - Integrar Stripe/Paddle e permitir upgrade/downgrade de plano.
+   - ✅ Limite de `max_tags` já aplicado no cadastro de tags; falta gating de features por plano.
 
 3. **Melhorar tipos de destino:**
    - Renderizadores específicos para PIX, Wi-Fi e PDF.

@@ -35,6 +35,7 @@ export function TagForm({
       toast.success(editing ? "Tag atualizada." : "Tag criada.");
       qc.invalidateQueries({ queryKey: ["tags"] });
       qc.invalidateQueries({ queryKey: ["tag", v.id] });
+      qc.invalidateQueries({ queryKey: ["my-plan"] });
       onSaved();
     },
     onError: (e) => toast.error((e as Error).message),

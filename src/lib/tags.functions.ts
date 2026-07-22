@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolvePlanUsage } from "./plans";
 import { z } from "zod";
 
 const DestinationTypeEnum = z.enum([
@@ -43,11 +44,37 @@ export const upsertTag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => upsertSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { supabase, userId } = context;
+
+    // Distinguish create vs update to enforce plan limits and pick the event.
+    const { data: existing } = await supabase
+      .from("tags").select("id").eq("id", data.id).maybeSingle();
+    const isCreate = !existing;
+
+    if (isCreate) {
+      const { plan, used } = await resolvePlanUsage(supabase, userId);
+      if (used >= plan.max_tags) {
+        throw new Error(
+          `Limite do plano ${plan.name} atingido (${plan.max_tags} tags). Faça upgrade para criar mais.`,
+        );
+      }
+    }
+
+    const { error } = await supabase
       .from("tags")
-      .upsert({ ...data, user_id: context.userId }, { onConflict: "id" });
+      .upsert({ ...data, user_id: userId }, { onConflict: "id" });
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    // Fire the matching webhook event (server-only helper, loaded lazily).
+    const { deliverWebhooks } = await import("./webhook-delivery.server");
+    await deliverWebhooks(userId, isCreate ? "tag.created" : "tag.updated", {
+      id: data.id,
+      name: data.name,
+      status: data.status,
+      destination_type: data.destination_type,
+    });
+
+    return { ok: true, created: isCreate };
   });
 
 export const deleteTag = createServerFn({ method: "POST" })
@@ -64,13 +91,6 @@ export const dashboardStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const [tagsRes, todayRes, monthRes, totalRes, recentRes, dailyRes] = await Promise.all([
-      supabase.from("tags").select("id, status", { count: "exact", head: false }).eq("user_id", userId),
-      supabase.rpc as unknown as never, // placeholder no-op
-      null as never, null as never, null as never, null as never,
-    ]).catch(() => [null, null, null, null, null, null] as const);
-
-    // Simpler approach — sequential queries
     const tags = await supabase.from("tags").select("id, status").eq("user_id", userId);
     const tagIds = (tags.data ?? []).map((t) => t.id);
 

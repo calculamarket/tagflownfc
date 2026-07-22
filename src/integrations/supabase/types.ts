@@ -278,12 +278,60 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_deliveries: {
+        Row: {
+          created_at: string
+          error: string | null
+          event: Database["public"]["Enums"]["webhook_event"]
+          id: string
+          ok: boolean
+          payload: Json
+          status_code: number | null
+          url: string
+          user_id: string
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event: Database["public"]["Enums"]["webhook_event"]
+          id?: string
+          ok?: boolean
+          payload?: Json
+          status_code?: number | null
+          url: string
+          user_id: string
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event?: Database["public"]["Enums"]["webhook_event"]
+          id?: string
+          ok?: boolean
+          payload?: Json
+          status_code?: number | null
+          url?: string
+          user_id?: string
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_deliveries_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "webhooks"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       webhooks: {
         Row: {
           active: boolean
           created_at: string
           event: Database["public"]["Enums"]["webhook_event"]
           id: string
+          secret: string
           url: string
           user_id: string
         }
@@ -292,6 +340,7 @@ export type Database = {
           created_at?: string
           event: Database["public"]["Enums"]["webhook_event"]
           id?: string
+          secret?: string
           url: string
           user_id: string
         }
@@ -300,6 +349,7 @@ export type Database = {
           created_at?: string
           event?: Database["public"]["Enums"]["webhook_event"]
           id?: string
+          secret?: string
           url?: string
           user_id?: string
         }
