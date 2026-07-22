@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getPublicView } from "@/lib/landing.functions";
 import type { LandingButton } from "@/lib/landing.functions";
+import { QrCanvas } from "@/components/qr-canvas";
+import { buildPixPayload, buildWifiPayload } from "@/lib/qr-payloads";
 
 export const Route = createFileRoute("/t/$id/view")({
   ssr: false,
@@ -90,18 +92,41 @@ function LandingView({
 function PixView({ payload, name }: { payload: Record<string, string>; name: string }) {
   const key = payload.key ?? "";
   const [copied, setCopied] = useState(false);
+  const brcode = buildPixPayload({
+    key,
+    name: payload.merchant_name || name,
+    city: payload.city,
+    amount: payload.amount,
+    txid: payload.txid,
+  });
+  const amountNum = parseFloat((payload.amount ?? "").replace(",", "."));
+  const showAmount = !Number.isNaN(amountNum) && amountNum > 0;
   return (
     <div className="min-h-screen bg-muted/30 grid place-items-center p-4">
       <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4 shadow-sm">
         <h1 className="text-xl font-semibold">Pagar com PIX</h1>
         <p className="text-sm text-muted-foreground">{name}</p>
-        <div className="rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm break-all">{key || "Chave não configurada"}</div>
-        <button
-          disabled={!key}
-          onClick={async () => { await navigator.clipboard.writeText(key); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-          className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium disabled:opacity-50">
-          {copied ? "Copiado!" : "Copiar chave PIX"}
-        </button>
+        {showAmount && (
+          <div className="text-2xl font-semibold">
+            {amountNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          </div>
+        )}
+        {brcode ? (
+          <>
+            <div className="grid place-items-center rounded-lg border border-border bg-white p-4">
+              <QrCanvas value={brcode} size={220} />
+            </div>
+            <p className="text-xs text-muted-foreground">Escaneie no app do seu banco ou use o Copia e Cola.</p>
+            <div className="rounded-lg border border-border bg-muted/50 p-3 font-mono text-xs break-all text-left">{brcode}</div>
+            <button
+              onClick={async () => { await navigator.clipboard.writeText(brcode); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+              className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium">
+              {copied ? "Copiado!" : "Copiar código PIX"}
+            </button>
+          </>
+        ) : (
+          <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground">Chave PIX não configurada</div>
+        )}
       </div>
     </div>
   );
@@ -111,21 +136,36 @@ function WifiView({ payload, name }: { payload: Record<string, string>; name: st
   const ssid = payload.ssid ?? "";
   const password = payload.password ?? "";
   const security = (payload.security ?? "WPA").toUpperCase();
+  const wifi = buildWifiPayload({ ssid, password, security, hidden: payload.hidden === "true" });
   return (
     <div className="min-h-screen bg-muted/30 grid place-items-center p-4">
       <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4 shadow-sm">
         <h1 className="text-xl font-semibold">Conectar ao Wi-Fi</h1>
         <p className="text-sm text-muted-foreground">{name}</p>
+        {wifi && (
+          <>
+            <div className="grid place-items-center rounded-lg border border-border bg-white p-4">
+              <QrCanvas value={wifi} size={200} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Aponte a câmera do celular para conectar automaticamente.
+            </p>
+          </>
+        )}
         <dl className="text-left space-y-2 text-sm">
           <div className="flex justify-between border-b border-border py-2"><dt className="text-muted-foreground">Rede</dt><dd className="font-medium">{ssid}</dd></div>
-          <div className="flex justify-between border-b border-border py-2"><dt className="text-muted-foreground">Segurança</dt><dd className="font-medium">{security}</dd></div>
-          <div className="flex justify-between py-2"><dt className="text-muted-foreground">Senha</dt><dd className="font-mono">{password}</dd></div>
+          <div className="flex justify-between border-b border-border py-2"><dt className="text-muted-foreground">Segurança</dt><dd className="font-medium">{security === "NOPASS" ? "Aberta" : security}</dd></div>
+          {security !== "NOPASS" && (
+            <div className="flex justify-between py-2"><dt className="text-muted-foreground">Senha</dt><dd className="font-mono">{password}</dd></div>
+          )}
         </dl>
-        <button
-          onClick={async () => { await navigator.clipboard.writeText(password); }}
-          className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium">
-          Copiar senha
-        </button>
+        {security !== "NOPASS" && (
+          <button
+            onClick={async () => { await navigator.clipboard.writeText(password); }}
+            className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium">
+            Copiar senha
+          </button>
+        )}
       </div>
     </div>
   );

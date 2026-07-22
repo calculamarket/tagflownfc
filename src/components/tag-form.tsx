@@ -173,22 +173,63 @@ function DestinationFields({
       );
     case "pix":
       return (
-        <div className="space-y-1.5">
-          <Label>Chave PIX (visualização em landing)</Label>
-          <Input value={value.key ?? ""} onChange={(e) => onChange("key", e.target.value)} />
-        </div>
+        <>
+          <div className="space-y-1.5">
+            <Label>Chave PIX</Label>
+            <Input placeholder="e-mail, CPF/CNPJ, telefone ou aleatória" value={value.key ?? ""} onChange={(e) => onChange("key", e.target.value)} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Nome do recebedor</Label>
+              <Input placeholder="Ex.: Loja do João" value={value.merchant_name ?? ""} onChange={(e) => onChange("merchant_name", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cidade</Label>
+              <Input placeholder="Ex.: SAO PAULO" value={value.city ?? ""} onChange={(e) => onChange("city", e.target.value)} />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Valor (opcional)</Label>
+              <Input inputMode="decimal" placeholder="0,00" value={value.amount ?? ""} onChange={(e) => onChange("amount", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Identificador / txid (opcional)</Label>
+              <Input value={value.txid ?? ""} onChange={(e) => onChange("txid", e.target.value)} />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Gera QR Code e Copia e Cola escaneáveis no app do banco.</p>
+        </>
       );
     case "wifi":
       return (
         <>
           <div className="space-y-1.5">
-            <Label>SSID</Label>
+            <Label>Nome da rede (SSID)</Label>
             <Input value={value.ssid ?? ""} onChange={(e) => onChange("ssid", e.target.value)} />
           </div>
-          <div className="space-y-1.5">
-            <Label>Senha</Label>
-            <Input value={value.password ?? ""} onChange={(e) => onChange("password", e.target.value)} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Segurança</Label>
+              <Select value={value.security ?? "WPA"} onValueChange={(x) => onChange("security", x)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WPA">WPA/WPA2</SelectItem>
+                  <SelectItem value="WEP">WEP</SelectItem>
+                  <SelectItem value="nopass">Aberta (sem senha)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Senha</Label>
+              <Input
+                disabled={(value.security ?? "WPA") === "nopass"}
+                value={value.password ?? ""}
+                onChange={(e) => onChange("password", e.target.value)}
+              />
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">Gera um QR Code que conecta o celular automaticamente.</p>
         </>
       );
     case "landing_page":
