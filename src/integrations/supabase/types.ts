@@ -128,6 +128,7 @@ export type Database = {
           referrer: string | null
           tag_id: string
           user_agent: string | null
+          variant: string | null
         }
         Insert: {
           browser?: string | null
@@ -141,6 +142,7 @@ export type Database = {
           referrer?: string | null
           tag_id: string
           user_agent?: string | null
+          variant?: string | null
         }
         Update: {
           browser?: string | null
@@ -154,6 +156,7 @@ export type Database = {
           referrer?: string | null
           tag_id?: string
           user_agent?: string | null
+          variant?: string | null
         }
         Relationships: [
           {
@@ -389,6 +392,9 @@ export type Database = {
         | "mercadolivre"
         | "shopee"
         | "amazon"
+        | "vcard"
+        | "review_gate"
+        | "ab_test"
       tag_status: "active" | "paused" | "archived"
       webhook_event: "tag.read" | "tag.created" | "tag.updated"
     }

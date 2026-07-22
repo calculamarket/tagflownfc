@@ -18,6 +18,9 @@ export const DESTINATION_LABELS: Record<DestinationType, string> = {
   mercadolivre: "Mercado Livre",
   shopee: "Shopee",
   amazon: "Amazon",
+  vcard: "Cartão de contato (vCard)",
+  review_gate: "Avaliação inteligente",
+  ab_test: "Teste A/B",
 };
 
 export function buildDestinationUrl(
@@ -49,9 +52,14 @@ export function buildDestinationUrl(
       const subj = encodeURIComponent(v("subject"));
       return `mailto:${v("email")}${subj ? `?subject=${subj}` : ""}`;
     }
+    case "ab_test":
+      // The chosen variant URL is injected server-side into payload.url.
+      return v("url");
     case "pix":
     case "wifi":
     case "landing_page":
+    case "vcard":
+    case "review_gate":
       return `/t/${fallbackTagId}/view`;
   }
 }

@@ -7,6 +7,7 @@ const DestinationTypeEnum = z.enum([
   "url","whatsapp","instagram","facebook","tiktok","youtube",
   "pdf","pix","wifi","phone","email","landing_page",
   "mercadolivre","shopee","amazon",
+  "vcard","review_gate","ab_test",
 ]);
 
 const TagStatusEnum = z.enum(["active","paused","archived"]);

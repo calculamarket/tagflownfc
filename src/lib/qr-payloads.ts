@@ -64,6 +64,37 @@ export function buildPixPayload({ key, name, city, amount, txid }: PixInput): st
   return payload + crc16(payload);
 }
 
+export type VCardInput = {
+  first_name?: string;
+  last_name?: string;
+  org?: string;
+  title?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+};
+
+/** Build a vCard 3.0 string (used both for the QR and the .vcf download). */
+export function buildVCard(v: VCardInput): string {
+  const esc = (s: string) => s.replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
+  const first = (v.first_name ?? "").trim();
+  const last = (v.last_name ?? "").trim();
+  const full = [first, last].filter(Boolean).join(" ") || (v.org ?? "").trim();
+  const lines = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `N:${esc(last)};${esc(first)};;;`,
+    `FN:${esc(full)}`,
+  ];
+  if (v.org) lines.push(`ORG:${esc(v.org)}`);
+  if (v.title) lines.push(`TITLE:${esc(v.title)}`);
+  if (v.phone) lines.push(`TEL;TYPE=CELL:${esc(v.phone)}`);
+  if (v.email) lines.push(`EMAIL;TYPE=INTERNET:${esc(v.email)}`);
+  if (v.website) lines.push(`URL:${esc(v.website)}`);
+  lines.push("END:VCARD");
+  return lines.join("\n");
+}
+
 /** Escape reserved chars in a Wi-Fi QR value. */
 function wifiEsc(v: string): string {
   return v.replace(/([\\;,":])/g, "\\$1");

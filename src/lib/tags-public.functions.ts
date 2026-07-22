@@ -56,6 +56,18 @@ export const resolveTag = createServerFn({ method: "POST" })
       null;
     const { os, browser, device } = parseUA(ua);
 
+    // A/B test: choose a variant server-side and route to its URL, so the
+    // variant can be recorded on the read for later analysis.
+    const dest = (tag.destination ?? {}) as Record<string, string>;
+    let variant: string | null = null;
+    let effectiveDestination = dest;
+    if (tag.destination_type === "ab_test") {
+      const weightA = Math.min(100, Math.max(0, parseFloat(dest.weight_a ?? "50") || 50));
+      const pickA = Math.random() * 100 < weightA;
+      variant = pickA ? "A" : "B";
+      effectiveDestination = { url: (pickA ? dest.url_a : dest.url_b) ?? "" };
+    }
+
     // Record the read (awaited so analytics stay accurate).
     await supabase.from("reads").insert({
       tag_id: tag.id,
@@ -67,6 +79,7 @@ export const resolveTag = createServerFn({ method: "POST" })
       device,
       referrer: data.referrer ?? null,
       user_agent: ua,
+      variant,
     });
 
     // Fire tag.read webhooks without blocking the redirect. The admin client
@@ -87,6 +100,6 @@ export const resolveTag = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       destination_type: tag.destination_type,
-      destination: (tag.destination ?? {}) as Record<string, string>,
+      destination: effectiveDestination,
     };
   });

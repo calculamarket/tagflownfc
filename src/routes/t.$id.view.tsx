@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getPublicView } from "@/lib/landing.functions";
 import type { LandingButton } from "@/lib/landing.functions";
 import { QrCanvas } from "@/components/qr-canvas";
-import { buildPixPayload, buildWifiPayload } from "@/lib/qr-payloads";
+import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads";
 
 export const Route = createFileRoute("/t/$id/view")({
   ssr: false,
@@ -48,6 +48,8 @@ function PublicViewPage() {
   const { tag, landing } = view;
   if (tag.destination_type === "pix") return <PixView payload={tag.destination} name={tag.name} />;
   if (tag.destination_type === "wifi") return <WifiView payload={tag.destination} name={tag.name} />;
+  if (tag.destination_type === "vcard") return <VCardView payload={tag.destination} name={tag.name} />;
+  if (tag.destination_type === "review_gate") return <ReviewGateView payload={tag.destination} name={tag.name} />;
   return <LandingView landing={landing} tag={tag} />;
 }
 
@@ -165,6 +167,108 @@ function WifiView({ payload, name }: { payload: Record<string, string>; name: st
             className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium">
             Copiar senha
           </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function VCardView({ payload, name }: { payload: Record<string, string>; name: string }) {
+  const vcard = buildVCard(payload);
+  const fullName =
+    [payload.first_name, payload.last_name].filter(Boolean).join(" ") || payload.org || name;
+  const href = `data:text/vcard;charset=utf-8,${encodeURIComponent(vcard)}`;
+  const rows: [string, string | undefined][] = [
+    ["Empresa", payload.org],
+    ["Cargo", payload.title],
+    ["Telefone", payload.phone],
+    ["E-mail", payload.email],
+    ["Site", payload.website],
+  ];
+  return (
+    <div className="min-h-screen bg-muted/30 grid place-items-center p-4">
+      <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4 shadow-sm">
+        <div className="mx-auto size-16 rounded-full bg-primary/10 grid place-items-center text-2xl font-semibold text-primary">
+          {fullName.slice(0, 1).toUpperCase()}
+        </div>
+        <div>
+          <h1 className="text-xl font-semibold">{fullName}</h1>
+          {payload.title && <p className="text-sm text-muted-foreground">{payload.title}</p>}
+        </div>
+        <dl className="text-left space-y-2 text-sm">
+          {rows.filter(([, v]) => v).map(([k, v]) => (
+            <div key={k} className="flex justify-between border-b border-border py-2">
+              <dt className="text-muted-foreground">{k}</dt>
+              <dd className="font-medium truncate max-w-[60%] text-right">{v}</dd>
+            </div>
+          ))}
+        </dl>
+        <a
+          href={href}
+          download={`${fullName || "contato"}.vcf`}
+          className="block w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium"
+        >
+          Adicionar aos contatos
+        </a>
+        <div className="grid place-items-center rounded-lg border border-border bg-white p-4">
+          <QrCanvas value={vcard} size={180} />
+        </div>
+        <p className="text-xs text-muted-foreground">Ou escaneie este QR com a câmera.</p>
+      </div>
+    </div>
+  );
+}
+
+function ReviewGateView({ payload, name }: { payload: Record<string, string>; name: string }) {
+  const [choice, setChoice] = useState<"none" | "happy" | "sad">("none");
+  const [message, setMessage] = useState("");
+  const positiveUrl = payload.positive_url ?? "";
+  const feedbackEmail = payload.feedback_email ?? "";
+
+  const goPositive = () => {
+    setChoice("happy");
+    if (positiveUrl) window.location.href = positiveUrl;
+  };
+
+  const mailto =
+    feedbackEmail &&
+    `mailto:${feedbackEmail}?subject=${encodeURIComponent(`Feedback: ${name}`)}&body=${encodeURIComponent(message)}`;
+
+  return (
+    <div className="min-h-screen bg-muted/30 grid place-items-center p-4">
+      <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-5 shadow-sm">
+        <h1 className="text-xl font-semibold">Como foi sua experiência?</h1>
+        <p className="text-sm text-muted-foreground">{name}</p>
+
+        {choice === "none" && (
+          <div className="flex justify-center gap-4">
+            <button onClick={goPositive} className="rounded-xl border border-border px-6 py-4 text-3xl hover:bg-accent">😀</button>
+            <button onClick={() => setChoice("sad")} className="rounded-xl border border-border px-6 py-4 text-3xl hover:bg-accent">😞</button>
+          </div>
+        )}
+
+        {choice === "happy" && !positiveUrl && (
+          <p className="text-sm text-muted-foreground">Obrigado pelo seu feedback! 💚</p>
+        )}
+
+        {choice === "sad" && (
+          <div className="space-y-3 text-left">
+            <p className="text-sm text-muted-foreground">Sentimos muito. Conte o que podemos melhorar:</p>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              className="w-full rounded-md border border-input bg-background p-2 text-sm"
+              placeholder="Seu comentário…"
+            />
+            {mailto ? (
+              <a href={mailto} className="block w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium text-center">
+                Enviar feedback
+              </a>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">Obrigado! Seu retorno é muito importante.</p>
+            )}
+          </div>
         )}
       </div>
     </div>

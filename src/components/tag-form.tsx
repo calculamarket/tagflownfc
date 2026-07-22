@@ -268,5 +268,77 @@ function DestinationFields({
       );
     case "landing_page":
       return <p className="text-sm text-muted-foreground">Configure a landing page personalizada em uma etapa futura.</p>;
+    case "vcard":
+      return (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Nome</Label>
+              <Input value={value.first_name ?? ""} onChange={(e) => onChange("first_name", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Sobrenome</Label>
+              <Input value={value.last_name ?? ""} onChange={(e) => onChange("last_name", e.target.value)} />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Empresa</Label>
+              <Input value={value.org ?? ""} onChange={(e) => onChange("org", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cargo</Label>
+              <Input value={value.title ?? ""} onChange={(e) => onChange("title", e.target.value)} />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Telefone</Label>
+              <Input value={value.phone ?? ""} onChange={(e) => onChange("phone", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>E-mail</Label>
+              <Input type="email" value={value.email ?? ""} onChange={(e) => onChange("email", e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Site</Label>
+            <Input placeholder="https://" value={value.website ?? ""} onChange={(e) => onChange("website", e.target.value)} />
+          </div>
+          <p className="text-xs text-muted-foreground">Ao escanear, o celular adiciona o contato na agenda.</p>
+        </>
+      );
+    case "review_gate":
+      return (
+        <>
+          <div className="space-y-1.5">
+            <Label>Link para avaliação positiva (ex.: Google Reviews)</Label>
+            <Input placeholder="https://g.page/…/review" value={value.positive_url ?? ""} onChange={(e) => onChange("positive_url", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>E-mail para feedback privado (opcional)</Label>
+            <Input type="email" value={value.feedback_email ?? ""} onChange={(e) => onChange("feedback_email", e.target.value)} />
+          </div>
+          <p className="text-xs text-muted-foreground">Clientes satisfeitos vão para a avaliação; insatisfeitos deixam feedback privado.</p>
+        </>
+      );
+    case "ab_test":
+      return (
+        <>
+          <div className="space-y-1.5">
+            <Label>URL A</Label>
+            <Input placeholder="https://" value={value.url_a ?? ""} onChange={(e) => onChange("url_a", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>URL B</Label>
+            <Input placeholder="https://" value={value.url_b ?? ""} onChange={(e) => onChange("url_b", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>% de tráfego para A (resto vai para B)</Label>
+            <Input inputMode="numeric" placeholder="50" value={value.weight_a ?? ""} onChange={(e) => onChange("weight_a", e.target.value)} />
+          </div>
+          <p className="text-xs text-muted-foreground">O sistema divide os acessos e registra qual variante foi mostrada.</p>
+        </>
+      );
   }
 }
