@@ -21,6 +21,10 @@ const upsertSchema = z.object({
   destination_type: DestinationTypeEnum,
   destination: z.record(z.string(), z.any()).default({}),
   qr_style: z.record(z.string(), z.string()).default({}),
+  max_scans: z.number().int().positive().nullable().optional(),
+  activate_at: z.string().nullable().optional(),
+  expire_at: z.string().nullable().optional(),
+  access_password: z.string().max(100).nullable().optional(),
 });
 
 export const listTags = createServerFn({ method: "GET" })

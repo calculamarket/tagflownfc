@@ -21,6 +21,12 @@ function EditTag() {
 
   if (!tag) return <div className="p-6">Tag não encontrada.</div>;
 
+  const toLocalInput = (iso: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
+
   return (
     <div className="p-6 lg:p-10 max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold tracking-tight">Editar tag</h1>
@@ -35,6 +41,10 @@ function EditTag() {
             destination_type: tag.destination_type,
             destination: (tag.destination as Record<string, string>) ?? {},
             qr_style: (tag.qr_style as Record<string, string>) ?? {},
+            max_scans: tag.max_scans != null ? String(tag.max_scans) : "",
+            activate_at: toLocalInput(tag.activate_at),
+            expire_at: toLocalInput(tag.expire_at),
+            access_password: tag.access_password ?? "",
           }}
           editing
           onSaved={() => navigate({ to: "/tags" })}

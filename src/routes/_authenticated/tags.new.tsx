@@ -20,6 +20,7 @@ function NewTag() {
           initial={{
             id, name: "", description: "", category: "",
             status: "active", destination_type: "url", destination: {}, qr_style: {},
+            max_scans: "", activate_at: "", expire_at: "", access_password: "",
           }}
           onSaved={() => navigate({ to: "/tags" })}
         />

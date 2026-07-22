@@ -1,49 +1,52 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
 import { parseUA } from "./user-agent";
 
-function isNewSupabaseApiKey(v: string) {
-  return v.startsWith("sb_publishable_") || v.startsWith("sb_secret_");
-}
-
-function serverPublicClient() {
-  const url = process.env.SUPABASE_URL!;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-  return createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (isNewSupabaseApiKey(key) && h.get("Authorization") === `Bearer ${key}`) {
-          h.delete("Authorization");
-        }
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
-  });
-}
-
-/** Resolve a tag by public id, log the read, and return the redirect target. */
+/**
+ * Resolve a tag by public id, enforce access guards, log the read, and return
+ * the redirect target. Runs server-side with the service role so it can read
+ * owner-only guard columns (scan limit, schedule, password) that anon cannot —
+ * only sanitized data (the final destination) is ever returned to the client.
+ */
 export const resolveTag = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; referrer?: string | null }) => d)
+  .inputValidator((d: { id: string; referrer?: string | null; password?: string | null }) => d)
   .handler(async ({ data }) => {
-    const supabase = serverPublicClient();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // NB: anon has column-level SELECT on tags (no user_id). The tag owner for
-    // webhook firing is resolved server-side via the service role below.
-    const { data: tag, error } = await supabase
+    const { data: tag, error } = await supabaseAdmin
       .from("tags")
-      .select("id, status, destination_type, destination")
+      .select(
+        "id, user_id, status, destination_type, destination, activate_at, expire_at, max_scans, access_password",
+      )
       .eq("id", data.id)
       .maybeSingle();
 
     if (error) throw new Error(error.message);
     if (!tag) return { ok: false as const, reason: "not_found" as const };
-    if (tag.status !== "active")
-      return { ok: false as const, reason: "inactive" as const };
+    if (tag.status !== "active") return { ok: false as const, reason: "inactive" as const };
+
+    const now = Date.now();
+    if (tag.activate_at && now < new Date(tag.activate_at).getTime())
+      return { ok: false as const, reason: "scheduled" as const };
+    if (tag.expire_at && now > new Date(tag.expire_at).getTime())
+      return { ok: false as const, reason: "expired" as const };
+
+    // Scan limit: count prior reads before logging this one.
+    if (tag.max_scans && tag.max_scans > 0) {
+      const { count } = await supabaseAdmin
+        .from("reads")
+        .select("id", { count: "exact", head: true })
+        .eq("tag_id", tag.id);
+      if ((count ?? 0) >= tag.max_scans)
+        return { ok: false as const, reason: "limit_reached" as const };
+    }
+
+    // Password gate (soft): require the correct password before revealing the destination.
+    if (tag.access_password) {
+      if (!data.password) return { ok: false as const, reason: "password_required" as const };
+      if (data.password !== tag.access_password)
+        return { ok: false as const, reason: "password_incorrect" as const };
+    }
 
     const req = getRequest();
     const headers = req?.headers;
@@ -69,7 +72,7 @@ export const resolveTag = createServerFn({ method: "POST" })
     }
 
     // Record the read (awaited so analytics stay accurate).
-    await supabase.from("reads").insert({
+    await supabaseAdmin.from("reads").insert({
       tag_id: tag.id,
       ip,
       country,
@@ -82,11 +85,9 @@ export const resolveTag = createServerFn({ method: "POST" })
       variant,
     });
 
-    // Fire tag.read webhooks without blocking the redirect. The admin client
-    // lives in a server-only module, loaded lazily so it never reaches the
-    // client bundle; it also resolves the tag owner via the service role.
-    void import("./webhook-delivery.server").then(({ deliverWebhooksForTag }) =>
-      deliverWebhooksForTag(tag.id, "tag.read", {
+    // Fire tag.read webhooks without blocking the redirect.
+    void import("./webhook-delivery.server").then(({ deliverWebhooks }) =>
+      deliverWebhooks(tag.user_id, "tag.read", {
         id: tag.id,
         country,
         city,

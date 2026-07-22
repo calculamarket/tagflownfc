@@ -220,12 +220,16 @@ export type Database = {
       }
       tags: {
         Row: {
+          access_password: string | null
+          activate_at: string | null
           category: string | null
           created_at: string
           description: string | null
           destination: Json
           destination_type: Database["public"]["Enums"]["destination_type"]
+          expire_at: string | null
           id: string
+          max_scans: number | null
           name: string
           qr_style: Json
           read_count: number
@@ -234,12 +238,16 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          access_password?: string | null
+          activate_at?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
           destination?: Json
           destination_type?: Database["public"]["Enums"]["destination_type"]
+          expire_at?: string | null
           id: string
+          max_scans?: number | null
           name: string
           qr_style?: Json
           read_count?: number
@@ -248,12 +256,16 @@ export type Database = {
           user_id: string
         }
         Update: {
+          access_password?: string | null
+          activate_at?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
           destination?: Json
           destination_type?: Database["public"]["Enums"]["destination_type"]
+          expire_at?: string | null
           id?: string
+          max_scans?: number | null
           name?: string
           qr_style?: Json
           read_count?: number

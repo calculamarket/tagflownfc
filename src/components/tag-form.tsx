@@ -22,6 +22,10 @@ export type TagFormValues = {
   destination_type: DestinationType;
   destination: Record<string, string>;
   qr_style: Record<string, string>;
+  max_scans: string;
+  activate_at: string;
+  expire_at: string;
+  access_password: string;
 };
 
 export function TagForm({
@@ -31,7 +35,23 @@ export function TagForm({
   const qc = useQueryClient();
 
   const save = useMutation({
-    mutationFn: () => upsertTag({ data: v }),
+    mutationFn: () =>
+      upsertTag({
+        data: {
+          id: v.id,
+          name: v.name,
+          description: v.description,
+          category: v.category,
+          status: v.status,
+          destination_type: v.destination_type,
+          destination: v.destination,
+          qr_style: v.qr_style,
+          max_scans: v.max_scans ? Number(v.max_scans) : null,
+          activate_at: v.activate_at ? new Date(v.activate_at).toISOString() : null,
+          expire_at: v.expire_at ? new Date(v.expire_at).toISOString() : null,
+          access_password: v.access_password || null,
+        },
+      }),
     onSuccess: () => {
       toast.success(editing ? "Tag atualizada." : "Tag criada.");
       qc.invalidateQueries({ queryKey: ["tags"] });
@@ -98,6 +118,31 @@ export function TagForm({
             </Select>
           </div>
           <DestinationFields type={v.destination_type} value={v.destination} onChange={setDest} />
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+          <div>
+            <h3 className="font-medium">Regras de acesso</h3>
+            <p className="text-xs text-muted-foreground">Opcional. Controle quando e quantas vezes a tag pode ser acessada.</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Limite de escaneamentos</Label>
+              <Input inputMode="numeric" placeholder="Sem limite" value={v.max_scans} onChange={(e) => setV({ ...v, max_scans: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Senha de acesso</Label>
+              <Input placeholder="Sem senha" value={v.access_password} onChange={(e) => setV({ ...v, access_password: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Ativar em</Label>
+              <Input type="datetime-local" value={v.activate_at} onChange={(e) => setV({ ...v, activate_at: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Expirar em</Label>
+              <Input type="datetime-local" value={v.expire_at} onChange={(e) => setV({ ...v, expire_at: e.target.value })} />
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-2">
