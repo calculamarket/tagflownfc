@@ -61,7 +61,7 @@ export const testWebhook = createServerFn({ method: "POST" })
           data: { message: "Teste de webhook TagFlow" },
         }),
       });
-      return { ok: true, status: res.status };
+      return { ok: res.ok, status: res.status, error: res.ok ? "" : res.statusText };
     } catch (e) {
       return { ok: false, status: 0, error: (e as Error).message };
     }
