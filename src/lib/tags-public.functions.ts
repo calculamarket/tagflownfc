@@ -71,6 +71,6 @@ export const resolveTag = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       destination_type: tag.destination_type,
-      destination: tag.destination as Record<string, unknown>,
+      destination: (tag.destination ?? {}) as Record<string, string>,
     };
   });
