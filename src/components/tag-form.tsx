@@ -1,0 +1,196 @@
+import { useState, type FormEvent } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { upsertTag } from "@/lib/tags.functions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { DESTINATION_LABELS, type DestinationType } from "@/lib/destination";
+import { toast } from "sonner";
+import { QrCode } from "lucide-react";
+import { TagQrPreview } from "./tag-qr-preview";
+
+export type TagFormValues = {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  status: "active" | "paused" | "archived";
+  destination_type: DestinationType;
+  destination: Record<string, string>;
+};
+
+export function TagForm({
+  initial, editing, onSaved,
+}: { initial: TagFormValues; editing?: boolean; onSaved: () => void }) {
+  const [v, setV] = useState<TagFormValues>(initial);
+  const qc = useQueryClient();
+
+  const save = useMutation({
+    mutationFn: () => upsertTag({ data: v }),
+    onSuccess: () => {
+      toast.success(editing ? "Tag atualizada." : "Tag criada.");
+      qc.invalidateQueries({ queryKey: ["tags"] });
+      qc.invalidateQueries({ queryKey: ["tag", v.id] });
+      onSaved();
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const submit = (e: FormEvent) => { e.preventDefault(); save.mutate(); };
+  const setDest = (k: string, val: string) => setV({ ...v, destination: { ...v.destination, [k]: val } });
+
+  return (
+    <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[1fr_280px]">
+      <div className="space-y-5">
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="name">Nome</Label>
+              <Input id="name" required value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="id">ID único</Label>
+              <Input id="id" required value={v.id} readOnly={editing}
+                onChange={(e) => setV({ ...v, id: e.target.value })} className="font-mono" />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="cat">Categoria</Label>
+              <Input id="cat" value={v.category} onChange={(e) => setV({ ...v, category: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={v.status} onValueChange={(x) => setV({ ...v, status: x as TagFormValues["status"] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativa</SelectItem>
+                  <SelectItem value="paused">Pausada</SelectItem>
+                  <SelectItem value="archived">Arquivada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="desc">Descrição</Label>
+            <Textarea id="desc" rows={2} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+          <h3 className="font-medium">Destino</h3>
+          <div className="space-y-1.5">
+            <Label>Tipo</Label>
+            <Select value={v.destination_type} onValueChange={(x) => setV({ ...v, destination_type: x as DestinationType, destination: {} })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(DESTINATION_LABELS) as DestinationType[]).map((k) => (
+                  <SelectItem key={k} value={k}>{DESTINATION_LABELS[k]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DestinationFields type={v.destination_type} value={v.destination} onChange={setDest} />
+        </div>
+
+        <div className="flex gap-2">
+          <Button type="submit" disabled={save.isPending}>
+            {save.isPending ? "Salvando…" : editing ? "Salvar alterações" : "Criar tag"}
+          </Button>
+        </div>
+      </div>
+
+      <aside className="rounded-lg border border-border bg-card p-5 space-y-3 h-fit">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <QrCode className="size-4" /> QR Code
+        </div>
+        <TagQrPreview id={v.id} />
+        <div className="text-xs text-muted-foreground break-all">
+          {typeof window !== "undefined" ? `${window.location.origin}/t/${v.id}` : `/t/${v.id}`}
+        </div>
+      </aside>
+    </form>
+  );
+}
+
+function DestinationFields({
+  type, value, onChange,
+}: { type: DestinationType; value: Record<string, string>; onChange: (k: string, v: string) => void }) {
+  const url = (
+    <div className="space-y-1.5">
+      <Label>URL</Label>
+      <Input placeholder="https://" value={value.url ?? ""} onChange={(e) => onChange("url", e.target.value)} />
+    </div>
+  );
+  switch (type) {
+    case "url":
+    case "instagram":
+    case "facebook":
+    case "tiktok":
+    case "youtube":
+    case "pdf":
+    case "mercadolivre":
+    case "shopee":
+    case "amazon":
+      return url;
+    case "whatsapp":
+      return (
+        <>
+          <div className="space-y-1.5">
+            <Label>Telefone (com DDI)</Label>
+            <Input placeholder="5511999999999" value={value.phone ?? ""} onChange={(e) => onChange("phone", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Mensagem (opcional)</Label>
+            <Input value={value.message ?? ""} onChange={(e) => onChange("message", e.target.value)} />
+          </div>
+        </>
+      );
+    case "phone":
+      return (
+        <div className="space-y-1.5">
+          <Label>Telefone</Label>
+          <Input value={value.phone ?? ""} onChange={(e) => onChange("phone", e.target.value)} />
+        </div>
+      );
+    case "email":
+      return (
+        <>
+          <div className="space-y-1.5">
+            <Label>E-mail</Label>
+            <Input type="email" value={value.email ?? ""} onChange={(e) => onChange("email", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Assunto (opcional)</Label>
+            <Input value={value.subject ?? ""} onChange={(e) => onChange("subject", e.target.value)} />
+          </div>
+        </>
+      );
+    case "pix":
+      return (
+        <div className="space-y-1.5">
+          <Label>Chave PIX (visualização em landing)</Label>
+          <Input value={value.key ?? ""} onChange={(e) => onChange("key", e.target.value)} />
+        </div>
+      );
+    case "wifi":
+      return (
+        <>
+          <div className="space-y-1.5">
+            <Label>SSID</Label>
+            <Input value={value.ssid ?? ""} onChange={(e) => onChange("ssid", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Senha</Label>
+            <Input value={value.password ?? ""} onChange={(e) => onChange("password", e.target.value)} />
+          </div>
+        </>
+      );
+    case "landing_page":
+      return <p className="text-sm text-muted-foreground">Configure a landing page personalizada em uma etapa futura.</p>;
+  }
+}
