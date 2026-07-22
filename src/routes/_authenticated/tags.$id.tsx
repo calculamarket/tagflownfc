@@ -34,6 +34,7 @@ function EditTag() {
             status: tag.status,
             destination_type: tag.destination_type,
             destination: (tag.destination as Record<string, string>) ?? {},
+            qr_style: (tag.qr_style as Record<string, string>) ?? {},
           }}
           editing
           onSaved={() => navigate({ to: "/tags" })}

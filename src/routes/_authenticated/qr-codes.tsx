@@ -23,7 +23,7 @@ function QRPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {tags.map((t) => (
             <div key={t.id} className="rounded-lg border border-border bg-card p-4 space-y-3">
-              <TagQrPreview id={t.id} size={180} />
+              <TagQrPreview id={t.id} size={180} style={(t.qr_style as Record<string, string>) ?? {}} downloadable />
               <div>
                 <div className="font-medium truncate">{t.name}</div>
                 <div className="text-xs text-muted-foreground font-mono">/t/{t.id}</div>

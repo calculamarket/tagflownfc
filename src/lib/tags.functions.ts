@@ -19,6 +19,7 @@ const upsertSchema = z.object({
   status: TagStatusEnum,
   destination_type: DestinationTypeEnum,
   destination: z.record(z.string(), z.any()).default({}),
+  qr_style: z.record(z.string(), z.string()).default({}),
 });
 
 export const listTags = createServerFn({ method: "GET" })

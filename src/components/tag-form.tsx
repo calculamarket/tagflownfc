@@ -21,6 +21,7 @@ export type TagFormValues = {
   status: "active" | "paused" | "archived";
   destination_type: DestinationType;
   destination: Record<string, string>;
+  qr_style: Record<string, string>;
 };
 
 export function TagForm({
@@ -43,6 +44,7 @@ export function TagForm({
 
   const submit = (e: FormEvent) => { e.preventDefault(); save.mutate(); };
   const setDest = (k: string, val: string) => setV({ ...v, destination: { ...v.destination, [k]: val } });
+  const setQr = (k: string, val: string) => setV({ ...v, qr_style: { ...v.qr_style, [k]: val } });
 
   return (
     <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[1fr_280px]">
@@ -109,9 +111,41 @@ export function TagForm({
         <div className="flex items-center gap-2 text-sm font-medium">
           <QrCode className="size-4" /> QR Code
         </div>
-        <TagQrPreview id={v.id} />
+        <TagQrPreview id={v.id} style={v.qr_style} downloadable />
         <div className="text-xs text-muted-foreground break-all">
           {typeof window !== "undefined" ? `${window.location.origin}/t/${v.id}` : `/t/${v.id}`}
+        </div>
+
+        <div className="pt-2 border-t border-border space-y-3">
+          <div className="text-xs font-medium text-muted-foreground">Personalização</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Cor</Label>
+              <input
+                type="color"
+                value={v.qr_style.dark || "#0f172a"}
+                onChange={(e) => setQr("dark", e.target.value)}
+                className="h-8 w-full rounded-md border border-input bg-background"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Fundo</Label>
+              <input
+                type="color"
+                value={v.qr_style.light || "#ffffff"}
+                onChange={(e) => setQr("light", e.target.value)}
+                className="h-8 w-full rounded-md border border-input bg-background"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Logo (URL)</Label>
+            <Input className="h-8" placeholder="https://…/logo.png" value={v.qr_style.logo_url ?? ""} onChange={(e) => setQr("logo_url", e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Legenda</Label>
+            <Input className="h-8" placeholder="Aponte a câmera" value={v.qr_style.caption ?? ""} onChange={(e) => setQr("caption", e.target.value)} />
+          </div>
         </div>
       </aside>
     </form>

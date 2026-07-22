@@ -224,6 +224,7 @@ export type Database = {
           destination_type: Database["public"]["Enums"]["destination_type"]
           id: string
           name: string
+          qr_style: Json
           read_count: number
           status: Database["public"]["Enums"]["tag_status"]
           updated_at: string
@@ -237,6 +238,7 @@ export type Database = {
           destination_type?: Database["public"]["Enums"]["destination_type"]
           id: string
           name: string
+          qr_style?: Json
           read_count?: number
           status?: Database["public"]["Enums"]["tag_status"]
           updated_at?: string
@@ -250,6 +252,7 @@ export type Database = {
           destination_type?: Database["public"]["Enums"]["destination_type"]
           id?: string
           name?: string
+          qr_style?: Json
           read_count?: number
           status?: Database["public"]["Enums"]["tag_status"]
           updated_at?: string

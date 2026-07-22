@@ -19,7 +19,7 @@ function NewTag() {
         <TagForm
           initial={{
             id, name: "", description: "", category: "",
-            status: "active", destination_type: "url", destination: {},
+            status: "active", destination_type: "url", destination: {}, qr_style: {},
           }}
           onSaved={() => navigate({ to: "/tags" })}
         />
