@@ -14,16 +14,330 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      landing_pages: {
+        Row: {
+          buttons: Json
+          created_at: string
+          description: string | null
+          image_url: string | null
+          logo_url: string | null
+          map: Json | null
+          tag_id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          buttons?: Json
+          created_at?: string
+          description?: string | null
+          image_url?: string | null
+          logo_url?: string | null
+          map?: Json | null
+          tag_id: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          buttons?: Json
+          created_at?: string
+          description?: string | null
+          image_url?: string | null
+          logo_url?: string | null
+          map?: Json | null
+          tag_id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_pages_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: true
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          features: Json
+          id: string
+          max_tags: number
+          name: string
+          price_cents: number
+        }
+        Insert: {
+          created_at?: string
+          features?: Json
+          id?: string
+          max_tags?: number
+          name: string
+          price_cents?: number
+        }
+        Update: {
+          created_at?: string
+          features?: Json
+          id?: string
+          max_tags?: number
+          name?: string
+          price_cents?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reads: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device: string | null
+          id: number
+          ip: string | null
+          os: string | null
+          referrer: string | null
+          tag_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          id?: number
+          ip?: string | null
+          os?: string | null
+          referrer?: string | null
+          tag_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          id?: number
+          ip?: string | null
+          os?: string | null
+          referrer?: string | null
+          tag_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reads_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          plan_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          plan_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          plan_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tags: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          destination: Json
+          destination_type: Database["public"]["Enums"]["destination_type"]
+          id: string
+          name: string
+          read_count: number
+          status: Database["public"]["Enums"]["tag_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          destination?: Json
+          destination_type?: Database["public"]["Enums"]["destination_type"]
+          id: string
+          name: string
+          read_count?: number
+          status?: Database["public"]["Enums"]["tag_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          destination?: Json
+          destination_type?: Database["public"]["Enums"]["destination_type"]
+          id?: string
+          name?: string
+          read_count?: number
+          status?: Database["public"]["Enums"]["tag_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      webhooks: {
+        Row: {
+          active: boolean
+          created_at: string
+          event: Database["public"]["Enums"]["webhook_event"]
+          id: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          event: Database["public"]["Enums"]["webhook_event"]
+          id?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          event?: Database["public"]["Enums"]["webhook_event"]
+          id?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      destination_type:
+        | "url"
+        | "whatsapp"
+        | "instagram"
+        | "facebook"
+        | "tiktok"
+        | "youtube"
+        | "pdf"
+        | "pix"
+        | "wifi"
+        | "phone"
+        | "email"
+        | "landing_page"
+        | "mercadolivre"
+        | "shopee"
+        | "amazon"
+      tag_status: "active" | "paused" | "archived"
+      webhook_event: "tag.read" | "tag.created" | "tag.updated"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +464,27 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      destination_type: [
+        "url",
+        "whatsapp",
+        "instagram",
+        "facebook",
+        "tiktok",
+        "youtube",
+        "pdf",
+        "pix",
+        "wifi",
+        "phone",
+        "email",
+        "landing_page",
+        "mercadolivre",
+        "shopee",
+        "amazon",
+      ],
+      tag_status: ["active", "paused", "archived"],
+      webhook_event: ["tag.read", "tag.created", "tag.updated"],
+    },
   },
 } as const
