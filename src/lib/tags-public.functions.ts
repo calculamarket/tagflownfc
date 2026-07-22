@@ -32,9 +32,11 @@ export const resolveTag = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const supabase = serverPublicClient();
 
+    // NB: anon has column-level SELECT on tags (no user_id). The tag owner for
+    // webhook firing is resolved server-side via the service role below.
     const { data: tag, error } = await supabase
       .from("tags")
-      .select("id, user_id, status, destination_type, destination")
+      .select("id, status, destination_type, destination")
       .eq("id", data.id)
       .maybeSingle();
 
@@ -69,9 +71,9 @@ export const resolveTag = createServerFn({ method: "POST" })
 
     // Fire tag.read webhooks without blocking the redirect. The admin client
     // lives in a server-only module, loaded lazily so it never reaches the
-    // client bundle.
-    void import("./webhook-delivery.server").then(({ deliverWebhooks }) =>
-      deliverWebhooks(tag.user_id, "tag.read", {
+    // client bundle; it also resolves the tag owner via the service role.
+    void import("./webhook-delivery.server").then(({ deliverWebhooksForTag }) =>
+      deliverWebhooksForTag(tag.id, "tag.read", {
         id: tag.id,
         country,
         city,

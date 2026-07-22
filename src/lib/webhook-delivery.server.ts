@@ -113,6 +113,29 @@ export async function deliverWebhooks(
 }
 
 /**
+ * Fire webhooks for a tag event when only the tag id is known (e.g. the public
+ * redirector, where anon has no column-level access to tags.user_id). Resolves
+ * the owner via the service role, then fans out. Never throws.
+ */
+export async function deliverWebhooksForTag(
+  tagId: string,
+  event: WebhookEvent,
+  data: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const { data: tag } = await supabaseAdmin
+      .from("tags")
+      .select("user_id")
+      .eq("id", tagId)
+      .maybeSingle();
+    if (!tag) return;
+    await deliverWebhooks(tag.user_id, event, data);
+  } catch {
+    // Swallow: webhook delivery must never break the redirect.
+  }
+}
+
+/**
  * Re-send a past delivery (manual "resend" from the UI). Re-uses the original
  * payload data and the webhook's current secret; logs a fresh delivery row.
  * Throws with a user-facing message on validation errors.
