@@ -9,38 +9,168 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TIdRouteImport } from './routes/t.$id'
+import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedTagsIndexRouteImport } from './routes/_authenticated/tags.index'
+import { Route as AuthenticatedTagsNewRouteImport } from './routes/_authenticated/tags.new'
+import { Route as AuthenticatedTagsIdRouteImport } from './routes/_authenticated/tags.$id'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TIdRoute = TIdRouteImport.update({
+  id: '/t/$id',
+  path: '/t/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTagsRoute = AuthenticatedTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTagsIndexRoute = AuthenticatedTagsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedTagsRoute,
+} as any)
+const AuthenticatedTagsNewRoute = AuthenticatedTagsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedTagsRoute,
+} as any)
+const AuthenticatedTagsIdRoute = AuthenticatedTagsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedTagsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/tags': typeof AuthenticatedTagsRouteWithChildren
+  '/t/$id': typeof TIdRoute
+  '/tags/$id': typeof AuthenticatedTagsIdRoute
+  '/tags/new': typeof AuthenticatedTagsNewRoute
+  '/tags/': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/t/$id': typeof TIdRoute
+  '/tags/$id': typeof AuthenticatedTagsIdRoute
+  '/tags/new': typeof AuthenticatedTagsNewRoute
+  '/tags': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/tags': typeof AuthenticatedTagsRouteWithChildren
+  '/t/$id': typeof TIdRoute
+  '/_authenticated/tags/$id': typeof AuthenticatedTagsIdRoute
+  '/_authenticated/tags/new': typeof AuthenticatedTagsNewRoute
+  '/_authenticated/tags/': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/dashboard'
+    | '/tags'
+    | '/t/$id'
+    | '/tags/$id'
+    | '/tags/new'
+    | '/tags/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/dashboard'
+    | '/t/$id'
+    | '/tags/$id'
+    | '/tags/new'
+    | '/tags'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/reset-password'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/tags'
+    | '/t/$id'
+    | '/_authenticated/tags/$id'
+    | '/_authenticated/tags/new'
+    | '/_authenticated/tags/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  TIdRoute: typeof TIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +178,85 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/t/$id': {
+      id: '/t/$id'
+      path: '/t/$id'
+      fullPath: '/t/$id'
+      preLoaderRoute: typeof TIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/tags': {
+      id: '/_authenticated/tags'
+      path: '/tags'
+      fullPath: '/tags'
+      preLoaderRoute: typeof AuthenticatedTagsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tags/': {
+      id: '/_authenticated/tags/'
+      path: '/'
+      fullPath: '/tags/'
+      preLoaderRoute: typeof AuthenticatedTagsIndexRouteImport
+      parentRoute: typeof AuthenticatedTagsRoute
+    }
+    '/_authenticated/tags/new': {
+      id: '/_authenticated/tags/new'
+      path: '/new'
+      fullPath: '/tags/new'
+      preLoaderRoute: typeof AuthenticatedTagsNewRouteImport
+      parentRoute: typeof AuthenticatedTagsRoute
+    }
+    '/_authenticated/tags/$id': {
+      id: '/_authenticated/tags/$id'
+      path: '/$id'
+      fullPath: '/tags/$id'
+      preLoaderRoute: typeof AuthenticatedTagsIdRouteImport
+      parentRoute: typeof AuthenticatedTagsRoute
+    }
   }
 }
 
+interface AuthenticatedTagsRouteChildren {
+  AuthenticatedTagsIdRoute: typeof AuthenticatedTagsIdRoute
+  AuthenticatedTagsNewRoute: typeof AuthenticatedTagsNewRoute
+  AuthenticatedTagsIndexRoute: typeof AuthenticatedTagsIndexRoute
+}
+
+const AuthenticatedTagsRouteChildren: AuthenticatedTagsRouteChildren = {
+  AuthenticatedTagsIdRoute: AuthenticatedTagsIdRoute,
+  AuthenticatedTagsNewRoute: AuthenticatedTagsNewRoute,
+  AuthenticatedTagsIndexRoute: AuthenticatedTagsIndexRoute,
+}
+
+const AuthenticatedTagsRouteWithChildren =
+  AuthenticatedTagsRoute._addFileChildren(AuthenticatedTagsRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedTagsRoute: typeof AuthenticatedTagsRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedTagsRoute: AuthenticatedTagsRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  TIdRoute: TIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

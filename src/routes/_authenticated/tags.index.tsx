@@ -9,7 +9,7 @@ import { format } from "date-fns";
 
 const tagsQO = queryOptions({ queryKey: ["tags"], queryFn: () => listTags() });
 
-export const Route = createFileRoute("/_authenticated/tags")({
+export const Route = createFileRoute("/_authenticated/tags/")({
   head: () => ({ meta: [{ title: "Minhas Tags · TagFlow" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(tagsQO),
   component: TagsPage,
