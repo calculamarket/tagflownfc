@@ -41,11 +41,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <div className="max-w-lg text-center">
         <h1 className="text-xl font-semibold">Não foi possível carregar</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Algo deu errado. Tente novamente ou volte ao início.
         </p>
+        {error?.message && (
+          <pre className="mt-4 max-h-48 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/50 p-3 text-left text-xs text-muted-foreground">
+            {error.message}
+          </pre>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => { router.invalidate(); reset(); }}
