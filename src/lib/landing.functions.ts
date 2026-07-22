@@ -10,6 +10,21 @@ const buttonSchema = z.object({
   style: z.enum(["primary", "secondary"]).default("primary"),
 });
 
+const leadFormSchema = z.object({
+  enabled: z.boolean().default(false),
+  title: z.string().max(120).default("Deixe seu contato"),
+  button_label: z.string().max(60).default("Enviar"),
+  success_message: z.string().max(200).default("Obrigado! Recebemos seu contato."),
+  fields: z
+    .object({
+      name: z.boolean().default(true),
+      email: z.boolean().default(true),
+      phone: z.boolean().default(false),
+      message: z.boolean().default(false),
+    })
+    .default({ name: true, email: true, phone: false, message: false }),
+});
+
 const landingSchema = z.object({
   tag_id: z.string().min(1),
   title: z.string().nullable().optional(),
@@ -17,9 +32,19 @@ const landingSchema = z.object({
   logo_url: z.string().nullable().optional(),
   image_url: z.string().nullable().optional(),
   buttons: z.array(buttonSchema).default([]),
+  lead_form: leadFormSchema.optional(),
 });
 
 export type LandingButton = z.infer<typeof buttonSchema>;
+export type LeadForm = z.infer<typeof leadFormSchema>;
+
+export const DEFAULT_LEAD_FORM: LeadForm = {
+  enabled: false,
+  title: "Deixe seu contato",
+  button_label: "Enviar",
+  success_message: "Obrigado! Recebemos seu contato.",
+  fields: { name: true, email: true, phone: false, message: false },
+};
 
 export const getLandingForEditor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -47,6 +72,7 @@ export const upsertLanding = createServerFn({ method: "POST" })
       logo_url: data.logo_url ?? null,
       image_url: data.image_url ?? null,
       buttons: data.buttons,
+      ...(data.lead_form ? { lead_form: data.lead_form } : {}),
     });
     if (error) throw new Error(error.message);
     return { ok: true };

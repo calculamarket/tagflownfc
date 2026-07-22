@@ -26,6 +26,7 @@ export const analyticsOverview = createServerFn({ method: "POST" })
       by_browser: [] as { key: string; count: number }[],
       by_os: [] as { key: string; count: number }[],
       by_referrer: [] as { key: string; count: number }[],
+      by_variant: [] as { key: string; count: number }[],
       recent: [] as Array<{
         id: number; tag_id: string; created_at: string;
         country: string | null; city: string | null;
@@ -40,7 +41,7 @@ export const analyticsOverview = createServerFn({ method: "POST" })
     const [{ data: reads }, { data: recent }] = await Promise.all([
       supabase
         .from("reads")
-        .select("created_at, country, city, device, browser, os, referrer")
+        .select("created_at, country, city, device, browser, os, referrer, variant")
         .in("tag_id", scoped)
         .gte("created_at", start.toISOString()),
       supabase
@@ -87,6 +88,17 @@ export const analyticsOverview = createServerFn({ method: "POST" })
       by_browser: tally("browser"),
       by_os: tally("os"),
       by_referrer: tally("referrer", "direto"),
+      // Only rows from A/B tags carry a variant; ignore the rest.
+      by_variant: (() => {
+        const m = new Map<string, number>();
+        for (const r of list) {
+          const v = (r as { variant?: string | null }).variant;
+          if (v) m.set(v, (m.get(v) ?? 0) + 1);
+        }
+        return Array.from(m.entries())
+          .map(([key, count]) => ({ key, count }))
+          .sort((a, b) => a.key.localeCompare(b.key));
+      })(),
       recent: recent ?? [],
     };
   });

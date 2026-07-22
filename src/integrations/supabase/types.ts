@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           description: string | null
           image_url: string | null
+          lead_form: Json
           logo_url: string | null
           map: Json | null
           tag_id: string
@@ -32,6 +33,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           image_url?: string | null
+          lead_form?: Json
           logo_url?: string | null
           map?: Json | null
           tag_id: string
@@ -44,6 +46,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           image_url?: string | null
+          lead_form?: Json
           logo_url?: string | null
           map?: Json | null
           tag_id?: string
@@ -59,6 +62,47 @@ export type Database = {
             referencedRelation: "tags"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      leads: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string | null
+          name: string | null
+          phone: string | null
+          tag_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+          tag_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+          tag_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          }
         ]
       }
       plans: {

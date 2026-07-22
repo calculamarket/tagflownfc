@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getPublicView } from "@/lib/landing.functions";
-import type { LandingButton } from "@/lib/landing.functions";
+import { getPublicView, DEFAULT_LEAD_FORM } from "@/lib/landing.functions";
+import type { LandingButton, LeadForm } from "@/lib/landing.functions";
+import { submitLead } from "@/lib/leads.functions";
 import { QrCanvas } from "@/components/qr-canvas";
 import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads";
 
@@ -53,15 +54,83 @@ function PublicViewPage() {
   return <LandingView landing={landing} tag={tag} />;
 }
 
+function LeadFormBlock({ tagId, config }: { tagId: string; config: LeadForm }) {
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [f, setF] = useState({ name: "", email: "", phone: "", message: "" });
+  const fields = config.fields ?? DEFAULT_LEAD_FORM.fields;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const res = await submitLead({
+      data: {
+        tag_id: tagId,
+        name: fields.name ? f.name : null,
+        email: fields.email ? f.email : null,
+        phone: fields.phone ? f.phone : null,
+        message: fields.message ? f.message : null,
+      },
+    }).catch(() => ({ ok: false as const }));
+    setBusy(false);
+    if (res.ok) setSent(true);
+  };
+
+  if (sent) {
+    return (
+      <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
+        {config.success_message || DEFAULT_LEAD_FORM.success_message}
+      </div>
+    );
+  }
+
+  const input = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
+
+  return (
+    <form onSubmit={submit} className="space-y-2 text-left">
+      <p className="text-sm font-medium text-center">
+        {config.title || DEFAULT_LEAD_FORM.title}
+      </p>
+      {fields.name && (
+        <input className={input} placeholder="Nome" value={f.name}
+          onChange={(e) => setF({ ...f, name: e.target.value })} />
+      )}
+      {fields.email && (
+        <input className={input} type="email" placeholder="E-mail" value={f.email}
+          onChange={(e) => setF({ ...f, email: e.target.value })} />
+      )}
+      {fields.phone && (
+        <input className={input} placeholder="Telefone" value={f.phone}
+          onChange={(e) => setF({ ...f, phone: e.target.value })} />
+      )}
+      {fields.message && (
+        <textarea className={input} rows={3} placeholder="Mensagem" value={f.message}
+          onChange={(e) => setF({ ...f, message: e.target.value })} />
+      )}
+      <button type="submit" disabled={busy}
+        className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium disabled:opacity-50">
+        {busy ? "Enviando…" : config.button_label || DEFAULT_LEAD_FORM.button_label}
+      </button>
+    </form>
+  );
+}
+
 function LandingView({
   landing, tag,
-}: { landing: NonNullable<Extract<ViewData, { ok: true }>["landing"]> | null; tag: { name: string } }) {
+}: {
+  landing: NonNullable<Extract<ViewData, { ok: true }>["landing"]> | null;
+  tag: { id: string; name: string };
+}) {
   const title = (landing?.title as string) || tag.name;
   const description = landing?.description as string | null;
   const logoUrl = landing?.logo_url as string | null;
   const imageUrl = landing?.image_url as string | null;
   const rawBtns = landing?.buttons;
   const buttons: LandingButton[] = Array.isArray(rawBtns) ? (rawBtns as LandingButton[]) : [];
+  const leadForm = {
+    ...DEFAULT_LEAD_FORM,
+    ...((landing?.lead_form ?? {}) as Partial<LeadForm>),
+  } as LeadForm;
 
   return (
     <div className="min-h-screen bg-muted/30 py-10 px-4">
@@ -80,10 +149,15 @@ function LandingView({
                     : "rounded-md border border-border py-2.5 text-sm hover:bg-accent"
                 }>{b.label}</a>
             ))}
-            {buttons.length === 0 && !description && (
+            {buttons.length === 0 && !description && !leadForm.enabled && (
               <p className="text-xs text-muted-foreground">Landing page em construção.</p>
             )}
           </div>
+          {leadForm.enabled && (
+            <div className="pt-4 mt-2 border-t border-border">
+              <LeadFormBlock tagId={tag.id} config={leadForm} />
+            </div>
+          )}
         </div>
       </div>
       <p className="text-center text-xs text-muted-foreground mt-6">Powered by TagFlow</p>

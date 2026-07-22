@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { getLandingForEditor, upsertLanding, type LandingButton } from "@/lib/landing.functions";
+import {
+  getLandingForEditor, upsertLanding, DEFAULT_LEAD_FORM,
+  type LandingButton, type LeadForm,
+} from "@/lib/landing.functions";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +32,7 @@ function LandingEditor() {
   const [logoUrl, setLogoUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [buttons, setButtons] = useState<LandingButton[]>([]);
+  const [leadForm, setLeadForm] = useState<LeadForm>(DEFAULT_LEAD_FORM);
 
   useEffect(() => {
     if (!data) return;
@@ -37,7 +42,14 @@ function LandingEditor() {
     setImageUrl((data.landing?.image_url as string) ?? "");
     const raw = data.landing?.buttons;
     setButtons(Array.isArray(raw) ? (raw as LandingButton[]) : []);
+    setLeadForm({
+      ...DEFAULT_LEAD_FORM,
+      ...((data.landing?.lead_form ?? {}) as Partial<LeadForm>),
+    });
   }, [data]);
+
+  const setField = (k: keyof LeadForm["fields"], val: boolean) =>
+    setLeadForm((p) => ({ ...p, fields: { ...p.fields, [k]: val } }));
 
   const save = useMutation({
     mutationFn: () =>
@@ -48,6 +60,7 @@ function LandingEditor() {
           logo_url: logoUrl || null,
           image_url: imageUrl || null,
           buttons,
+          lead_form: leadForm,
         },
       }),
     onSuccess: () => {
@@ -130,6 +143,60 @@ function LandingEditor() {
                 </div>
               ))}
             </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base">Captura de contatos</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Exibe um formulário na landing. Os contatos aparecem em “Leads”.
+                </p>
+              </div>
+              <Switch
+                checked={leadForm.enabled}
+                onCheckedChange={(x) => setLeadForm({ ...leadForm, enabled: x })}
+              />
+            </CardHeader>
+            {leadForm.enabled && (
+              <CardContent className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Título do formulário</Label>
+                    <Input value={leadForm.title}
+                      onChange={(e) => setLeadForm({ ...leadForm, title: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Texto do botão</Label>
+                    <Input value={leadForm.button_label}
+                      onChange={(e) => setLeadForm({ ...leadForm, button_label: e.target.value })} />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Mensagem de agradecimento</Label>
+                  <Input value={leadForm.success_message}
+                    onChange={(e) => setLeadForm({ ...leadForm, success_message: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Campos exibidos</Label>
+                  <div className="flex flex-wrap gap-4">
+                    {([
+                      ["name", "Nome"], ["email", "E-mail"],
+                      ["phone", "Telefone"], ["message", "Mensagem"],
+                    ] as const).map(([k, label]) => (
+                      <label key={k} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={leadForm.fields[k]}
+                          onChange={(e) => setField(k, e.target.checked)}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            )}
           </Card>
         </div>
 

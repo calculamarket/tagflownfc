@@ -5,6 +5,7 @@ import { analyticsOverview } from "@/lib/analytics.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { GeoHeat } from "@/components/geo-heat";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({ meta: [{ title: "Analytics · TagFlow" }] }),
@@ -81,9 +82,40 @@ function AnalyticsPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Mapa de calor geográfico</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Onde suas etiquetas foram escaneadas. A intensidade da barra indica o volume.
+          </p>
+        </CardHeader>
+        <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Países</p>
+            <GeoHeat rows={data?.by_country ?? []} showFlag />
+          </div>
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Cidades</p>
+            <GeoHeat rows={data?.by_city ?? []} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {(data?.by_variant ?? []).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Teste A/B</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Distribuição das leituras entre as variantes.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <GeoHeat rows={data?.by_variant ?? []} />
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <BreakdownCard title="Países" rows={data?.by_country ?? []} />
-        <BreakdownCard title="Cidades" rows={data?.by_city ?? []} />
         <BreakdownCard title="Dispositivos" rows={data?.by_device ?? []} />
         <BreakdownCard title="Navegadores" rows={data?.by_browser ?? []} />
         <BreakdownCard title="Sistemas" rows={data?.by_os ?? []} />
