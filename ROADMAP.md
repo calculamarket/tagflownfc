@@ -154,14 +154,19 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 - Gate por role `admin` via `has_role()` (redirect na UI + checagem no servidor).
 - **Ainda não implementado:** bloqueio/ban de usuários (exige `auth.admin` API) e auditoria.
 
+#### Links Inteligentes — Concluído
+- Rota `/links` lista todas as tags como links curtos `/t/{id}` com copiar, abrir e editar.
+
+#### Configurações — Concluído (núcleo)
+- Rota `/settings` funcional: aparência (tema claro/escuro), segurança (trocar senha via
+  `supabase.auth.updateUser`) e sessão (sair de todos os dispositivos).
+- **Ainda não implementado:** preferências de notificação e exclusão de conta.
+
 #### Equipe
-- Rota `/team` criada, mas **ainda não implementada**.
+- Rota `/team` criada, mas **ainda não implementada** (depende de convites por e-mail).
 
 #### Integrações
 - Rota `/integrations` criada, mas **ainda não implementada**.
-
-#### Configurações
-- Rota `/settings` criada, mas **ainda não implementada**.
 
 ---
 
@@ -216,7 +221,7 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 - [ ] Exportação de CSV/Excel de analytics.
 
 ### 3.7. Configurações
-- [~] Perfil do usuário: edição de nome já existe em `/account`. Falta avatar, troca de e-mail/senha.
+- [~] Perfil do usuário: edição de nome em `/account`; troca de senha em `/settings`. Falta avatar e troca de e-mail.
 - [ ] Preferências de notificação.
 - [ ] Configurações de webhook padrão.
 - [ ] Fechamento/exclusão de conta.
