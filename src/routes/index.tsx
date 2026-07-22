@@ -6,8 +6,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "TagFlow — Etiquetas NFC, QR Codes e Links Inteligentes" },
       { name: "description", content: "Uma plataforma. Todas as suas etiquetas. Gerencie NFC, QR Codes e links inteligentes com analytics em tempo real." },
-      { property: "og:title", content: "TagFlow" },
-      { property: "og:description", content: "Uma plataforma. Todas as suas etiquetas." },
+      { property: "og:title", content: "TagFlow — Etiquetas NFC, QR Codes e Links Inteligentes" },
+      { property: "og:description", content: "Uma plataforma. Todas as suas etiquetas. Gerencie NFC, QR Codes e links inteligentes com analytics em tempo real." },
     ],
   }),
   component: Landing,
