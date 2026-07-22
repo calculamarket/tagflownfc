@@ -144,11 +144,15 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 - Helper server-only: `src/lib/webhook-delivery.server.ts` (usa service role via `supabaseAdmin`).
 - **Ainda não implementado:** retry automático das entregas com falha; filtros por tag/tipo.
 
-#### Painel Admin (`/admin`) — Parcial
-- Rota em `src/routes/_authenticated/admin.tsx` com dashboard básico: contagem de usuários,
-  leituras totais e lista de usuários. Gate por role `admin` via `has_role()`.
-- **Ainda não implementado:** busca/filtros de usuários, bloqueio/edição, gestão de planos e
-  receita real (hoje exibe R$ 0).
+#### Painel Admin (`/admin`) — Concluído (núcleo)
+- Server functions em `src/lib/admin.functions.ts` (middleware `requireAdmin`):
+  `adminStats`, `adminListUsers` (com busca), `adminListPlans`, `adminSetUserPlan`.
+- Rota em `src/routes/_authenticated/admin.tsx`:
+  - Cards globais: usuários, tags, leituras (total/hoje/mês), assinaturas ativas e
+    **receita mensal real** (soma dos planos ativos) + distribuição de planos.
+  - Busca de usuários por nome/e-mail e **troca de plano** por usuário (inline).
+- Gate por role `admin` via `has_role()` (redirect na UI + checagem no servidor).
+- **Ainda não implementado:** bloqueio/ban de usuários (exige `auth.admin` API) e auditoria.
 
 #### Equipe
 - Rota `/team` criada, mas **ainda não implementada**.
@@ -198,10 +202,10 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 - [ ] Faturamento por equipe.
 
 ### 3.5. Admin
-- [ ] Lista de usuários com busca/filtros.
-- [ ] Edição/bloqueamento de usuários.
-- [ ] Gerenciamento de planos e preços.
-- [ ] Dashboard global: leituras totais, receita, novos usuários.
+- [x] Lista de usuários com busca/filtros.
+- [~] Edição de usuários: troca de plano implementada; bloqueio/ban ainda não.
+- [~] Gerenciamento de planos: atribuição de plano por usuário feita; edição de preços/limites dos planos ainda não.
+- [x] Dashboard global: usuários, tags, leituras (total/hoje/mês), assinaturas e receita real.
 - [ ] Auditoria de atividades.
 
 ### 3.6. Integrações
