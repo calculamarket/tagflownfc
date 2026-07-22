@@ -83,6 +83,58 @@ export const upsertTag = createServerFn({ method: "POST" })
     return { ok: true, created: isCreate };
   });
 
+/** Public id allowed in URLs: letters, digits, hyphen and underscore. */
+const tagIdSchema = z
+  .string()
+  .trim()
+  .min(4)
+  .max(32)
+  .regex(/^[A-Za-z0-9_-]+$/, "Use apenas letras, números, hífen e underline.");
+
+/**
+ * Rename a tag's public id. Child rows (reads, landing_pages, tag_rules) follow
+ * via ON UPDATE CASCADE, so analytics history and rules are preserved.
+ */
+export const renameTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ oldId: tagIdSchema, newId: tagIdSchema }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.oldId === data.newId) return { ok: true, id: data.newId };
+
+    const { data: tag } = await supabase
+      .from("tags")
+      .select("id, name, status, destination_type")
+      .eq("id", data.oldId)
+      .maybeSingle();
+    if (!tag) throw new Error("Tag não encontrada.");
+
+    const { error } = await supabase
+      .from("tags")
+      .update({ id: data.newId })
+      .eq("id", data.oldId);
+
+    if (error) {
+      // 23505 = unique/PK violation: the id belongs to some tag (possibly
+      // another user's). Keep the message generic so it never leaks existence.
+      if (error.code === "23505") throw new Error("Esse ID já está em uso. Escolha outro.");
+      throw new Error(error.message);
+    }
+
+    const { deliverWebhooks } = await import("./webhook-delivery.server");
+    await deliverWebhooks(userId, "tag.updated", {
+      id: data.newId,
+      previous_id: data.oldId,
+      name: tag.name,
+      status: tag.status,
+      destination_type: tag.destination_type,
+    });
+
+    return { ok: true, id: data.newId };
+  });
+
 export const deleteTag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)

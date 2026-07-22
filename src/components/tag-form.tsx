@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { upsertTag } from "@/lib/tags.functions";
+import { upsertTag, renameTag } from "@/lib/tags.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { DESTINATION_LABELS, type DestinationType } from "@/lib/destination";
 import { toast } from "sonner";
-import { QrCode } from "lucide-react";
+import { QrCode, Copy, Check } from "lucide-react";
 import { TagQrPreview } from "./tag-qr-preview";
 
 export type TagFormValues = {
@@ -29,10 +29,42 @@ export type TagFormValues = {
 };
 
 export function TagForm({
-  initial, editing, onSaved,
-}: { initial: TagFormValues; editing?: boolean; onSaved: () => void }) {
+  initial, editing, onSaved, onRenamed,
+}: {
+  initial: TagFormValues;
+  editing?: boolean;
+  onSaved: () => void;
+  onRenamed?: (newId: string) => void;
+}) {
   const [v, setV] = useState<TagFormValues>(initial);
+  const [renaming, setRenaming] = useState(false);
+  const [newId, setNewId] = useState(initial.id);
+  const [copied, setCopied] = useState(false);
   const qc = useQueryClient();
+
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const tagUrl = `${origin}/t/${v.id}`;
+
+  const copyUrl = async () => {
+    await navigator.clipboard.writeText(tagUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+    toast.success("Endereço copiado");
+  };
+
+  const rename = useMutation({
+    mutationFn: () => renameTag({ data: { oldId: v.id, newId: newId.trim() } }),
+    onSuccess: (res) => {
+      const id = res.id;
+      toast.success("ID alterado.");
+      setV((prev) => ({ ...prev, id }));
+      setRenaming(false);
+      qc.invalidateQueries({ queryKey: ["tags"] });
+      qc.invalidateQueries({ queryKey: ["tag", v.id] });
+      onRenamed?.(id);
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
 
   const save = useMutation({
     mutationFn: () =>
@@ -70,16 +102,19 @@ export function TagForm({
     <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-5">
         <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className={`grid gap-4 ${editing ? "" : "sm:grid-cols-2"}`}>
             <div className="space-y-1.5">
               <Label htmlFor="name">Nome</Label>
               <Input id="name" required value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="id">ID único</Label>
-              <Input id="id" required value={v.id} readOnly={editing}
-                onChange={(e) => setV({ ...v, id: e.target.value })} className="font-mono" />
-            </div>
+            {!editing && (
+              <div className="space-y-1.5">
+                <Label htmlFor="id">ID único</Label>
+                <Input id="id" required value={v.id} pattern="[A-Za-z0-9_-]{4,32}"
+                  onChange={(e) => setV({ ...v, id: e.target.value })} className="font-mono" />
+                <p className="text-xs text-muted-foreground">Letras, números, hífen e underline (4–32).</p>
+              </div>
+            )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -157,9 +192,66 @@ export function TagForm({
           <QrCode className="size-4" /> QR Code
         </div>
         <TagQrPreview id={v.id} style={v.qr_style} downloadable />
-        <div className="text-xs text-muted-foreground break-all">
-          {typeof window !== "undefined" ? `${window.location.origin}/t/${v.id}` : `/t/${v.id}`}
+
+        <div className="pt-3 border-t border-border space-y-2">
+          <Label className="text-xs">Endereço da etiqueta</Label>
+          <p className="text-xs text-muted-foreground">
+            Cole este link no app de gravação da etiqueta NFC.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              readOnly
+              value={tagUrl}
+              onFocus={(e) => e.currentTarget.select()}
+              className="h-8 font-mono text-xs"
+            />
+            <Button type="button" variant="outline" size="sm" onClick={copyUrl} title="Copiar endereço">
+              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+            </Button>
+          </div>
         </div>
+
+        {editing && (
+          <div className="pt-3 border-t border-border space-y-2">
+            <Label className="text-xs">ID da etiqueta</Label>
+            {!renaming ? (
+              <div className="flex items-center gap-2">
+                <code className="flex-1 truncate rounded-md bg-muted px-2 py-1.5 text-xs">{v.id}</code>
+                <Button
+                  type="button" variant="outline" size="sm"
+                  onClick={() => { setNewId(v.id); setRenaming(true); }}
+                >
+                  Alterar
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Input
+                  className="h-8 font-mono text-xs"
+                  value={newId}
+                  onChange={(e) => setNewId(e.target.value)}
+                  placeholder="novo-id"
+                />
+                <p className="text-xs text-destructive">
+                  Atenção: etiquetas NFC e QR Codes já gravados com o ID atual deixarão de
+                  funcionar. As leituras e regras já existentes são preservadas.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button" size="sm"
+                    disabled={rename.isPending || !newId.trim() || newId.trim() === v.id}
+                    onClick={() => rename.mutate()}
+                  >
+                    {rename.isPending ? "Salvando…" : "Salvar ID"}
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setRenaming(false)}>
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="pt-2 border-t border-border space-y-3">
           <div className="text-xs font-medium text-muted-foreground">Personalização</div>

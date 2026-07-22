@@ -49,6 +49,7 @@ function EditTag() {
           }}
           editing
           onSaved={() => navigate({ to: "/tags" })}
+          onRenamed={(id) => navigate({ to: "/tags/$id", params: { id }, replace: true })}
         />
         <div className="mt-6">
           <TagRulesEditor tagId={tag.id} />
