@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { deleteWebhook, listDeliveries, listWebhooks, testWebhook, upsertWebhook } from "@/lib/webhooks.functions";
+import { deleteWebhook, listDeliveries, listWebhooks, retryDelivery, testWebhook, upsertWebhook } from "@/lib/webhooks.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Send, Copy, KeyRound } from "lucide-react";
+import { Trash2, Send, Copy, KeyRound, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/automations")({
@@ -62,6 +62,14 @@ function AutomationsPage() {
     mutationFn: (id: string) => testWebhook({ data: { id } }),
     onSuccess: (res) =>
       res.ok ? toast.success(`Enviado (HTTP ${res.status})`) : toast.error(`Falhou: ${res.error ?? res.status}`),
+  });
+  const retry = useMutation({
+    mutationFn: (id: string) => retryDelivery({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Reenvio disparado");
+      qc.invalidateQueries({ queryKey: ["webhook-deliveries"] });
+    },
+    onError: (e) => toast.error((e as Error).message),
   });
 
   return (
@@ -187,6 +195,18 @@ function AutomationsPage() {
                 <span className="text-xs text-muted-foreground shrink-0">
                   {new Date(d.created_at).toLocaleString()}
                 </span>
+                {!d.ok && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0"
+                    title="Reenviar"
+                    disabled={retry.isPending}
+                    onClick={() => retry.mutate(d.id)}
+                  >
+                    <RefreshCw className="size-4" />
+                  </Button>
+                )}
               </div>
             ))}
           </div>

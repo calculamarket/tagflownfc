@@ -185,7 +185,10 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
   - `tag.read` ao escanear/ler uma tag.
 - [x] Log de entrega de webhooks (tabela `webhook_deliveries`) — visível em `/automations`.
 - [x] Assinaturas de webhook com segredo (HMAC-SHA256, header `X-TagFlow-Signature`).
-- [ ] Retry automático das entregas com falha (a tabela de log já existe).
+- [x] Retry automático das entregas com falha:
+  - Retry in-request com backoff para falhas transientes (429/5xx/rede) no `dispatchOne`.
+  - Reenvio manual de qualquer entrega falha via UI (`retryDelivery` → `redeliverDelivery`).
+  - Falta: retry durável agendado (endpoint fora do ar por horas) — exige Edge Function + `pg_cron`.
 - [ ] Filtros por tag ou tipo de destino.
 
 ### 3.4. Equipe e Permissões

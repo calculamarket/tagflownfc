@@ -53,6 +53,15 @@ export const listDeliveries = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const retryDelivery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { redeliverDelivery } = await import("./webhook-delivery.server");
+    await redeliverDelivery(context.userId, data.id);
+    return { ok: true };
+  });
+
 export const testWebhook = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
