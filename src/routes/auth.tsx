@@ -12,7 +12,7 @@ const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() })
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "Entrar · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Entrar · 3D QR" }] }),
   component: AuthPage,
 });
 
@@ -71,7 +71,7 @@ function AuthPage() {
       <div className="hidden lg:flex flex-col justify-between p-10 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <Link to="/" className="flex items-center gap-2 font-semibold">
           <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-xs font-bold">T</div>
-          TagFlow
+          3D QR
         </Link>
         <div>
           <h2 className="text-3xl font-semibold tracking-tight">
@@ -81,7 +81,7 @@ function AuthPage() {
             Gestão profissional de NFC, QR Codes e links inteligentes com analytics em tempo real.
           </p>
         </div>
-        <div className="text-xs text-sidebar-foreground/50">© {new Date().getFullYear()} TagFlow</div>
+        <div className="text-xs text-sidebar-foreground/50">© {new Date().getFullYear()} 3D QR</div>
       </div>
 
       <div className="flex items-center justify-center p-6">

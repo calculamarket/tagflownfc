@@ -8,7 +8,7 @@ import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads
 
 export const Route = createFileRoute("/t/$id/view")({
   ssr: false,
-  head: () => ({ meta: [{ title: "TagFlow" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "3D QR" }, { name: "robots", content: "noindex" }] }),
   component: PublicViewPage,
 });
 
@@ -160,7 +160,7 @@ function LandingView({
           )}
         </div>
       </div>
-      <p className="text-center text-xs text-muted-foreground mt-6">Powered by TagFlow</p>
+      <p className="text-center text-xs text-muted-foreground mt-6">Powered by 3D QR</p>
     </div>
   );
 }

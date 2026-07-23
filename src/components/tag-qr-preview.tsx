@@ -93,7 +93,7 @@ export function TagQrPreview({
     if (!canvas) return;
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");
-    a.download = `tagflow-${id}.png`;
+    a.download = `3dqr-${id}.png`;
     a.click();
   };
 

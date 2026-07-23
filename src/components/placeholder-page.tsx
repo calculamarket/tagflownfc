@@ -7,7 +7,7 @@ export function PlaceholderPage({ title, description }: { title: string; descrip
       <p className="text-sm text-muted-foreground mt-1">{description}</p>
       <div className="mt-8 rounded-lg border border-dashed border-border bg-card p-12 text-center">
         <Sparkles className="size-6 mx-auto text-muted-foreground" />
-        <p className="mt-3 text-sm text-muted-foreground">Em breve nesta fase do TagFlow.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Em breve nesta fase do 3D QR.</p>
       </div>
     </div>
   );

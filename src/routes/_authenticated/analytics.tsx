@@ -8,7 +8,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { GeoHeat } from "@/components/geo-heat";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "Analytics · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Analytics · 3D QR" }] }),
   component: AnalyticsPage,
 });
 

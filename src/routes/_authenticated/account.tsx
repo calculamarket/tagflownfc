@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/account")({
-  head: () => ({ meta: [{ title: "Minha Conta · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Minha Conta · 3D QR" }] }),
   component: Account,
 });
 

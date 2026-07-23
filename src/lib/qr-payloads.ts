@@ -56,7 +56,7 @@ export function buildPixPayload({ key, name, city, amount, txid }: PixInput): st
     tlv("53", "986") +
     (hasAmount ? tlv("54", amountNum.toFixed(2)) : "") +
     tlv("58", "BR") +
-    tlv("59", pixText(name || "TAGFLOW", 25) || "TAGFLOW") +
+    tlv("59", pixText(name || "3D QR", 25) || "3D QR") +
     tlv("60", pixText(city || "BRASIL", 15) || "BRASIL") +
     tlv("62", additional) +
     "6304";

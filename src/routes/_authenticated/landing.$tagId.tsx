@@ -16,7 +16,7 @@ import { Plus, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/landing/$tagId")({
-  head: () => ({ meta: [{ title: "Landing Page · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Landing Page · 3D QR" }] }),
   component: LandingEditor,
 });
 

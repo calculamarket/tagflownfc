@@ -9,7 +9,7 @@ import { toast } from "sonner";
 const tagsQO = queryOptions({ queryKey: ["tags"], queryFn: () => listTags() });
 
 export const Route = createFileRoute("/_authenticated/links")({
-  head: () => ({ meta: [{ title: "Links Inteligentes · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Links Inteligentes · 3D QR" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(tagsQO),
   component: LinksPage,
 });

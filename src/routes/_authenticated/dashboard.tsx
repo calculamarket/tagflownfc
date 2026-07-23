@@ -11,7 +11,7 @@ const statsQO = queryOptions({
 });
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Dashboard · 3D QR" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(statsQO),
   component: Dashboard,
 });

@@ -79,7 +79,7 @@ export const testWebhook = createServerFn({ method: "POST" })
           event: wh.event,
           test: true,
           delivered_at: new Date().toISOString(),
-          data: { message: "Teste de webhook TagFlow" },
+          data: { message: "Teste de webhook 3D QR" },
         }),
       });
       return { ok: res.ok, status: res.status, error: res.ok ? "" : res.statusText };

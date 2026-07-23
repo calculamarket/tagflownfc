@@ -9,7 +9,7 @@ import { Moon, Sun, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Configurações · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Configurações · 3D QR" }] }),
   component: SettingsPage,
 });
 

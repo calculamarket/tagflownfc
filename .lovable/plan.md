@@ -1,4 +1,4 @@
-# TagFlow — Plano de Construção
+# 3D QR — Plano de Construção
 
 O escopo é grande demais para uma única entrega. Proponho construir em fases incrementais, cada uma entregando valor funcional. Confirme a fase 1 (ou ajuste) para eu começar.
 
@@ -43,7 +43,7 @@ O escopo é grande demais para uma única entrega. Proponho construir em fases i
 
 ## O que NÃO farei sem confirmação
 - Cobrança real (Stripe/Paddle) — a menos que peça, faço apenas modelo de planos.
-- Domínio `app.tagflow.com` — usarei o domínio Lovable até você publicar/apontar.
+- Domínio `app.3D QR.com` — usarei o domínio Lovable até você publicar/apontar.
 - Service worker offline.
 
 ## Pergunta

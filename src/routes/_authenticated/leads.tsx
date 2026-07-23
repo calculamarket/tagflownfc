@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/leads")({
-  head: () => ({ meta: [{ title: "Leads · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Leads · 3D QR" }] }),
   component: LeadsPage,
 });
 
@@ -41,7 +41,7 @@ function LeadsPage() {
     const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "leads-tagflow.csv";
+    a.download = "leads-3D QR.csv";
     a.click();
     URL.revokeObjectURL(url);
   };

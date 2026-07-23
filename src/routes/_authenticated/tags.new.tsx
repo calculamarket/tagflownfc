@@ -4,7 +4,7 @@ import { newTagId } from "@/lib/tag-id";
 import { useMemo } from "react";
 
 export const Route = createFileRoute("/_authenticated/tags/new")({
-  head: () => ({ meta: [{ title: "Nova tag · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Nova tag · 3D QR" }] }),
   component: NewTag,
 });
 

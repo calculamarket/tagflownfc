@@ -1,13 +1,13 @@
-# TagFlow — Roadmap & Status de Implementação
+# 3D QR — Roadmap & Status de Implementação
 
-> Documento vivo que registra o que já foi construído, o que está em andamento e o que ainda precisa ser feito na plataforma TagFlow.
+> Documento vivo que registra o que já foi construído, o que está em andamento e o que ainda precisa ser feito na plataforma 3D QR.
 > Última atualização: 22 de julho de 2026.
 
 ---
 
 ## 1. Visão Geral
 
-**TagFlow** é uma plataforma SaaS para gerenciamento de etiquetas NFC, QR Codes e Links Inteligentes. Cada tag recebe um ID curto único (`/t/{id}`) e pode apontar para diferentes destinos: URL, WhatsApp, PIX, Wi-Fi, landing page, redes sociais, telefone, e-mail, marketplaces e PDFs.
+**3D QR** é uma plataforma SaaS para gerenciamento de etiquetas NFC, QR Codes e Links Inteligentes. Cada tag recebe um ID curto único (`/t/{id}`) e pode apontar para diferentes destinos: URL, WhatsApp, PIX, Wi-Fi, landing page, redes sociais, telefone, e-mail, marketplaces e PDFs.
 
 A arquitetura segue o padrão moderno full-stack com SSR/SSG, edge functions, autenticação, banco relacional com RLS e design system minimalista no estilo Linear/Stripe/Vercel.
 
@@ -175,7 +175,7 @@ Sidebar (`src/components/app-shell.tsx`) com navegação para:
 ### 3.1. Funcionalidades Core
 - [ ] **PWA completo:** adicionar service worker para cache/offline (opcional, conforme plano).
 - [ ] **Upload de arquivos:** suporte a PDF e imagens de logo/capa no Storage da Lovable Cloud.
-- [ ] **Domínio customizado:** `app.tagflow.com` ou domínio próprio do usuário.
+- [ ] **Domínio customizado:** `app.3D QR.com` ou domínio próprio do usuário.
 - [ ] **Pagamentos:** integração real com Stripe/Paddle para assinaturas Pro/Business.
 - [x] **Limites de plano (cadastro):** `max_tags` é validado em `upsertTag` ao criar tags; UI mostra uso (`getMyPlan` em `src/lib/plans.functions.ts`). Falta upgrade/downgrade de plano.
 

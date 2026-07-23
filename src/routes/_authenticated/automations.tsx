@@ -13,7 +13,7 @@ import { Trash2, Send, Copy, KeyRound, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/automations")({
-  head: () => ({ meta: [{ title: "Automações · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Automações · 3D QR" }] }),
   component: AutomationsPage,
 });
 

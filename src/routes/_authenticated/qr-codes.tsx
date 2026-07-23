@@ -6,7 +6,7 @@ import { TagQrPreview } from "@/components/tag-qr-preview";
 const tagsQO = queryOptions({ queryKey: ["tags"], queryFn: () => listTags() });
 
 export const Route = createFileRoute("/_authenticated/qr-codes")({
-  head: () => ({ meta: [{ title: "QR Codes · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "QR Codes · 3D QR" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(tagsQO),
   component: QRPage,
 });

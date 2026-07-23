@@ -5,7 +5,7 @@ import { TagForm } from "@/components/tag-form";
 import { TagRulesEditor } from "@/components/tag-rules-editor";
 
 export const Route = createFileRoute("/_authenticated/tags/$id")({
-  head: () => ({ meta: [{ title: "Editar tag · TagFlow" }] }),
+  head: () => ({ meta: [{ title: "Editar tag · 3D QR" }] }),
   loader: ({ params, context }) =>
     context.queryClient.ensureQueryData(
       queryOptions({ queryKey: ["tag", params.id], queryFn: () => getTag({ data: { id: params.id } }) }),
