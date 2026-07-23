@@ -39,8 +39,11 @@ function RedirectPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const go = async (pw?: string) => {
+    // Which medium was used: the NFC tag is written with ?s=nfc, the printed QR
+    // keeps the plain URL (kept short on purpose for 3D printing).
+    const source = new URLSearchParams(window.location.search).get("s");
     const res = await resolveTag({
-      data: { id, referrer: document.referrer || null, password: pw ?? null },
+      data: { id, referrer: document.referrer || null, password: pw ?? null, source },
     });
     if (res.ok) {
       const target = buildDestinationUrl(res.destination_type, res.destination, id);

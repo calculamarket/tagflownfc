@@ -9,8 +9,22 @@ import { ruleMatches, platformFromOs, nowMinutesInTz } from "./rules-eval";
  * owner-only guard columns (scan limit, schedule, password) that anon cannot —
  * only sanitized data (the final destination) is ever returned to the client.
  */
+/** Only these media are recorded; anything else becomes null so a crafted URL
+ *  can't inject arbitrary values into the analytics breakdown. */
+function normalizeSource(value: string | null | undefined): string | null {
+  const v = (value ?? "").trim().toLowerCase();
+  return v === "nfc" || v === "qr" ? v : null;
+}
+
 export const resolveTag = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; referrer?: string | null; password?: string | null }) => d)
+  .inputValidator(
+    (d: {
+      id: string;
+      referrer?: string | null;
+      password?: string | null;
+      source?: string | null;
+    }) => d,
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -118,6 +132,7 @@ export const resolveTag = createServerFn({ method: "POST" })
       referrer: data.referrer ?? null,
       user_agent: ua,
       variant,
+      source: normalizeSource(data.source),
     });
 
     // Fire tag.read webhooks without blocking the redirect.

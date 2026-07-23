@@ -46,9 +46,12 @@ export function TagForm({
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const tagUrl = `${origin}/t/${v.id}`;
+  // The NFC tag gets ?s=nfc so Analytics can tell taps from QR scans. The QR
+  // itself keeps the plain URL, staying as small as possible for 3D printing.
+  const nfcUrl = `${tagUrl}?s=nfc`;
 
   const copyUrl = async () => {
-    await navigator.clipboard.writeText(tagUrl);
+    await navigator.clipboard.writeText(nfcUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
     toast.success("Endereço copiado");
@@ -197,14 +200,15 @@ export function TagForm({
         <Qr3dDownload url={tagUrl} filename={`3dqr-${v.id}`} />
 
         <div className="pt-3 border-t border-border space-y-2">
-          <Label className="text-xs">Endereço da etiqueta</Label>
+          <Label className="text-xs">Endereço para gravar na NFC</Label>
           <p className="text-xs text-muted-foreground">
-            Cole este link no app de gravação da etiqueta NFC.
+            Cole no app de gravação como registro <strong>URI</strong>. O{" "}
+            <code>?s=nfc</code> faz o Analytics separar toques de NFC de leituras do QR.
           </p>
           <div className="flex gap-2">
             <Input
               readOnly
-              value={tagUrl}
+              value={nfcUrl}
               onFocus={(e) => e.currentTarget.select()}
               className="h-8 font-mono text-xs"
             />

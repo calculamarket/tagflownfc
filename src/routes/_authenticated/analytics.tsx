@@ -116,6 +116,7 @@ function AnalyticsPage() {
       )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <BreakdownCard title="NFC vs QR Code" rows={data?.by_source ?? []} />
         <BreakdownCard title="Dispositivos" rows={data?.by_device ?? []} />
         <BreakdownCard title="Navegadores" rows={data?.by_browser ?? []} />
         <BreakdownCard title="Sistemas" rows={data?.by_os ?? []} />

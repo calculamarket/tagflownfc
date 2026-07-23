@@ -170,6 +170,7 @@ export type Database = {
           ip: string | null
           os: string | null
           referrer: string | null
+          source: string | null
           tag_id: string
           user_agent: string | null
           variant: string | null
@@ -184,6 +185,7 @@ export type Database = {
           ip?: string | null
           os?: string | null
           referrer?: string | null
+          source?: string | null
           tag_id: string
           user_agent?: string | null
           variant?: string | null
@@ -198,6 +200,7 @@ export type Database = {
           ip?: string | null
           os?: string | null
           referrer?: string | null
+          source?: string | null
           tag_id?: string
           user_agent?: string | null
           variant?: string | null

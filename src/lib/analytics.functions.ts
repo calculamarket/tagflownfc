@@ -27,6 +27,7 @@ export const analyticsOverview = createServerFn({ method: "POST" })
       by_os: [] as { key: string; count: number }[],
       by_referrer: [] as { key: string; count: number }[],
       by_variant: [] as { key: string; count: number }[],
+      by_source: [] as { key: string; count: number }[],
       recent: [] as Array<{
         id: number; tag_id: string; created_at: string;
         country: string | null; city: string | null;
@@ -41,7 +42,7 @@ export const analyticsOverview = createServerFn({ method: "POST" })
     const [{ data: reads }, { data: recent }] = await Promise.all([
       supabase
         .from("reads")
-        .select("created_at, country, city, device, browser, os, referrer, variant")
+        .select("created_at, country, city, device, browser, os, referrer, variant, source")
         .in("tag_id", scoped)
         .gte("created_at", start.toISOString()),
       supabase
@@ -98,6 +99,20 @@ export const analyticsOverview = createServerFn({ method: "POST" })
         return Array.from(m.entries())
           .map(([key, count]) => ({ key, count }))
           .sort((a, b) => a.key.localeCompare(b.key));
+      })(),
+      // Reads written by the NFC tag carry ?s=nfc. Everything else is a QR scan
+      // or a direct visit, which we can't tell apart — labelled honestly.
+      by_source: (() => {
+        const labels: Record<string, string> = { nfc: "NFC", qr: "QR Code" };
+        const m = new Map<string, number>();
+        for (const r of list) {
+          const raw = (r as { source?: string | null }).source;
+          const key = raw ? labels[raw] ?? raw : "QR / link direto";
+          m.set(key, (m.get(key) ?? 0) + 1);
+        }
+        return Array.from(m.entries())
+          .map(([key, count]) => ({ key, count }))
+          .sort((a, b) => b.count - a.count);
       })(),
       recent: recent ?? [],
     };
