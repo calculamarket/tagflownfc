@@ -7,7 +7,7 @@ import { QrCanvas } from "@/components/qr-canvas";
 import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads";
 import { normalizeDestinationUrl } from "@/lib/destination";
 
-export const Route = createFileRoute("/t/$id/view")({
+export const Route = createFileRoute("/t/$id_/view")({
   ssr: false,
   head: () => ({ meta: [{ title: "3D QR" }, { name: "robots", content: "noindex" }] }),
   component: PublicViewPage,
