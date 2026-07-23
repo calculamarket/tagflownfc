@@ -37,8 +37,13 @@ function ActivatePage() {
     setBusy(true);
     try {
       const res = await claimTag({ data: { code } });
-      toast.success("Etiqueta ativada! Agora escolha o destino.");
-      navigate({ to: "/tags/$id", params: { id: res.id } });
+      if (res.kind === "kit") {
+        toast.success(`${res.model} ativado! Configure cada face.`);
+        navigate({ to: "/pecas/$id", params: { id: res.id } });
+      } else {
+        toast.success("Etiqueta ativada! Agora escolha o destino.");
+        navigate({ to: "/tags/$id", params: { id: res.id } });
+      }
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

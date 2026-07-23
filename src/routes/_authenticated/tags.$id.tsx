@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getTag } from "@/lib/tags.functions";
 import { TagForm } from "@/components/tag-form";
@@ -31,6 +31,15 @@ function EditTag() {
   return (
     <div className="p-6 lg:p-10 max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold tracking-tight">Editar tag</h1>
+      {tag.kit_id && (
+        <Link
+          to="/pecas/$id"
+          params={{ id: tag.kit_id }}
+          className="text-sm text-muted-foreground hover:underline"
+        >
+          ← {tag.slot_label || (tag.slot != null ? `Face ${tag.slot}` : "Face")} desta peça
+        </Link>
+      )}
       <div className="mt-6">
         <TagForm
           initial={{

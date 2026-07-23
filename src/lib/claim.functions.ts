@@ -20,7 +20,40 @@ export const claimTag = createServerFn({ method: "POST" })
     if (code.length < 8) throw new Error("Código inválido.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const now = new Date().toISOString();
 
+    // A multi-QR piece (cube, triangle, totem) activates through its kit: one
+    // code releases every face at once.
+    const { data: kit } = await supabaseAdmin
+      .from("tag_kits")
+      .select("id, model, slots, user_id, claimed_at")
+      .eq("claim_code", code)
+      .maybeSingle();
+
+    if (kit) {
+      if (kit.claimed_at || kit.user_id) throw new Error("Código inválido ou já utilizado.");
+
+      const { data: claimedKit, error: kitError } = await supabaseAdmin
+        .from("tag_kits")
+        .update({ user_id: context.userId, claimed_at: now })
+        .eq("id", kit.id)
+        .is("user_id", null) // guards against two people claiming at once
+        .select("id")
+        .maybeSingle();
+      if (kitError) throw new Error(kitError.message);
+      if (!claimedKit) throw new Error("Código inválido ou já utilizado.");
+
+      const { error: tagsError } = await supabaseAdmin
+        .from("tags")
+        .update({ user_id: context.userId, claimed_at: now })
+        .eq("kit_id", kit.id)
+        .is("user_id", null);
+      if (tagsError) throw new Error(tagsError.message);
+
+      return { ok: true as const, kind: "kit" as const, id: kit.id, model: kit.model, slots: kit.slots };
+    }
+
+    // Single-QR piece: the code lives on the tag itself.
     const { data: tag, error } = await supabaseAdmin
       .from("tags")
       .select("id, name, user_id, claimed_at")
@@ -36,11 +69,11 @@ export const claimTag = createServerFn({ method: "POST" })
 
     const { error: updateError } = await supabaseAdmin
       .from("tags")
-      .update({ user_id: context.userId, claimed_at: new Date().toISOString() })
+      .update({ user_id: context.userId, claimed_at: now })
       .eq("id", tag.id)
-      .is("user_id", null); // guards against two people claiming at once
+      .is("user_id", null);
 
     if (updateError) throw new Error(updateError.message);
 
-    return { ok: true as const, id: tag.id, name: tag.name };
+    return { ok: true as const, kind: "tag" as const, id: tag.id, name: tag.name };
   });

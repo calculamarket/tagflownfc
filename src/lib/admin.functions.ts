@@ -156,21 +156,33 @@ export const adminListBatches = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: batches, error } = await supabaseAdmin
       .from("tag_batches")
-      .select("id, name, quantity, notes, created_at")
+      .select("id, name, quantity, notes, created_at, model, slots")
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
 
-    // How many pieces of each batch have already been activated.
-    const { data: claimed } = await supabaseAdmin
-      .from("tags")
-      .select("batch_id")
-      .not("batch_id", "is", null)
-      .not("claimed_at", "is", null);
+    // Count activated PIECES, not tags: a batch of 10 cubes holds 60 tags but
+    // is still 10 pieces. Kits cover multi-QR products; tags without a kit are
+    // the older single-QR stock.
+    const [{ data: claimedKits }, { data: claimedLoose }] = await Promise.all([
+      supabaseAdmin
+        .from("tag_kits")
+        .select("batch_id")
+        .not("batch_id", "is", null)
+        .not("claimed_at", "is", null),
+      supabaseAdmin
+        .from("tags")
+        .select("batch_id")
+        .is("kit_id", null)
+        .not("batch_id", "is", null)
+        .not("claimed_at", "is", null),
+    ]);
 
     const claimedByBatch = new Map<string, number>();
-    for (const t of claimed ?? []) {
-      if (t.batch_id) claimedByBatch.set(t.batch_id, (claimedByBatch.get(t.batch_id) ?? 0) + 1);
+    for (const row of [...(claimedKits ?? []), ...(claimedLoose ?? [])]) {
+      if (row.batch_id) {
+        claimedByBatch.set(row.batch_id, (claimedByBatch.get(row.batch_id) ?? 0) + 1);
+      }
     }
 
     return (batches ?? []).map((b) => ({ ...b, claimed: claimedByBatch.get(b.id) ?? 0 }));
@@ -184,6 +196,8 @@ export const adminCreateBatch = createServerFn({ method: "POST" })
       .object({
         name: z.string().trim().min(1).max(80),
         quantity: z.number().int().min(1).max(500),
+        model: z.string().trim().min(1).max(40).default("Peça"),
+        slots: z.number().int().min(1).max(24).default(1),
         notes: z.string().trim().max(500).optional().nullable(),
       })
       .parse(d),
@@ -198,6 +212,8 @@ export const adminCreateBatch = createServerFn({ method: "POST" })
       .insert({
         name: data.name,
         quantity: data.quantity,
+        model: data.model,
+        slots: data.slots,
         notes: data.notes ?? null,
         created_by: context.userId,
       })
@@ -205,21 +221,43 @@ export const adminCreateBatch = createServerFn({ method: "POST" })
       .single();
     if (batchError) throw new Error(batchError.message);
 
-    const rows = Array.from({ length: data.quantity }, (_, i) => ({
-      id: newTagId(),
-      name: `${data.name} #${i + 1}`,
-      user_id: null,
-      claim_code: normalizeClaimCode(generateClaimCode()),
+    // One kit per physical piece, each with a single activation code — the
+    // customer types one code no matter how many faces the piece carries.
+    const kitRows = Array.from({ length: data.quantity }, () => ({
       batch_id: batch.id,
-      status: "active" as const,
-      destination_type: "url" as const,
-      destination: {},
+      model: data.model,
+      slots: data.slots,
+      claim_code: normalizeClaimCode(generateClaimCode()),
     }));
 
-    const { error: insertError } = await supabaseAdmin.from("tags").insert(rows);
+    const { data: kits, error: kitError } = await supabaseAdmin
+      .from("tag_kits")
+      .insert(kitRows)
+      .select("id");
+    if (kitError) throw new Error(kitError.message);
+
+    const tagRows = (kits ?? []).flatMap((kit, kitIndex) =>
+      Array.from({ length: data.slots }, (_, slotIndex) => ({
+        id: newTagId(),
+        name:
+          data.slots > 1
+            ? `${data.name} #${kitIndex + 1} · Face ${slotIndex + 1}`
+            : `${data.name} #${kitIndex + 1}`,
+        user_id: null,
+        batch_id: batch.id,
+        kit_id: kit.id,
+        slot: slotIndex + 1,
+        slot_label: data.slots > 1 ? `Face ${slotIndex + 1}` : null,
+        status: "active" as const,
+        destination_type: "url" as const,
+        destination: {},
+      })),
+    );
+
+    const { error: insertError } = await supabaseAdmin.from("tags").insert(tagRows);
     if (insertError) throw new Error(insertError.message);
 
-    return { ok: true, batchId: batch.id, quantity: rows.length };
+    return { ok: true, batchId: batch.id, kits: kits?.length ?? 0, tags: tagRows.length };
   });
 
 /**
@@ -231,13 +269,43 @@ export const adminBatchTags = createServerFn({ method: "GET" })
   .inputValidator((d: { batchId: string }) => d)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
-      .from("tags")
-      .select("id, claim_code, claimed_at")
-      .eq("batch_id", data.batchId)
-      .order("created_at", { ascending: true });
+
+    const [{ data: rows, error }, { data: kits }] = await Promise.all([
+      supabaseAdmin
+        .from("tags")
+        .select("id, claim_code, claimed_at, kit_id, slot, slot_label")
+        .eq("batch_id", data.batchId)
+        .order("created_at", { ascending: true }),
+      supabaseAdmin
+        .from("tag_kits")
+        .select("id, model, claim_code, claimed_at")
+        .eq("batch_id", data.batchId)
+        .order("created_at", { ascending: true }),
+    ]);
     if (error) throw new Error(error.message);
-    return rows ?? [];
+
+    // Number the kits so production can tell one physical piece from another.
+    const kitInfo = new Map(
+      (kits ?? []).map((k, i) => [
+        k.id,
+        { number: i + 1, model: k.model, code: k.claim_code, claimedAt: k.claimed_at },
+      ]),
+    );
+
+    return (rows ?? []).map((r) => {
+      const kit = r.kit_id ? kitInfo.get(r.kit_id) : undefined;
+      return {
+        id: r.id,
+        slot: r.slot,
+        slot_label: r.slot_label,
+        kit_number: kit?.number ?? null,
+        model: kit?.model ?? null,
+        // Multi-face pieces activate through the kit code; single pieces keep
+        // their own tag-level code.
+        claim_code: kit?.code ?? r.claim_code,
+        claimed_at: kit?.claimedAt ?? r.claimed_at,
+      };
+    });
   });
 
 /** Assign (or change) a user's active subscription plan. */

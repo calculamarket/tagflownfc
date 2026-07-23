@@ -270,27 +270,74 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          model: string | null
           name: string
           notes: string | null
           quantity: number
+          slots: number | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: string
+          model?: string | null
           name: string
           notes?: string | null
           quantity?: number
+          slots?: number | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           id?: string
+          model?: string | null
           name?: string
           notes?: string | null
           quantity?: number
+          slots?: number | null
         }
         Relationships: []
+      }
+      tag_kits: {
+        Row: {
+          batch_id: string | null
+          claim_code: string | null
+          claimed_at: string | null
+          created_at: string
+          id: string
+          model: string
+          slots: number
+          user_id: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          claim_code?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          model: string
+          slots: number
+          user_id?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          claim_code?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          model?: string
+          slots?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tag_kits_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "tag_batches"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       tag_rules: {
         Row: {
@@ -347,10 +394,13 @@ export type Database = {
           destination_type: Database["public"]["Enums"]["destination_type"]
           expire_at: string | null
           id: string
+          kit_id: string | null
           max_scans: number | null
           name: string
           qr_style: Json
           read_count: number
+          slot: number | null
+          slot_label: string | null
           status: Database["public"]["Enums"]["tag_status"]
           updated_at: string
           user_id: string | null
@@ -368,10 +418,13 @@ export type Database = {
           destination_type?: Database["public"]["Enums"]["destination_type"]
           expire_at?: string | null
           id: string
+          kit_id?: string | null
           max_scans?: number | null
           name: string
           qr_style?: Json
           read_count?: number
+          slot?: number | null
+          slot_label?: string | null
           status?: Database["public"]["Enums"]["tag_status"]
           updated_at?: string
           user_id?: string | null
@@ -389,10 +442,13 @@ export type Database = {
           destination_type?: Database["public"]["Enums"]["destination_type"]
           expire_at?: string | null
           id?: string
+          kit_id?: string | null
           max_scans?: number | null
           name?: string
           qr_style?: Json
           read_count?: number
+          slot?: number | null
+          slot_label?: string | null
           status?: Database["public"]["Enums"]["tag_status"]
           updated_at?: string
           user_id?: string | null

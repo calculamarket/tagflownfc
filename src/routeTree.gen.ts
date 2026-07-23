@@ -28,6 +28,8 @@ import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/t
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as TIdRouteImport } from './routes/t.$id'
 import { Route as AuthenticatedLandingTagIdRouteImport } from './routes/_authenticated/landing.$tagId'
+import { Route as AuthenticatedPecasIndexRouteImport } from './routes/_authenticated/pecas.index'
+import { Route as AuthenticatedPecasIdRouteImport } from './routes/_authenticated/pecas.$id'
 import { Route as AuthenticatedTagsIndexRouteImport } from './routes/_authenticated/tags.index'
 import { Route as AuthenticatedTagsIdRouteImport } from './routes/_authenticated/tags.$id'
 import { Route as AuthenticatedTagsNewRouteImport } from './routes/_authenticated/tags.new'
@@ -130,6 +132,16 @@ const AuthenticatedLandingTagIdRoute =
     path: '/landing/$tagId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPecasIndexRoute = AuthenticatedPecasIndexRouteImport.update({
+  id: '/pecas/',
+  path: '/pecas/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPecasIdRoute = AuthenticatedPecasIdRouteImport.update({
+  id: '/pecas/$id',
+  path: '/pecas/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTagsIndexRoute = AuthenticatedTagsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -170,9 +182,11 @@ export interface FileRoutesByFullPath {
   '/team': typeof AuthenticatedTeamRoute
   '/t/$id': typeof TIdRoute
   '/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
+  '/pecas/$id': typeof AuthenticatedPecasIdRoute
   '/tags/$id': typeof AuthenticatedTagsIdRoute
   '/tags/new': typeof AuthenticatedTagsNewRoute
   '/t/$id/view': typeof TIdViewRoute
+  '/pecas/': typeof AuthenticatedPecasIndexRoute
   '/tags/': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -193,9 +207,11 @@ export interface FileRoutesByTo {
   '/team': typeof AuthenticatedTeamRoute
   '/t/$id': typeof TIdRoute
   '/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
+  '/pecas/$id': typeof AuthenticatedPecasIdRoute
   '/tags/$id': typeof AuthenticatedTagsIdRoute
   '/tags/new': typeof AuthenticatedTagsNewRoute
   '/t/$id/view': typeof TIdViewRoute
+  '/pecas': typeof AuthenticatedPecasIndexRoute
   '/tags': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRoutesById {
@@ -219,9 +235,11 @@ export interface FileRoutesById {
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/t/$id': typeof TIdRoute
   '/_authenticated/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
+  '/_authenticated/pecas/$id': typeof AuthenticatedPecasIdRoute
   '/_authenticated/tags/$id': typeof AuthenticatedTagsIdRoute
   '/_authenticated/tags/new': typeof AuthenticatedTagsNewRoute
   '/t/$id_/view': typeof TIdViewRoute
+  '/_authenticated/pecas/': typeof AuthenticatedPecasIndexRoute
   '/_authenticated/tags/': typeof AuthenticatedTagsIndexRoute
 }
 export interface FileRouteTypes {
@@ -245,9 +263,11 @@ export interface FileRouteTypes {
     | '/team'
     | '/t/$id'
     | '/landing/$tagId'
+    | '/pecas/$id'
     | '/tags/$id'
     | '/tags/new'
     | '/t/$id/view'
+    | '/pecas/'
     | '/tags/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -268,9 +288,11 @@ export interface FileRouteTypes {
     | '/team'
     | '/t/$id'
     | '/landing/$tagId'
+    | '/pecas/$id'
     | '/tags/$id'
     | '/tags/new'
     | '/t/$id/view'
+    | '/pecas'
     | '/tags'
   id:
     | '__root__'
@@ -293,9 +315,11 @@ export interface FileRouteTypes {
     | '/_authenticated/team'
     | '/t/$id'
     | '/_authenticated/landing/$tagId'
+    | '/_authenticated/pecas/$id'
     | '/_authenticated/tags/$id'
     | '/_authenticated/tags/new'
     | '/t/$id_/view'
+    | '/_authenticated/pecas/'
     | '/_authenticated/tags/'
   fileRoutesById: FileRoutesById
 }
@@ -444,6 +468,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLandingTagIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pecas/': {
+      id: '/_authenticated/pecas/'
+      path: '/pecas'
+      fullPath: '/pecas/'
+      preLoaderRoute: typeof AuthenticatedPecasIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pecas/$id': {
+      id: '/_authenticated/pecas/$id'
+      path: '/pecas/$id'
+      fullPath: '/pecas/$id'
+      preLoaderRoute: typeof AuthenticatedPecasIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tags/': {
       id: '/_authenticated/tags/'
       path: '/'
@@ -504,6 +542,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRouteWithChildren
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedLandingTagIdRoute: typeof AuthenticatedLandingTagIdRoute
+  AuthenticatedPecasIdRoute: typeof AuthenticatedPecasIdRoute
+  AuthenticatedPecasIndexRoute: typeof AuthenticatedPecasIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -520,6 +560,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTagsRoute: AuthenticatedTagsRouteWithChildren,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedLandingTagIdRoute: AuthenticatedLandingTagIdRoute,
+  AuthenticatedPecasIdRoute: AuthenticatedPecasIdRoute,
+  AuthenticatedPecasIndexRoute: AuthenticatedPecasIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

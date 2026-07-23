@@ -160,6 +160,16 @@ function BatchesSection() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("50");
+  const [model, setModel] = useState("Placa");
+  const [slots, setSlots] = useState("1");
+
+  // Presets match the printed products; "Totem" leaves the count free.
+  const MODELS = [
+    { label: "Placa (1 QR)", model: "Placa", slots: 1 },
+    { label: "Triângulo (3 QR)", model: "Triângulo", slots: 3 },
+    { label: "Cubo (6 QR)", model: "Cubo", slots: 6 },
+    { label: "Totem (personalizado)", model: "Totem", slots: 0 },
+  ];
 
   const { data: batches = [] } = useQuery({
     queryKey: ["admin-batches"],
@@ -168,9 +178,16 @@ function BatchesSection() {
 
   const create = useMutation({
     mutationFn: () =>
-      adminCreateBatch({ data: { name: name.trim(), quantity: Number(quantity) } }),
+      adminCreateBatch({
+        data: {
+          name: name.trim(),
+          quantity: Number(quantity),
+          model,
+          slots: Math.max(1, Number(slots) || 1),
+        },
+      }),
     onSuccess: (res) => {
-      toast.success(`Lote criado com ${res.quantity} peças.`);
+      toast.success(`Lote criado: ${res.kits} peças, ${res.tags} QR Codes.`);
       setName("");
       qc.invalidateQueries({ queryKey: ["admin-batches"] });
     },
@@ -197,7 +214,10 @@ function BatchesSection() {
           baseColor: "#ffffff",
           codeColor: "#111111",
         });
-        entries.push({ name: `${r.id}.3mf`, data: bytes });
+        // Group by piece so the print queue mirrors what gets assembled.
+        const folder = r.kit_number ? `peca-${String(r.kit_number).padStart(3, "0")}/` : "";
+        const face = r.slot != null ? `face-${r.slot}-` : "";
+        entries.push({ name: `${folder}${face}${r.id}.3mf`, data: bytes });
       }
       const zip = await createZip(entries);
       const url = URL.createObjectURL(zip);
@@ -218,10 +238,15 @@ function BatchesSection() {
     try {
       const rows = await adminBatchTags({ data: { batchId } });
       const origin = window.location.origin;
-      const header = "id,codigo_ativacao,url_do_qr,ativada_em";
+      // One row per QR. Pieces with several faces repeat the same activation
+      // code, since the customer receives a single code per piece.
+      const header = "peca,modelo,face,id,codigo_ativacao,url_do_qr,ativada_em";
       const body = rows
         .map((r) =>
           [
+            r.kit_number ?? "",
+            r.model ?? "",
+            r.slot_label ?? (r.slot != null ? `Face ${r.slot}` : ""),
             r.id,
             formatClaimCode(r.claim_code ?? ""),
             `${origin}/t/${r.id}`,
@@ -256,8 +281,30 @@ function BatchesSection() {
           <Label className="text-xs">Nome do lote</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Lote Janeiro" />
         </div>
-        <div className="space-y-1 w-32">
-          <Label className="text-xs">Quantidade</Label>
+        <div className="space-y-1 w-48">
+          <Label className="text-xs">Modelo</Label>
+          <Select
+            value={model}
+            onValueChange={(m) => {
+              setModel(m);
+              const preset = MODELS.find((x) => x.model === m);
+              if (preset && preset.slots > 0) setSlots(String(preset.slots));
+            }}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {MODELS.map((m) => (
+                <SelectItem key={m.model} value={m.model}>{m.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1 w-28">
+          <Label className="text-xs">QRs por peça</Label>
+          <Input inputMode="numeric" value={slots} onChange={(e) => setSlots(e.target.value)} />
+        </div>
+        <div className="space-y-1 w-28">
+          <Label className="text-xs">Peças</Label>
           <Input inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
         </div>
         <Button
@@ -277,8 +324,9 @@ function BatchesSection() {
             <div className="flex-1 min-w-0">
               <div className="font-medium truncate">{b.name}</div>
               <div className="text-xs text-muted-foreground">
-                {b.quantity} peças · {b.claimed} ativadas ·{" "}
-                {new Date(b.created_at).toLocaleDateString("pt-BR")}
+                {b.model ?? "Peça"}
+                {b.slots && b.slots > 1 ? ` · ${b.slots} QR cada` : ""} · {b.quantity} peças ·{" "}
+                {b.claimed} ativadas · {new Date(b.created_at).toLocaleDateString("pt-BR")}
               </div>
             </div>
             <Button
