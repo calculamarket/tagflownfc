@@ -89,10 +89,27 @@ function RedirectPage() {
     <div className="min-h-screen grid place-items-center bg-background text-foreground p-6">
       <div className="text-center max-w-sm w-full">
         {state === "loading" && (
-          <>
-            <div className="mx-auto size-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-            <p className="mt-4 text-sm text-muted-foreground">Redirecionando…</p>
-          </>
+          <div className="flex flex-col items-center gap-6">
+            {/* Brand mark with the ring sweeping around it: reads as "opening"
+                rather than "waiting", which matters because this screen should
+                be gone in a few hundred milliseconds. */}
+            <div className="relative grid size-20 place-items-center">
+              <div className="absolute inset-0 rounded-2xl border-2 border-primary/15" />
+              <div className="absolute inset-0 rounded-2xl border-2 border-transparent border-t-primary animate-spin [animation-duration:0.9s]" />
+              <div className="grid size-12 place-items-center rounded-xl bg-primary text-[13px] font-bold text-primary-foreground">
+                3D
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-base font-medium">Abrindo sua etiqueta</p>
+              <p className="text-sm text-muted-foreground">Um instante…</p>
+            </div>
+
+            <div className="h-1 w-40 overflow-hidden rounded-full bg-muted">
+              <div className="h-full w-1/3 rounded-full bg-primary/70 animate-[loadingSlide_1.1s_ease-in-out_infinite]" />
+            </div>
+          </div>
         )}
 
         {state === "password" && (

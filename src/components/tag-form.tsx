@@ -51,8 +51,12 @@ export function TagForm({
   // itself keeps the plain URL, staying as small as possible for 3D printing.
   const nfcUrl = `${tagUrl}?s=nfc`;
 
+  // A printed piece is already recorded, so its owner wants a link to share.
+  // Writing the NFC tag is a production step, and that is where ?s=nfc belongs.
+  const shownUrl = physical ? tagUrl : nfcUrl;
+
   const copyUrl = async () => {
-    await navigator.clipboard.writeText(nfcUrl);
+    await navigator.clipboard.writeText(shownUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
     toast.success("Endereço copiado");
@@ -200,15 +204,26 @@ export function TagForm({
         <TagQrPreview id={v.id} style={v.qr_style} downloadable />
 
         <div className="pt-3 border-t border-border space-y-2">
-          <Label className="text-xs">Endereço para gravar na NFC</Label>
+          <Label className="text-xs">
+            {physical ? "Link da sua etiqueta" : "Endereço para gravar na NFC"}
+          </Label>
           <p className="text-xs text-muted-foreground">
-            Cole no app de gravação como registro <strong>URI</strong>. O{" "}
-            <code>?s=nfc</code> faz o Analytics separar toques de NFC de leituras do QR.
+            {physical ? (
+              <>
+                É para onde sua peça aponta. Compartilhe onde quiser — o destino você
+                muda aqui a qualquer momento.
+              </>
+            ) : (
+              <>
+                Cole no app de gravação como registro <strong>URI</strong>. O{" "}
+                <code>?s=nfc</code> faz o Analytics separar toques de NFC de leituras do QR.
+              </>
+            )}
           </p>
           <div className="flex gap-2">
             <Input
               readOnly
-              value={nfcUrl}
+              value={shownUrl}
               onFocus={(e) => e.currentTarget.select()}
               className="h-8 font-mono text-xs"
             />

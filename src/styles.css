@@ -141,3 +141,18 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Indeterminate bar on the redirect screen. */
+@keyframes loadingSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(320%); }
+}
+
+/* The redirect screen is meant to be gone in milliseconds; motion there is
+   decorative, so honour a reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin,
+  [class*="loadingSlide"] {
+    animation: none !important;
+  }
+}
