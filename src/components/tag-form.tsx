@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { QrCode, Copy, Check } from "lucide-react";
 import { TagQrPreview } from "./tag-qr-preview";
 import { FileUpload } from "./file-upload";
+import { Qr3dDownload } from "./qr-3d-download";
 
 export type TagFormValues = {
   id: string;
@@ -193,6 +194,7 @@ export function TagForm({
           <QrCode className="size-4" /> QR Code
         </div>
         <TagQrPreview id={v.id} style={v.qr_style} downloadable />
+        <Qr3dDownload url={tagUrl} filename={`3dqr-${v.id}`} />
 
         <div className="pt-3 border-t border-border space-y-2">
           <Label className="text-xs">Endereço da etiqueta</Label>
