@@ -5,6 +5,7 @@ import type { LandingButton, LeadForm } from "@/lib/landing.functions";
 import { submitLead } from "@/lib/leads.functions";
 import { QrCanvas } from "@/components/qr-canvas";
 import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads";
+import { normalizeDestinationUrl } from "@/lib/destination";
 
 export const Route = createFileRoute("/t/$id/view")({
   ssr: false,
@@ -142,7 +143,7 @@ function LandingView({
           {description && <p className="text-sm text-muted-foreground whitespace-pre-line">{description}</p>}
           <div className="flex flex-col gap-2 pt-2">
             {buttons.map((b, i) => (
-              <a key={i} href={b.url} target="_blank" rel="noreferrer"
+              <a key={i} href={normalizeDestinationUrl(b.url) || "#"} target="_blank" rel="noreferrer"
                 className={
                   b.style === "primary"
                     ? "rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium hover:opacity-90"
@@ -296,7 +297,7 @@ function VCardView({ payload, name }: { payload: Record<string, string>; name: s
 function ReviewGateView({ payload, name }: { payload: Record<string, string>; name: string }) {
   const [choice, setChoice] = useState<"none" | "happy" | "sad">("none");
   const [message, setMessage] = useState("");
-  const positiveUrl = payload.positive_url ?? "";
+  const positiveUrl = normalizeDestinationUrl(payload.positive_url ?? "");
   const feedbackEmail = payload.feedback_email ?? "";
 
   const goPositive = () => {
