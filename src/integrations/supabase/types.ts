@@ -102,7 +102,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tags"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       plans: {
@@ -336,7 +336,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tag_batches"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       tag_rules: {
@@ -377,7 +377,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tags"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       tags: {
@@ -453,7 +453,22 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tags_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "tag_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tags_kit_id_fkey"
+            columns: ["kit_id"]
+            isOneToOne: false
+            referencedRelation: "tag_kits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -733,6 +748,9 @@ export const Constants = {
         "mercadolivre",
         "shopee",
         "amazon",
+        "vcard",
+        "review_gate",
+        "ab_test",
       ],
       tag_status: ["active", "paused", "archived"],
       webhook_event: ["tag.read", "tag.created", "tag.updated"],
