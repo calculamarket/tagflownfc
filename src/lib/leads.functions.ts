@@ -26,7 +26,8 @@ export const submitLead = createServerFn({ method: "POST" })
       .eq("id", data.tag_id)
       .maybeSingle();
 
-    if (!tag || tag.status !== "active") return { ok: false as const };
+    // An unclaimed stock tag has no owner, so a lead would have nowhere to go.
+    if (!tag || !tag.user_id || tag.status !== "active") return { ok: false as const };
 
     if (!data.name && !data.email && !data.phone && !data.message)
       return { ok: false as const };

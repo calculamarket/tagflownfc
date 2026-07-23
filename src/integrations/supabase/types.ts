@@ -262,6 +262,33 @@ export type Database = {
           },
         ]
       }
+      tag_batches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          quantity?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          quantity?: number
+        }
+        Relationships: []
+      }
       tag_rules: {
         Row: {
           condition_type: string
@@ -307,7 +334,10 @@ export type Database = {
         Row: {
           access_password: string | null
           activate_at: string | null
+          batch_id: string | null
           category: string | null
+          claim_code: string | null
+          claimed_at: string | null
           created_at: string
           description: string | null
           destination: Json
@@ -320,12 +350,15 @@ export type Database = {
           read_count: number
           status: Database["public"]["Enums"]["tag_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           access_password?: string | null
           activate_at?: string | null
+          batch_id?: string | null
           category?: string | null
+          claim_code?: string | null
+          claimed_at?: string | null
           created_at?: string
           description?: string | null
           destination?: Json
@@ -338,12 +371,15 @@ export type Database = {
           read_count?: number
           status?: Database["public"]["Enums"]["tag_status"]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           access_password?: string | null
           activate_at?: string | null
+          batch_id?: string | null
           category?: string | null
+          claim_code?: string | null
+          claimed_at?: string | null
           created_at?: string
           description?: string | null
           destination?: Json
@@ -356,7 +392,7 @@ export type Database = {
           read_count?: number
           status?: Database["public"]["Enums"]["tag_status"]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

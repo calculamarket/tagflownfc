@@ -15,6 +15,7 @@ type Reason =
   | "scheduled"
   | "expired"
   | "limit_reached"
+  | "unclaimed"
   | "password_required"
   | "password_incorrect";
 
@@ -31,7 +32,7 @@ const MESSAGES: Record<
 
 function RedirectPage() {
   const { id } = Route.useParams();
-  const [state, setState] = useState<"loading" | "error" | "password">("loading");
+  const [state, setState] = useState<"loading" | "error" | "password" | "unclaimed">("loading");
   const [reason, setReason] = useState<keyof typeof MESSAGES>("not_found");
   const [password, setPassword] = useState("");
   const [pwError, setPwError] = useState(false);
@@ -57,6 +58,8 @@ function RedirectPage() {
     } else if (r === "password_incorrect") {
       setPwError(true);
       setState("password");
+    } else if (r === "unclaimed") {
+      setState("unclaimed");
     } else {
       setReason(r);
       setState("error");
@@ -110,6 +113,23 @@ function RedirectPage() {
               {submitting ? "Verificando…" : "Acessar"}
             </button>
           </form>
+        )}
+
+        {state === "unclaimed" && (
+          <div className="space-y-4">
+            <div className="mx-auto size-12 rounded-xl bg-primary/10 grid place-items-center text-2xl">📦</div>
+            <h1 className="text-2xl font-semibold">Etiqueta ainda não ativada</h1>
+            <p className="text-sm text-muted-foreground">
+              Esta peça ainda não foi configurada. Se ela é sua, ative com o código que veio
+              na embalagem e escolha para onde ela deve apontar.
+            </p>
+            <a
+              href="/ativar"
+              className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+            >
+              Ativar minha etiqueta
+            </a>
+          </div>
         )}
 
         {state === "error" && (

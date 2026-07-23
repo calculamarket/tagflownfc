@@ -2,11 +2,17 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { adminStats, adminListUsers, adminListPlans, adminSetUserPlan } from "@/lib/admin.functions";
+import {
+  adminStats, adminListUsers, adminListPlans, adminSetUserPlan,
+  adminListBatches, adminCreateBatch, adminBatchTags,
+} from "@/lib/admin.functions";
+import { formatClaimCode } from "@/lib/claim-code";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -74,6 +80,8 @@ function AdminPage() {
         </div>
       </div>
 
+      <BatchesSection />
+
       <div className="rounded-lg border border-border bg-card">
         <div className="p-5 border-b border-border flex items-center justify-between gap-4">
           <div className="font-semibold">Usuários</div>
@@ -140,6 +148,105 @@ function AdminPage() {
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Production batches: generate unclaimed pieces and export them for printing. */
+function BatchesSection() {
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [quantity, setQuantity] = useState("50");
+
+  const { data: batches = [] } = useQuery({
+    queryKey: ["admin-batches"],
+    queryFn: () => adminListBatches(),
+  });
+
+  const create = useMutation({
+    mutationFn: () =>
+      adminCreateBatch({ data: { name: name.trim(), quantity: Number(quantity) } }),
+    onSuccess: (res) => {
+      toast.success(`Lote criado com ${res.quantity} peças.`);
+      setName("");
+      qc.invalidateQueries({ queryKey: ["admin-batches"] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const exportCsv = async (batchId: string, batchName: string) => {
+    try {
+      const rows = await adminBatchTags({ data: { batchId } });
+      const origin = window.location.origin;
+      const header = "id,codigo_ativacao,url_do_qr,ativada_em";
+      const body = rows
+        .map((r) =>
+          [
+            r.id,
+            formatClaimCode(r.claim_code ?? ""),
+            `${origin}/t/${r.id}`,
+            r.claimed_at ?? "",
+          ].join(","),
+        )
+        .join("\n");
+      const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lote-${batchName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV exportado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="p-5 border-b border-border">
+        <div className="font-semibold">Lotes de produção</div>
+        <p className="text-sm text-muted-foreground">
+          Gere peças sem dono com código de ativação e exporte o CSV para a impressão.
+        </p>
+      </div>
+
+      <div className="p-5 border-b border-border flex flex-wrap items-end gap-3">
+        <div className="space-y-1 flex-1 min-w-48">
+          <Label className="text-xs">Nome do lote</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Lote Janeiro" />
+        </div>
+        <div className="space-y-1 w-32">
+          <Label className="text-xs">Quantidade</Label>
+          <Input inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+        </div>
+        <Button
+          disabled={!name.trim() || !(Number(quantity) > 0) || create.isPending}
+          onClick={() => create.mutate()}
+        >
+          {create.isPending ? "Gerando…" : "Gerar lote"}
+        </Button>
+      </div>
+
+      <div className="divide-y divide-border">
+        {batches.length === 0 && (
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nenhum lote ainda.</p>
+        )}
+        {batches.map((b) => (
+          <div key={b.id} className="px-5 py-3 flex items-center gap-4 text-sm">
+            <div className="flex-1 min-w-0">
+              <div className="font-medium truncate">{b.name}</div>
+              <div className="text-xs text-muted-foreground">
+                {b.quantity} peças · {b.claimed} ativadas ·{" "}
+                {new Date(b.created_at).toLocaleDateString("pt-BR")}
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => exportCsv(b.id, b.name)}>
+              <Download className="size-4" /> CSV
+            </Button>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -29,7 +29,14 @@ export async function resolvePlanUsage(
       .from("plans")
       .select("id, name, max_tags, price_cents, features")
       .order("price_cents", { ascending: true }),
-    supabase.from("tags").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    // Only tags created from scratch in the panel count towards the plan limit.
+    // Physical pieces the customer bought and activated (claim_code IS NOT NULL)
+    // are excluded — they already paid for those.
+    supabase
+      .from("tags")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .is("claim_code", null),
   ]);
 
   const list = plans ?? [];

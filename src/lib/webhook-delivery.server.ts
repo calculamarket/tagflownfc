@@ -128,7 +128,8 @@ export async function deliverWebhooksForTag(
       .select("user_id")
       .eq("id", tagId)
       .maybeSingle();
-    if (!tag) return;
+    // Unclaimed stock tags have no owner, so there is nobody to notify.
+    if (!tag?.user_id) return;
     await deliverWebhooks(tag.user_id, event, data);
   } catch {
     // Swallow: webhook delivery must never break the redirect.

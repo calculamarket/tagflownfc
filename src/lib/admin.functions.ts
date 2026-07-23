@@ -112,7 +112,11 @@ export const adminListUsers = createServerFn({ method: "GET" })
       ]);
 
     const tagCount = new Map<string, number>();
-    for (const t of allTags ?? []) tagCount.set(t.user_id, (tagCount.get(t.user_id) ?? 0) + 1);
+    for (const t of allTags ?? []) {
+      // Unclaimed stock tags have no owner yet.
+      if (!t.user_id) continue;
+      tagCount.set(t.user_id, (tagCount.get(t.user_id) ?? 0) + 1);
+    }
 
     const planNameById = new Map((plans ?? []).map((p) => [p.id, p.name]));
     const planByUser = new Map(
@@ -143,6 +147,97 @@ export const adminListPlans = createServerFn({ method: "GET" })
       .order("price_cents");
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+/** Production batches of pre-generated (unclaimed) tags. */
+export const adminListBatches = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: batches, error } = await supabaseAdmin
+      .from("tag_batches")
+      .select("id, name, quantity, notes, created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+
+    // How many pieces of each batch have already been activated.
+    const { data: claimed } = await supabaseAdmin
+      .from("tags")
+      .select("batch_id")
+      .not("batch_id", "is", null)
+      .not("claimed_at", "is", null);
+
+    const claimedByBatch = new Map<string, number>();
+    for (const t of claimed ?? []) {
+      if (t.batch_id) claimedByBatch.set(t.batch_id, (claimedByBatch.get(t.batch_id) ?? 0) + 1);
+    }
+
+    return (batches ?? []).map((b) => ({ ...b, claimed: claimedByBatch.get(b.id) ?? 0 }));
+  });
+
+/** Generate a batch of unclaimed tags, each with a secret activation code. */
+export const adminCreateBatch = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        name: z.string().trim().min(1).max(80),
+        quantity: z.number().int().min(1).max(500),
+        notes: z.string().trim().max(500).optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { newTagId } = await import("./tag-id");
+    const { generateClaimCode, normalizeClaimCode } = await import("./claim-code");
+
+    const { data: batch, error: batchError } = await supabaseAdmin
+      .from("tag_batches")
+      .insert({
+        name: data.name,
+        quantity: data.quantity,
+        notes: data.notes ?? null,
+        created_by: context.userId,
+      })
+      .select("id")
+      .single();
+    if (batchError) throw new Error(batchError.message);
+
+    const rows = Array.from({ length: data.quantity }, (_, i) => ({
+      id: newTagId(),
+      name: `${data.name} #${i + 1}`,
+      user_id: null,
+      claim_code: normalizeClaimCode(generateClaimCode()),
+      batch_id: batch.id,
+      status: "active" as const,
+      destination_type: "url" as const,
+      destination: {},
+    }));
+
+    const { error: insertError } = await supabaseAdmin.from("tags").insert(rows);
+    if (insertError) throw new Error(insertError.message);
+
+    return { ok: true, batchId: batch.id, quantity: rows.length };
+  });
+
+/**
+ * Rows for the production export of a batch: public id, activation code and the
+ * URL that goes into the printed QR. Admin-only — claim_code is secret.
+ */
+export const adminBatchTags = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .inputValidator((d: { batchId: string }) => d)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("tags")
+      .select("id, claim_code, claimed_at")
+      .eq("batch_id", data.batchId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
   });
 
 /** Assign (or change) a user's active subscription plan. */
