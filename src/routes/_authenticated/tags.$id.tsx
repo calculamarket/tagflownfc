@@ -48,6 +48,7 @@ function EditTag() {
             access_password: tag.access_password ?? "",
           }}
           editing
+          physical={!!tag.claim_code}
           onSaved={() => navigate({ to: "/tags" })}
           onRenamed={(id) => navigate({ to: "/tags/$id", params: { id }, replace: true })}
         />

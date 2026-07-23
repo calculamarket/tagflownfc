@@ -22,7 +22,7 @@ export function Qr3dDownload({ url, filename }: { url: string; filename: string 
   const [codeColor, setCodeColor] = useState("#111111");
   const [busy, setBusy] = useState(false);
 
-  const download = () => {
+  const download = async () => {
     const size = parseFloat(sizeMm.replace(",", "."));
     const base = parseFloat(baseHeightMm.replace(",", "."));
     const mod = parseFloat(moduleHeightMm.replace(",", "."));
@@ -40,7 +40,7 @@ export function Qr3dDownload({ url, filename }: { url: string; filename: string 
       };
       const blob =
         format === "3mf"
-          ? buildQr3mf(url, { ...opts, baseColor, codeColor })
+          ? await buildQr3mf(url, { ...opts, baseColor, codeColor })
           : buildQrStl(url, opts);
 
       const href = URL.createObjectURL(blob);

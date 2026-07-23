@@ -106,10 +106,18 @@ export const renameTag = createServerFn({ method: "POST" })
 
     const { data: tag } = await supabase
       .from("tags")
-      .select("id, name, status, destination_type")
+      .select("id, name, status, destination_type, claim_code")
       .eq("id", data.oldId)
       .maybeSingle();
     if (!tag) throw new Error("Tag não encontrada.");
+
+    // A pre-printed piece carries its id on the physical QR and NFC tag, so
+    // renaming would silently brick it. Enforced here, not just in the UI.
+    if (tag.claim_code) {
+      throw new Error(
+        "Esta é uma peça impressa: o ID está gravado no QR e na etiqueta NFC e não pode ser alterado.",
+      );
+    }
 
     const { error } = await supabase
       .from("tags")

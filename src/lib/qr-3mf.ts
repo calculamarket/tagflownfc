@@ -66,7 +66,7 @@ function toDisplayColor(color: string, fallback: string): string {
   return `${c.toUpperCase()}FF`;
 }
 
-export function buildQr3mf(text: string, options: Qr3mfOptions = {}): Blob {
+export function buildQr3mf(text: string, options: Qr3mfOptions = {}): Promise<Blob> {
   const { base, modules } = buildQrGeometry(text, options);
   const baseColor = toDisplayColor(options.baseColor ?? "#FFFFFF", "#FFFFFF");
   const codeColor = toDisplayColor(options.codeColor ?? "#111111", "#111111");
@@ -101,11 +101,18 @@ export function buildQr3mf(text: string, options: Qr3mfOptions = {}): Blob {
     `</Relationships>`;
 
   const encoder = new TextEncoder();
-  const zip = createZip([
+  return createZip([
     { name: "[Content_Types].xml", data: encoder.encode(contentTypes) },
     { name: "_rels/.rels", data: encoder.encode(rels) },
     { name: "3D/3dmodel.model", data: encoder.encode(model) },
   ]);
+}
 
-  return new Blob([zip], { type: "model/3mf" });
+/** Raw 3MF bytes, for packing many pieces of a batch into one archive. */
+export async function buildQr3mfBytes(
+  text: string,
+  options: Qr3mfOptions = {},
+): Promise<Uint8Array> {
+  const blob = await buildQr3mf(text, options);
+  return new Uint8Array(await blob.arrayBuffer());
 }

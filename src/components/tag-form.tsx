@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { QrCode, Copy, Check } from "lucide-react";
 import { TagQrPreview } from "./tag-qr-preview";
 import { FileUpload } from "./file-upload";
-import { Qr3dDownload } from "./qr-3d-download";
 
 export type TagFormValues = {
   id: string;
@@ -31,10 +30,12 @@ export type TagFormValues = {
 };
 
 export function TagForm({
-  initial, editing, onSaved, onRenamed,
+  initial, editing, physical, onSaved, onRenamed,
 }: {
   initial: TagFormValues;
   editing?: boolean;
+  /** A pre-printed piece: its ID is already on a physical QR/NFC. */
+  physical?: boolean;
   onSaved: () => void;
   onRenamed?: (newId: string) => void;
 }) {
@@ -197,7 +198,6 @@ export function TagForm({
           <QrCode className="size-4" /> QR Code
         </div>
         <TagQrPreview id={v.id} style={v.qr_style} downloadable />
-        <Qr3dDownload url={tagUrl} filename={`3dqr-${v.id}`} />
 
         <div className="pt-3 border-t border-border space-y-2">
           <Label className="text-xs">Endereço para gravar na NFC</Label>
@@ -221,7 +221,15 @@ export function TagForm({
         {editing && (
           <div className="pt-3 border-t border-border space-y-2">
             <Label className="text-xs">ID da etiqueta</Label>
-            {!renaming ? (
+            {physical ? (
+              <div className="space-y-1.5">
+                <code className="block truncate rounded-md bg-muted px-2 py-1.5 text-xs">{v.id}</code>
+                <p className="text-xs text-muted-foreground">
+                  Esta é uma peça impressa: o ID já está gravado no QR e na etiqueta NFC,
+                  por isso não pode ser alterado.
+                </p>
+              </div>
+            ) : !renaming ? (
               <div className="flex items-center gap-2">
                 <code className="flex-1 truncate rounded-md bg-muted px-2 py-1.5 text-xs">{v.id}</code>
                 <Button

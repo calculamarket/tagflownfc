@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download } from "lucide-react";
+import { Search, Download, Box } from "lucide-react";
+import { buildQr3mfBytes } from "@/lib/qr-3mf";
+import { createZip } from "@/lib/zip";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -175,6 +177,43 @@ function BatchesSection() {
     onError: (e) => toast.error((e as Error).message),
   });
 
+  const [modelsBusy, setModelsBusy] = useState<string | null>(null);
+
+  const slug = (s: string) => s.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+
+  /** One .3mf per piece of the batch, zipped. Each QR encodes its own URL, so
+   *  production needs a distinct model per piece. */
+  const exportModels = async (batchId: string, batchName: string) => {
+    setModelsBusy(batchId);
+    try {
+      const rows = await adminBatchTags({ data: { batchId } });
+      const origin = window.location.origin;
+      const entries = [];
+      for (const r of rows) {
+        const bytes = await buildQr3mfBytes(`${origin}/t/${r.id}`, {
+          sizeMm: 60,
+          baseHeightMm: 2,
+          moduleHeightMm: 1.6,
+          baseColor: "#ffffff",
+          codeColor: "#111111",
+        });
+        entries.push({ name: `${r.id}.3mf`, data: bytes });
+      }
+      const zip = await createZip(entries);
+      const url = URL.createObjectURL(zip);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `modelos-${slug(batchName)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${entries.length} modelos gerados.`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setModelsBusy(null);
+    }
+  };
+
   const exportCsv = async (batchId: string, batchName: string) => {
     try {
       const rows = await adminBatchTags({ data: { batchId } });
@@ -242,6 +281,14 @@ function BatchesSection() {
                 {new Date(b.created_at).toLocaleDateString("pt-BR")}
               </div>
             </div>
+            <Button
+              variant="outline" size="sm"
+              disabled={modelsBusy === b.id}
+              onClick={() => exportModels(b.id, b.name)}
+              title="Um .3mf por peça, prontos para o fatiador"
+            >
+              <Box className="size-4" /> {modelsBusy === b.id ? "Gerando…" : "Modelos 3D"}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => exportCsv(b.id, b.name)}>
               <Download className="size-4" /> CSV
             </Button>

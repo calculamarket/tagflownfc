@@ -24,8 +24,25 @@ function crc32(bytes: Uint8Array): number {
 
 export type ZipEntry = { name: string; data: Uint8Array };
 
-/** Build an uncompressed ZIP archive from the given entries. */
-export function createZip(entries: ZipEntry[]): Blob {
+/**
+ * Deflate via the browser's CompressionStream. 3MF is XML and compresses ~10x,
+ * which is the difference between a 4 MB and a 40 MB batch download. Falls back
+ * to storing the bytes where CompressionStream is unavailable.
+ */
+async function deflateRaw(data: Uint8Array): Promise<Uint8Array | null> {
+  if (typeof CompressionStream === "undefined") return null;
+  try {
+    // Copy so the Blob gets a Uint8Array backed by a plain ArrayBuffer.
+    const bytes = new Uint8Array(data);
+    const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+/** Build a ZIP archive from the given entries, deflating when possible. */
+export async function createZip(entries: ZipEntry[]): Promise<Blob> {
   const encoder = new TextEncoder();
   const locals: Uint8Array[] = [];
   const centrals: Uint8Array[] = [];
@@ -33,19 +50,25 @@ export function createZip(entries: ZipEntry[]): Blob {
 
   for (const entry of entries) {
     const nameBytes = encoder.encode(entry.name);
+    // CRC and the uncompressed size always describe the ORIGINAL bytes, even
+    // when the stored payload is deflated.
     const crc = crc32(entry.data);
     const size = entry.data.length;
+    const deflated = await deflateRaw(entry.data);
+    const payload = deflated ?? entry.data;
+    const method = deflated ? 8 : 0;
+    const compressedSize = payload.length;
 
     const local = new Uint8Array(30 + nameBytes.length);
     const lv = new DataView(local.buffer);
     lv.setUint32(0, 0x04034b50, true); // local file header signature
     lv.setUint16(4, 20, true); // version needed
     lv.setUint16(6, 0, true); // flags
-    lv.setUint16(8, 0, true); // method: store
+    lv.setUint16(8, method, true);
     lv.setUint16(10, 0, true); // mod time
     lv.setUint16(12, 0, true); // mod date
     lv.setUint32(14, crc, true);
-    lv.setUint32(18, size, true); // compressed size
+    lv.setUint32(18, compressedSize, true);
     lv.setUint32(22, size, true); // uncompressed size
     lv.setUint16(26, nameBytes.length, true);
     lv.setUint16(28, 0, true); // extra length
@@ -57,11 +80,11 @@ export function createZip(entries: ZipEntry[]): Blob {
     cv.setUint16(4, 20, true); // version made by
     cv.setUint16(6, 20, true); // version needed
     cv.setUint16(8, 0, true);
-    cv.setUint16(10, 0, true); // method: store
+    cv.setUint16(10, method, true);
     cv.setUint16(12, 0, true);
     cv.setUint16(14, 0, true);
     cv.setUint32(16, crc, true);
-    cv.setUint32(20, size, true);
+    cv.setUint32(20, compressedSize, true);
     cv.setUint32(24, size, true);
     cv.setUint16(28, nameBytes.length, true);
     cv.setUint16(30, 0, true); // extra
@@ -72,9 +95,9 @@ export function createZip(entries: ZipEntry[]): Blob {
     cv.setUint32(42, offset, true); // local header offset
     central.set(nameBytes, 46);
 
-    locals.push(local, entry.data);
+    locals.push(local, payload);
     centrals.push(central);
-    offset += local.length + size;
+    offset += local.length + compressedSize;
   }
 
   const centralSize = centrals.reduce((n, c) => n + c.length, 0);
