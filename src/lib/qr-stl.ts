@@ -25,7 +25,66 @@ export type QrStlOptions = {
   recessed?: boolean;
 };
 
-type Box = [number, number, number, number, number, number]; // x0,y0,z0,x1,y1,z1
+export type Box = [number, number, number, number, number, number]; // x0,y0,z0,x1,y1,z1
+
+/**
+ * Base plate and module blocks kept apart, so a two-colour export can hand the
+ * slicer two separate solids. The modules sink slightly into the plate instead
+ * of resting exactly on it: a shared coincident plane is what makes slicers
+ * produce gaps or z-fighting between materials.
+ */
+export type QrGeometry = { base: Box[]; modules: Box[]; baseHeightMm: number };
+
+const OVERLAP_MM = 0.2;
+
+/** Shared geometry for every 3D export format. */
+export function buildQrGeometry(text: string, options: QrStlOptions = {}): QrGeometry {
+  const {
+    sizeMm = 60,
+    baseHeightMm = 2,
+    moduleHeightMm = 1.6,
+    marginModules = 4,
+    recessed = false,
+  } = options;
+
+  const qr = QRCode.create(text, { errorCorrectionLevel: "M" });
+  const qrSize = qr.modules.size;
+  const data = qr.modules.data;
+
+  const grid = qrSize + marginModules * 2;
+  const moduleMm = sizeMm / grid;
+  const topZ = baseHeightMm + moduleHeightMm;
+
+  const base: Box[] = [[0, 0, 0, sizeMm, sizeMm, baseHeightMm]];
+  const modules: Box[] = [];
+
+  for (let row = 0; row < grid; row++) {
+    for (let col = 0; col < grid; col++) {
+      const qrRow = row - marginModules;
+      const qrCol = col - marginModules;
+      const inside = qrRow >= 0 && qrRow < qrSize && qrCol >= 0 && qrCol < qrSize;
+      const isDark = inside ? data[qrRow * qrSize + qrCol] === 1 : false;
+
+      // Emboss raises the dark modules; recess raises everything else so the
+      // dark modules become channels.
+      if (recessed ? isDark : !isDark) continue;
+
+      const x0 = col * moduleMm;
+      // Flip Y so the code reads correctly when viewed from +Z.
+      const y0 = sizeMm - (row + 1) * moduleMm;
+      modules.push([
+        x0,
+        y0,
+        baseHeightMm - OVERLAP_MM,
+        x0 + moduleMm,
+        y0 + moduleMm,
+        topZ,
+      ]);
+    }
+  }
+
+  return { base, modules, baseHeightMm };
+}
 
 const FACES: { n: [number, number, number]; idx: [number, number, number][] }[] = [
   // Vertex order: 0=a 1=b 2=c 3=d (bottom), 4=e 5=f 6=g 7=h (top)
@@ -82,47 +141,15 @@ function boxesToStl(boxes: Box[], header: string): ArrayBuffer {
   return buffer;
 }
 
-/** Build the STL for `text` as a downloadable Blob. */
+/**
+ * Single-solid STL: base plate and modules merged into one object. Right for a
+ * single-colour print, or for the filament-change trick (all modules start at
+ * the same Z, so one swap at that layer colours the whole code).
+ */
 export function buildQrStl(text: string, options: QrStlOptions = {}): Blob {
-  const {
-    sizeMm = 60,
-    baseHeightMm = 2,
-    moduleHeightMm = 1.6,
-    marginModules = 4,
-    recessed = false,
-  } = options;
-
-  const qr = QRCode.create(text, { errorCorrectionLevel: "M" });
-  const qrSize = qr.modules.size;
-  const data = qr.modules.data;
-
-  const grid = qrSize + marginModules * 2;
-  const moduleMm = sizeMm / grid;
-  const topZ = baseHeightMm + moduleHeightMm;
-
-  const boxes: Box[] = [];
-  // Base plate.
-  boxes.push([0, 0, 0, sizeMm, sizeMm, baseHeightMm]);
-
-  for (let row = 0; row < grid; row++) {
-    for (let col = 0; col < grid; col++) {
-      const qrRow = row - marginModules;
-      const qrCol = col - marginModules;
-      const inside = qrRow >= 0 && qrRow < qrSize && qrCol >= 0 && qrCol < qrSize;
-      const isDark = inside ? data[qrRow * qrSize + qrCol] === 1 : false;
-
-      // Emboss raises the dark modules; recess raises everything else so the
-      // dark modules become channels.
-      if (recessed ? isDark : !isDark) continue;
-
-      const x0 = col * moduleMm;
-      // Flip Y so the code reads correctly when viewed from +Z.
-      const y0 = sizeMm - (row + 1) * moduleMm;
-      boxes.push([x0, y0, baseHeightMm, x0 + moduleMm, y0 + moduleMm, topZ]);
-    }
-  }
-
-  const stl = boxesToStl(boxes, `3D QR - ${sizeMm}mm - ${recessed ? "recess" : "emboss"}`);
+  const { base, modules } = buildQrGeometry(text, options);
+  const label = `3D QR - ${options.sizeMm ?? 60}mm - ${options.recessed ? "recess" : "emboss"}`;
+  const stl = boxesToStl([...base, ...modules], label);
   return new Blob([stl], { type: "model/stl" });
 }
 

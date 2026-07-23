@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { downloadQrStl } from "@/lib/qr-stl";
+import { buildQrStl } from "@/lib/qr-stl";
+import { buildQr3mf } from "@/lib/qr-3mf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,13 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Box } from "lucide-react";
 import { toast } from "sonner";
 
-/** Parameters + download button for the 3D-printable STL of a tag's QR code. */
+type Format = "3mf" | "stl";
+
+/** Parameters + download for the 3D-printable model of a tag's QR code. */
 export function Qr3dDownload({ url, filename }: { url: string; filename: string }) {
   const [open, setOpen] = useState(false);
+  const [format, setFormat] = useState<Format>("3mf");
   const [sizeMm, setSizeMm] = useState("60");
   const [baseHeightMm, setBaseHeightMm] = useState("2");
   const [moduleHeightMm, setModuleHeightMm] = useState("1.6");
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");
+  const [baseColor, setBaseColor] = useState("#ffffff");
+  const [codeColor, setCodeColor] = useState("#111111");
   const [busy, setBusy] = useState(false);
 
   const download = () => {
@@ -26,13 +32,24 @@ export function Qr3dDownload({ url, filename }: { url: string; filename: string 
     }
     setBusy(true);
     try {
-      downloadQrStl(url, filename, {
+      const opts = {
         sizeMm: size,
         baseHeightMm: base,
         moduleHeightMm: mod,
         recessed: mode === "recess",
-      });
-      toast.success("Arquivo .stl gerado.");
+      };
+      const blob =
+        format === "3mf"
+          ? buildQr3mf(url, { ...opts, baseColor, codeColor })
+          : buildQrStl(url, opts);
+
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = `${filename}.${format}`;
+      a.click();
+      URL.revokeObjectURL(href);
+      toast.success(`Arquivo .${format} gerado.`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -54,6 +71,17 @@ export function Qr3dDownload({ url, filename }: { url: string; filename: string 
 
       {open && (
         <div className="rounded-md border border-border p-3 space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Formato</Label>
+            <Select value={format} onValueChange={(v) => setFormat(v as Format)}>
+              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3mf">3MF · duas cores (AMS/MMU)</SelectItem>
+                <SelectItem value="stl">STL · peça única</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-xs">Tamanho (mm)</Label>
@@ -79,13 +107,45 @@ export function Qr3dDownload({ url, filename }: { url: string; filename: string 
             </div>
           </div>
 
+          {format === "3mf" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Cor da base</Label>
+                <input
+                  type="color"
+                  value={baseColor}
+                  onChange={(e) => setBaseColor(e.target.value)}
+                  className="h-8 w-full rounded-md border border-input bg-background"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Cor do código</Label>
+                <input
+                  type="color"
+                  value={codeColor}
+                  onChange={(e) => setCodeColor(e.target.value)}
+                  className="h-8 w-full rounded-md border border-input bg-background"
+                />
+              </div>
+            </div>
+          )}
+
           <p className="text-xs text-muted-foreground">
-            Para o QR ser lido, imprima em duas cores (base clara, módulos escuros). Só o
-            relevo costuma não dar contraste suficiente.
+            {format === "3mf" ? (
+              <>
+                Base e código saem como <strong>dois objetos</strong>, cada um com sua cor —
+                é só atribuir o filamento de cada um no fatiador.
+              </>
+            ) : (
+              <>
+                Peça única. Para duas cores sem AMS, use <strong>troca de filamento</strong> na
+                altura {baseHeightMm} mm — todos os módulos começam nessa camada.
+              </>
+            )}
           </p>
 
           <Button type="button" size="sm" className="w-full" disabled={busy} onClick={download}>
-            {busy ? "Gerando…" : "Baixar .stl"}
+            {busy ? "Gerando…" : `Baixar .${format}`}
           </Button>
         </div>
       )}
