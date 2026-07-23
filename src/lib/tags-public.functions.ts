@@ -31,17 +31,18 @@ export const resolveTag = createServerFn({ method: "POST" })
     const { data: tag, error } = await supabaseAdmin
       .from("tags")
       .select(
-        "id, user_id, status, destination_type, destination, activate_at, expire_at, max_scans, access_password, claimed_at",
+        "id, user_id, status, destination_type, destination, activate_at, expire_at, max_scans, access_password",
       )
       .eq("id", data.id)
       .maybeSingle();
 
     if (error) throw new Error(error.message);
     if (!tag) return { ok: false as const, reason: "not_found" as const };
-    // Pre-generated piece that nobody has activated yet: send the scanner to the
-    // activation flow instead of showing an error.
-    if (!tag.user_id || !tag.claimed_at)
-      return { ok: false as const, reason: "unclaimed" as const };
+    // A pre-generated stock piece has no owner yet: send the scanner to the
+    // activation flow. Having an owner is the only signal that matters — tags
+    // created in the panel have one immediately (and no claimed_at), so we must
+    // NOT treat a missing claimed_at as unclaimed.
+    if (!tag.user_id) return { ok: false as const, reason: "unclaimed" as const };
     const ownerId = tag.user_id; // narrowed; the closure below would widen it again
     if (tag.status !== "active") return { ok: false as const, reason: "inactive" as const };
 
