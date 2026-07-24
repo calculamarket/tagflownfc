@@ -8,7 +8,16 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
-const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
+const searchSchema = z.object({
+  mode: z.enum(["signin", "signup"]).optional(),
+  // Where to go after auth. Restricted to internal paths so it can't be turned
+  // into an open redirect via a crafted link.
+  redirect: z.string().optional(),
+});
+
+function safeRedirect(value: string | undefined): string {
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
+}
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
@@ -17,7 +26,8 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { mode: initialMode } = Route.useSearch();
+  const { mode: initialMode, redirect } = Route.useSearch();
+  const dest = safeRedirect(redirect);
   const [mode, setMode] = useState<"signin" | "signup" | "reset">(initialMode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,9 +37,9 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/dashboard", replace: true });
+      if (data.user) navigate({ to: dest, replace: true });
     });
-  }, [navigate]);
+  }, [navigate, dest]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,13 +48,13 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/dashboard", replace: true });
+        navigate({ to: dest, replace: true });
       } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}${dest}`,
             data: { full_name: name },
           },
         });
@@ -70,7 +80,7 @@ function AuthPage() {
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       <div className="hidden lg:flex flex-col justify-between p-10 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <Link to="/" className="flex items-center gap-2 font-semibold">
-          <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-xs font-bold">T</div>
+          <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold">3D</div>
           3D QR
         </Link>
         <div>

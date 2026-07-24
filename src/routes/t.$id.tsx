@@ -144,7 +144,7 @@ function RedirectPage() {
               na embalagem e escolha para onde ela deve apontar.
             </p>
             <a
-              href="/ativar"
+              href={`/ativar/${id}`}
               className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
             >
               Ativar minha etiqueta
