@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Box } from "lucide-react";
+import { Search, Download, Box, Printer } from "lucide-react";
+import QRCode from "qrcode";
 import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
 import { Button } from "@/components/ui/button";
@@ -195,8 +196,72 @@ function BatchesSection() {
   });
 
   const [modelsBusy, setModelsBusy] = useState<string | null>(null);
+  const [sheetBusy, setSheetBusy] = useState<string | null>(null);
 
   const slug = (s: string) => s.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+
+  /**
+   * Printable sheet: a grid of QR images (one per QR of the batch) opened in a
+   * new tab that auto-triggers print. From there the browser can print on paper
+   * / adhesive labels or "save as PDF". Each QR encodes the same URL as the
+   * physical piece, so a printed sticker behaves exactly like the 3D part.
+   */
+  const printSheet = async (batchId: string, batchName: string) => {
+    setSheetBusy(batchId);
+    try {
+      const rows = await adminBatchTags({ data: { batchId } });
+      const origin = window.location.origin;
+      const cells = await Promise.all(
+        rows.map(async (r) => {
+          const dataUrl = await QRCode.toDataURL(`${origin}/t/${r.id}`, {
+            width: 300,
+            margin: 1,
+            errorCorrectionLevel: "M",
+          });
+          const label =
+            r.kit_number != null
+              ? `Peça ${r.kit_number}${r.slot != null ? ` · F${r.slot}` : ""}`
+              : "";
+          return `<div class="cell"><img src="${dataUrl}" alt=""/><div class="id">${esc(r.id)}</div>${
+            label ? `<div class="lbl">${esc(label)}</div>` : ""
+          }</div>`;
+        }),
+      );
+
+      const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>QR ${esc(batchName)}</title><style>
+@page { margin: 8mm; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; margin: 0; color: #111; }
+.head { padding: 6mm 6mm 0; font-size: 12px; color: #555; }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm; padding: 6mm; }
+.cell { text-align: center; page-break-inside: avoid; border: 1px solid #e5e5e5;
+  border-radius: 6px; padding: 3mm; }
+.cell img { width: 100%; height: auto; display: block; }
+.id { font-family: ui-monospace, monospace; font-size: 10px; margin-top: 1.5mm; }
+.lbl { font-size: 9px; color: #666; }
+@media print { .no-print { display: none; } }
+</style></head><body>
+<div class="head no-print">${rows.length} QR Codes — use Ctrl/Cmd+P para imprimir ou salvar em PDF.</div>
+<div class="grid">${cells.join("")}</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>
+</body></html>`;
+
+      const w = window.open("", "_blank");
+      if (!w) {
+        toast.error("Permita pop-ups para abrir a folha de impressão.");
+        return;
+      }
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSheetBusy(null);
+    }
+  };
 
   /** One .3mf per piece of the batch, zipped. Each QR encodes its own URL, so
    *  production needs a distinct model per piece. */
@@ -329,6 +394,14 @@ function BatchesSection() {
                 {b.claimed} ativadas · {new Date(b.created_at).toLocaleDateString("pt-BR")}
               </div>
             </div>
+            <Button
+              variant="outline" size="sm"
+              disabled={sheetBusy === b.id}
+              onClick={() => printSheet(b.id, b.name)}
+              title="Folha com todos os QR Codes para imprimir de uma vez"
+            >
+              <Printer className="size-4" /> {sheetBusy === b.id ? "Gerando…" : "Folha QR"}
+            </Button>
             <Button
               variant="outline" size="sm"
               disabled={modelsBusy === b.id}
