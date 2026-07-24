@@ -190,16 +190,28 @@ function PixView({ payload, name }: { payload: Record<string, string>; name: str
         )}
         {brcode ? (
           <>
-            <div className="grid place-items-center rounded-lg border border-border bg-white p-4">
-              <QrCanvas value={brcode} size={220} />
-            </div>
-            <p className="text-xs text-muted-foreground">Escaneie no app do seu banco ou use o Copia e Cola.</p>
-            <div className="rounded-lg border border-border bg-muted/50 p-3 font-mono text-xs break-all text-left">{brcode}</div>
+            {/* Primary action: the visitor is already on their phone, so
+                copy-and-paste into the bank app beats scanning our on-screen
+                QR with the same phone. */}
             <button
-              onClick={async () => { await navigator.clipboard.writeText(brcode); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-              className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium">
-              {copied ? "Copiado!" : "Copiar código PIX"}
+              onClick={async () => { await navigator.clipboard.writeText(brcode); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+              className="w-full rounded-md bg-primary text-primary-foreground py-3 text-sm font-semibold">
+              {copied ? "✓ Código copiado — cole no seu banco" : "Copiar código PIX (Copia e Cola)"}
             </button>
+            <p className="text-xs text-muted-foreground">
+              Copie o código e cole na opção <strong>PIX Copia e Cola</strong> do app do seu banco.
+            </p>
+
+            <div className="pt-2 flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="h-px flex-1 bg-border" /> ou <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <div className="grid place-items-center rounded-lg border border-border bg-white p-4">
+              <QrCanvas value={brcode} size={200} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Escaneie este QR com o app do banco a partir de <strong>outro</strong> aparelho.
+            </p>
           </>
         ) : (
           <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground">Chave PIX não configurada</div>
