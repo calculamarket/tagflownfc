@@ -21,6 +21,7 @@ export const DESTINATION_LABELS: Record<DestinationType, string> = {
   vcard: "Cartão de contato (vCard)",
   review_gate: "Avaliação inteligente",
   ab_test: "Teste A/B",
+  links: "Menu de links (link na bio)",
 };
 
 /** Drop control characters: browsers strip them, so "java\nscript:" would
@@ -102,6 +103,7 @@ export function buildDestinationUrl(
     case "landing_page":
     case "vcard":
     case "review_gate":
+    case "links":
       return `/t/${fallbackTagId}/view`;
   }
 }

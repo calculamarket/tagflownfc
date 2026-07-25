@@ -10,9 +10,12 @@ import {
 } from "@/components/ui/select";
 import { DESTINATION_LABELS, type DestinationType } from "@/lib/destination";
 import { toast } from "sonner";
-import { QrCode, Copy, Check } from "lucide-react";
+import { QrCode, Copy, Check, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { TagQrPreview } from "./tag-qr-preview";
 import { FileUpload } from "./file-upload";
+import {
+  LINK_ITEM_TYPES, defaultLabel, parseLinkItems, type LinkItem, type LinkItemType,
+} from "@/lib/link-menu";
 
 export type TagFormValues = {
   id: string;
@@ -323,6 +326,93 @@ export function TagForm({
   );
 }
 
+const MAX_LINK_ITEMS = 8;
+
+/** Builder for the "Menu de links" destination: an ordered list of typed
+ *  options serialized into destination.items (JSON string). */
+function LinksBuilder({
+  value, onChange,
+}: { value: Record<string, string>; onChange: (k: string, v: string) => void }) {
+  const items = parseLinkItems(value);
+  const commit = (next: LinkItem[]) => onChange("items", JSON.stringify(next));
+  const update = (i: number, patch: Partial<LinkItem>) =>
+    commit(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+  const add = () => {
+    if (items.length >= MAX_LINK_ITEMS) return;
+    commit([...items, { type: "instagram", label: "" }]);
+  };
+  const remove = (i: number) => commit(items.filter((_, idx) => idx !== i));
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
+    [next[i], next[j]] = [next[j], next[i]];
+    commit(next);
+  };
+  const ph = (t: LinkItemType) => LINK_ITEM_TYPES.find((x) => x.type === t)?.placeholder ?? "";
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Label>Título da página (opcional)</Label>
+        <Input placeholder="Ex.: Meus links" value={value.title ?? ""} onChange={(e) => onChange("title", e.target.value)} />
+      </div>
+
+      <div className="space-y-3">
+        {items.length === 0 && (
+          <p className="text-sm text-muted-foreground">Nenhuma opção ainda. Adicione abaixo.</p>
+        )}
+        {items.map((it, i) => (
+          <div key={i} className="rounded-md border border-border p-3 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <span className="w-4 text-xs text-muted-foreground">{i + 1}</span>
+              <Select value={it.type} onValueChange={(t) => update(i, { type: t as LinkItemType })}>
+                <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {LINK_ITEM_TYPES.map((t) => (
+                    <SelectItem key={t.type} value={t.type}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                className="h-8 flex-1"
+                placeholder={`Rótulo (padrão: ${defaultLabel(it.type)})`}
+                value={it.label}
+                onChange={(e) => update(i, { label: e.target.value })}
+              />
+              <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => move(i, -1)} title="Subir"><ChevronUp className="size-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => move(i, 1)} title="Descer"><ChevronDown className="size-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => remove(i)} title="Remover"><Trash2 className="size-4" /></Button>
+            </div>
+
+            <Input className="h-8" placeholder={ph(it.type)} value={it.value ?? ""} onChange={(e) => update(i, { value: e.target.value })} />
+
+            {it.type === "whatsapp" && (
+              <Input className="h-8" placeholder="Mensagem inicial (opcional)" value={it.message ?? ""} onChange={(e) => update(i, { message: e.target.value })} />
+            )}
+            {it.type === "pix" && (
+              <div className="grid grid-cols-3 gap-2">
+                <Input className="h-8" placeholder="Recebedor" value={it.name ?? ""} onChange={(e) => update(i, { name: e.target.value })} />
+                <Input className="h-8" placeholder="Cidade" value={it.city ?? ""} onChange={(e) => update(i, { city: e.target.value })} />
+                <Input className="h-8" inputMode="decimal" placeholder="Valor" value={it.amount ?? ""} onChange={(e) => update(i, { amount: e.target.value })} />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {items.length < MAX_LINK_ITEMS && (
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          <Plus className="size-4" /> Adicionar opção
+        </Button>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Ao escanear, abre uma página com estes botões. O PIX abre o código na própria página.
+      </p>
+    </div>
+  );
+}
+
 function DestinationFields({
   type, value, onChange,
 }: { type: DestinationType; value: Record<string, string>; onChange: (k: string, v: string) => void }) {
@@ -454,6 +544,8 @@ function DestinationFields({
       );
     case "landing_page":
       return <p className="text-sm text-muted-foreground">Configure a landing page personalizada em uma etapa futura.</p>;
+    case "links":
+      return <LinksBuilder value={value} onChange={onChange} />;
     case "vcard":
       return (
         <>

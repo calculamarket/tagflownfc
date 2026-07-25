@@ -602,6 +602,7 @@ export type Database = {
         | "vcard"
         | "review_gate"
         | "ab_test"
+        | "links"
       tag_status: "active" | "paused" | "archived"
       webhook_event: "tag.read" | "tag.created" | "tag.updated"
     }

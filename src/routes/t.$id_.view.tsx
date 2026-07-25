@@ -6,6 +6,7 @@ import { submitLead } from "@/lib/leads.functions";
 import { QrCanvas } from "@/components/qr-canvas";
 import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads";
 import { normalizeDestinationUrl } from "@/lib/destination";
+import { parseLinkItems, defaultLabel, linkItemHref, type LinkItem } from "@/lib/link-menu";
 
 export const Route = createFileRoute("/t/$id_/view")({
   ssr: false,
@@ -52,6 +53,7 @@ function PublicViewPage() {
   if (tag.destination_type === "wifi") return <WifiView payload={tag.destination} name={tag.name} />;
   if (tag.destination_type === "vcard") return <VCardView payload={tag.destination} name={tag.name} />;
   if (tag.destination_type === "review_gate") return <ReviewGateView payload={tag.destination} name={tag.name} />;
+  if (tag.destination_type === "links") return <LinksView payload={tag.destination} name={tag.name} />;
   return <LandingView landing={landing} tag={tag} />;
 }
 
@@ -358,6 +360,84 @@ function ReviewGateView({ payload, name }: { payload: Record<string, string>; na
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function LinksView({ payload, name }: { payload: Record<string, string>; name: string }) {
+  const items = parseLinkItems(payload);
+  const title = payload.title || name;
+  const [openPix, setOpenPix] = useState<number | null>(null);
+
+  return (
+    <div className="min-h-screen bg-muted/30 py-10 px-4">
+      <div className="max-w-md mx-auto space-y-3">
+        <h1 className="text-center text-xl font-semibold mb-4">{title}</h1>
+
+        {items.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground">Nenhuma opção configurada ainda.</p>
+        )}
+
+        {items.map((item, i) => {
+          const label = item.label || defaultLabel(item.type);
+          if (item.type === "pix") {
+            const open = openPix === i;
+            return (
+              <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
+                <button
+                  onClick={() => setOpenPix(open ? null : i)}
+                  className="w-full px-4 py-3.5 text-sm font-medium flex items-center justify-between hover:bg-accent/50"
+                >
+                  {label}
+                  <span className="text-muted-foreground">{open ? "▲" : "▼"}</span>
+                </button>
+                {open && <InlinePix item={item} />}
+              </div>
+            );
+          }
+          const href = linkItemHref(item);
+          return (
+            <a
+              key={i}
+              href={href || undefined}
+              target="_blank"
+              rel="noreferrer"
+              className="block rounded-xl border border-border bg-card px-4 py-3.5 text-center text-sm font-medium hover:bg-accent/50"
+            >
+              {label}
+            </a>
+          );
+        })}
+
+        <p className="text-center text-xs text-muted-foreground pt-4">Powered by 3D QR</p>
+      </div>
+    </div>
+  );
+}
+
+function InlinePix({ item }: { item: LinkItem }) {
+  const [copied, setCopied] = useState(false);
+  const brcode = buildPixPayload({
+    key: item.value ?? "",
+    name: item.name,
+    city: item.city,
+    amount: item.amount,
+  });
+  if (!brcode) {
+    return <div className="px-4 pb-4 text-sm text-muted-foreground">Chave PIX não configurada.</div>;
+  }
+  return (
+    <div className="px-4 pb-4 space-y-3 border-t border-border pt-3 text-center">
+      <div className="grid place-items-center rounded-lg border border-border bg-white p-3">
+        <QrCanvas value={brcode} size={180} />
+      </div>
+      <button
+        onClick={async () => { await navigator.clipboard.writeText(brcode); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+        className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-semibold"
+      >
+        {copied ? "✓ Código copiado" : "Copiar código PIX"}
+      </button>
+      <p className="text-xs text-muted-foreground">Cole no PIX Copia e Cola do seu banco.</p>
     </div>
   );
 }
