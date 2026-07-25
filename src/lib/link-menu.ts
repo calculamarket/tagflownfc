@@ -35,6 +35,16 @@ export function defaultLabel(type: LinkItemType): string {
   return LINK_ITEM_TYPES.find((t) => t.type === type)?.label ?? "Link";
 }
 
+/**
+ * These hand control to an app (WhatsApp, dialer, mail client). They must open
+ * in the SAME tab: a target="_blank" tab is left blank when the app takes over
+ * and gets auto-closed by the browser before the user can tap "Abrir". Web
+ * links (Instagram, site) open in a new tab so the menu stays behind.
+ */
+export function opensInApp(type: LinkItemType): boolean {
+  return type === "whatsapp" || type === "phone" || type === "email";
+}
+
 /** Read the items array back from the tag's destination JSON. Tolerant of the
  *  string-encoded form used by the editor and of a raw array. */
 export function parseLinkItems(destination: Record<string, unknown>): LinkItem[] {

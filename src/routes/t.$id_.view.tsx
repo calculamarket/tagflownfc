@@ -6,7 +6,7 @@ import { submitLead } from "@/lib/leads.functions";
 import { QrCanvas } from "@/components/qr-canvas";
 import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads";
 import { normalizeDestinationUrl } from "@/lib/destination";
-import { parseLinkItems, defaultLabel, linkItemHref, type LinkItem } from "@/lib/link-menu";
+import { parseLinkItems, defaultLabel, linkItemHref, opensInApp, type LinkItem } from "@/lib/link-menu";
 
 export const Route = createFileRoute("/t/$id_/view")({
   ssr: false,
@@ -396,12 +396,15 @@ function LinksView({ payload, name }: { payload: Record<string, string>; name: s
             );
           }
           const href = linkItemHref(item);
+          // App hand-off links (WhatsApp/tel/mailto) open in the same tab so the
+          // browser doesn't kill an orphan tab before the app opens.
+          const sameTab = opensInApp(item.type);
           return (
             <a
               key={i}
               href={href || undefined}
-              target="_blank"
-              rel="noreferrer"
+              target={sameTab ? undefined : "_blank"}
+              rel={sameTab ? undefined : "noreferrer"}
               className="block rounded-xl border border-border bg-card px-4 py-3.5 text-center text-sm font-medium hover:bg-accent/50"
             >
               {label}
