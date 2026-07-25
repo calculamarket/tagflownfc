@@ -30,10 +30,20 @@ const MESSAGES: Record<
   limit_reached: { title: "Limite atingido", body: "Esta etiqueta atingiu o número máximo de acessos." },
 };
 
+// Destinations that hand off to an app. Auto-redirecting to these makes the
+// intermediate page flash and the app hand-off bounce before the visitor can
+// react; a deliberate button tap is the reliable way to open the app.
+const HANDOFF: Record<string, string> = {
+  whatsapp: "Abrir WhatsApp",
+  phone: "Ligar agora",
+  email: "Enviar e-mail",
+};
+
 function RedirectPage() {
   const { id } = Route.useParams();
-  const [state, setState] = useState<"loading" | "error" | "password" | "unclaimed">("loading");
+  const [state, setState] = useState<"loading" | "error" | "password" | "unclaimed" | "handoff">("loading");
   const [reason, setReason] = useState<keyof typeof MESSAGES>("not_found");
+  const [handoff, setHandoff] = useState<{ url: string; label: string } | null>(null);
   const [password, setPassword] = useState("");
   const [pwError, setPwError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -48,7 +58,14 @@ function RedirectPage() {
     if (res.ok) {
       const target = buildDestinationUrl(res.destination_type, res.destination, id);
       if (target) {
-        window.location.replace(target);
+        const label = HANDOFF[res.destination_type];
+        if (label) {
+          // Let the visitor tap to open the app instead of auto-handing off.
+          setHandoff({ url: target, label });
+          setState("handoff");
+        } else {
+          window.location.replace(target);
+        }
         return;
       }
       setReason("not_found");
@@ -133,6 +150,21 @@ function RedirectPage() {
               {submitting ? "Verificando…" : "Acessar"}
             </button>
           </form>
+        )}
+
+        {state === "handoff" && handoff && (
+          <div className="space-y-5">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+              <div className="size-9 rounded-xl bg-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">Tudo pronto. Toque no botão para continuar.</p>
+            <a
+              href={handoff.url}
+              className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
+            >
+              {handoff.label}
+            </a>
+          </div>
         )}
 
         {state === "unclaimed" && (
