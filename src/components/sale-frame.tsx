@@ -13,10 +13,15 @@ export type FrameCfg = {
   xPct: number; // QR top-left X, as % of frame width
   yPct: number; // QR top-left Y, as % of frame height
   wPct: number; // QR width, as % of frame width
-  cols: number; // frames per row on the A4
+  perPage: 2 | 3; // 10x15cm frames per A4 (3 = the third one printed rotated)
 };
 
-const DEFAULT_CFG: FrameCfg = { frameUrl: "", xPct: 33, yPct: 28, wPct: 52, cols: 1 };
+// A physical sticker is 10x15 cm. Fixed so print output is exact regardless of
+// the art's own pixel size.
+const FRAME_W_MM = 100;
+const FRAME_H_MM = 150;
+
+const DEFAULT_CFG: FrameCfg = { frameUrl: "", xPct: 33, yPct: 28, wPct: 52, perPage: 3 };
 
 export function getFrameCfg(): FrameCfg {
   if (typeof window === "undefined") return DEFAULT_CFG;
@@ -34,10 +39,15 @@ function saveFrameCfg(cfg: FrameCfg) {
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /**
- * Compose each batch QR onto the sale frame and open a print-ready A4 tab.
+ * Compose each batch QR onto the sale frame (fixed 10x15 cm) and open a
+ * print-ready A4 tab, packing as many stickers per sheet as fit.
+ *
  * The frame is a foreground <img> (not a CSS background) so it prints without
- * the "background graphics" print option; the QR is an absolutely-positioned
- * <img> on top, placed by the configured percentages.
+ * the "background graphics" print option; the QR is absolutely positioned on
+ * top by the configured percentages.
+ *
+ * A4 (21x29,7) fits two 10x15 stickers upright; with perPage=3 a third is laid
+ * out rotated 90° at the bottom (the cut sticker is identical).
  */
 export async function openFrameSheet(
   rows: { id: string }[],
@@ -49,32 +59,50 @@ export async function openFrameSheet(
     return;
   }
 
-  const cells = await Promise.all(
-    rows.map(async (r) => {
-      const qr = await QRCode.toDataURL(`${origin}/t/${r.id}`, {
-        width: 500,
-        margin: 0,
-        errorCorrectionLevel: "M",
-      });
-      return `<div class="frame"><img class="bg" src="${esc(cfg.frameUrl)}"/><img class="qr" src="${qr}"/></div>`;
-    }),
+  const cell = (qr: string) =>
+    `<img class="bg" src="${esc(cfg.frameUrl)}"/>` +
+    `<img class="qr" src="${qr}" style="left:${cfg.xPct}%;top:${cfg.yPct}%;width:${cfg.wPct}%"/>`;
+
+  const qrDataUrls = await Promise.all(
+    rows.map((r) =>
+      QRCode.toDataURL(`${origin}/t/${r.id}`, { width: 600, margin: 0, errorCorrectionLevel: "M" }),
+    ),
   );
 
+  // Group into pages and place each sticker at an exact mm position.
+  const perPage = cfg.perPage;
+  const pages: string[] = [];
+  for (let i = 0; i < qrDataUrls.length; i += perPage) {
+    const group = qrDataUrls.slice(i, i + perPage);
+    const slots = group.map((qr, j) => {
+      if (perPage === 3 && j === 2) {
+        // Third sticker: rotated 90° into a 150x100 landscape box at the bottom.
+        return `<div class="rotbox"><div class="frame rot">${cell(qr)}</div></div>`;
+      }
+      const left = j === 0 ? 3 : 107; // two upright columns
+      return `<div class="frame up" style="left:${left}mm;top:3mm">${cell(qr)}</div>`;
+    });
+    pages.push(`<div class="page">${slots.join("")}</div>`);
+  }
+
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<title>Frames para impressao</title><style>
-@page { size: A4; margin: 6mm; }
+<title>Frames 10x15 para impressao</title><style>
+@page { size: A4 portrait; margin: 0; }
 * { box-sizing: border-box; }
 body { margin: 0; }
-.grid { display: grid; grid-template-columns: repeat(${cfg.cols}, 1fr); gap: 4mm; }
-.frame { position: relative; page-break-inside: avoid; }
-.frame .bg { width: 100%; display: block; }
-.frame .qr { position: absolute; left: ${cfg.xPct}%; top: ${cfg.yPct}%; width: ${cfg.wPct}%; }
-.hint { font-family: system-ui, sans-serif; font-size: 11px; color: #555; padding: 4mm 6mm; }
+.page { position: relative; width: 210mm; height: 297mm; overflow: hidden; page-break-after: always; }
+.frame { position: absolute; width: ${FRAME_W_MM}mm; height: ${FRAME_H_MM}mm; }
+.frame .bg { width: 100%; height: 100%; object-fit: contain; display: block; }
+.frame .qr { position: absolute; }
+.up { }
+.rotbox { position: absolute; left: 30mm; top: 155mm; width: ${FRAME_H_MM}mm; height: ${FRAME_W_MM}mm; }
+.rot { left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(90deg); transform-origin: center; }
+.hint { position: fixed; top: 2mm; left: 2mm; font-family: system-ui, sans-serif; font-size: 10px; color: #999; }
 @media print { .hint { display: none; } }
 </style></head><body>
-<div class="hint">${rows.length} frames — Ctrl/Cmd+P para imprimir ou salvar em PDF.</div>
-<div class="grid">${cells.join("")}</div>
-<img src="${esc(cfg.frameUrl)}" style="display:none" onload="setTimeout(function(){window.print();},400)"/>
+<div class="hint">${rows.length} etiquetas 10x15 — Ctrl/Cmd+P para imprimir ou salvar em PDF.</div>
+${pages.join("")}
+<img src="${esc(cfg.frameUrl)}" style="display:none" onload="setTimeout(function(){window.print();},500)"/>
 </body></html>`;
 
   const w = window.open("", "_blank");
@@ -140,16 +168,16 @@ export function SaleFramePanel() {
             {numInput("wPct", "QR tamanho (%)")}
           </div>
 
-          <div className="space-y-1 w-40">
-            <Label className="text-xs">Colunas por folha</Label>
-            <Select value={String(cfg.cols)} onValueChange={(v) => patch({ cols: Number(v) })}>
+          <div className="space-y-1 w-56">
+            <Label className="text-xs">Etiquetas 10×15 por folha A4</Label>
+            <Select value={String(cfg.perPage)} onValueChange={(v) => patch({ perPage: Number(v) as 2 | 3 })}>
               <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1 por linha</SelectItem>
-                <SelectItem value="2">2 por linha</SelectItem>
-                <SelectItem value="3">3 por linha</SelectItem>
+                <SelectItem value="2">2 (ambas em pé)</SelectItem>
+                <SelectItem value="3">3 (a 3ª sai deitada)</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-[11px] text-muted-foreground">Cada etiqueta sai exatamente 10×15 cm.</p>
           </div>
         </div>
 
