@@ -6,7 +6,7 @@ import { submitLead } from "@/lib/leads.functions";
 import { QrCanvas } from "@/components/qr-canvas";
 import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads";
 import { normalizeDestinationUrl } from "@/lib/destination";
-import { parseLinkItems, defaultLabel, linkItemHref, opensInApp, type LinkItem } from "@/lib/link-menu";
+import { parseLinkItems, defaultLabel, linkItemHref, opensInApp, itemIcon, type LinkItem } from "@/lib/link-menu";
 import { parsePromoProducts, formatBRL, promoStatus, type PromoProduct } from "@/lib/promo";
 
 export const Route = createFileRoute("/t/$id_/view")({
@@ -390,7 +390,7 @@ function LinksView({ payload, name }: { payload: Record<string, string>; name: s
                   onClick={() => setOpenPix(open ? null : i)}
                   className="w-full px-4 py-3.5 text-sm font-medium flex items-center justify-between hover:bg-accent/50"
                 >
-                  {label}
+                  <span><span className="mr-2">{itemIcon(item.type)}</span>{label}</span>
                   <span className="text-muted-foreground">{open ? "▲" : "▼"}</span>
                 </button>
                 {open && <InlinePix item={item} />}
@@ -409,7 +409,7 @@ function LinksView({ payload, name }: { payload: Record<string, string>; name: s
               rel={sameTab ? undefined : "noreferrer"}
               className="block rounded-xl border border-border bg-card px-4 py-3.5 text-center text-sm font-medium hover:bg-accent/50"
             >
-              {label}
+              <span className="mr-2">{itemIcon(item.type)}</span>{label}
             </a>
           );
         })}

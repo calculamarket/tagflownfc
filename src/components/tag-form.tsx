@@ -14,7 +14,8 @@ import { QrCode, Copy, Check, Plus, Trash2, ChevronUp, ChevronDown } from "lucid
 import { TagQrPreview } from "./tag-qr-preview";
 import { FileUpload } from "./file-upload";
 import {
-  LINK_ITEM_TYPES, defaultLabel, parseLinkItems, type LinkItem, type LinkItemType,
+  LINK_ITEM_TYPES, LINK_PRESETS, defaultLabel, usesFileUpload, parseLinkItems,
+  type LinkItem, type LinkItemType,
 } from "@/lib/link-menu";
 import {
   parsePromoProducts, MAX_PROMO_PRODUCTS, MAX_PROMO_IMAGES, type PromoProduct,
@@ -361,9 +362,27 @@ function LinksBuilder({
         <Input placeholder="Ex.: Meus links" value={value.title ?? ""} onChange={(e) => onChange("title", e.target.value)} />
       </div>
 
+      <div className="space-y-1.5">
+        <Label className="text-xs">Começar por um modelo</Label>
+        <div className="flex flex-wrap gap-2">
+          {LINK_PRESETS.map((preset) => (
+            <Button
+              key={preset.label}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => commit(preset.items.slice(0, MAX_LINK_ITEMS))}
+            >
+              {preset.label}
+            </Button>
+          ))}
+        </div>
+        <p className="text-[11px] text-muted-foreground">Preenche as opções típicas — você ajusta depois.</p>
+      </div>
+
       <div className="space-y-3">
         {items.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhuma opção ainda. Adicione abaixo.</p>
+          <p className="text-sm text-muted-foreground">Nenhuma opção ainda. Escolha um modelo acima ou adicione manualmente.</p>
         )}
         {items.map((it, i) => (
           <div key={i} className="rounded-md border border-border p-3 space-y-2.5">
@@ -388,7 +407,17 @@ function LinksBuilder({
               <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => remove(i)} title="Remover"><Trash2 className="size-4" /></Button>
             </div>
 
-            <Input className="h-8" placeholder={ph(it.type)} value={it.value ?? ""} onChange={(e) => update(i, { value: e.target.value })} />
+            {usesFileUpload(it.type) ? (
+              <FileUpload
+                value={it.value ?? ""}
+                onChange={(url) => update(i, { value: url })}
+                accept="application/pdf,image/*"
+                placeholder={ph(it.type)}
+                preview="file"
+              />
+            ) : (
+              <Input className="h-8" placeholder={ph(it.type)} value={it.value ?? ""} onChange={(e) => update(i, { value: e.target.value })} />
+            )}
 
             {it.type === "whatsapp" && (
               <Input className="h-8" placeholder="Mensagem inicial (opcional)" value={it.message ?? ""} onChange={(e) => update(i, { message: e.target.value })} />
