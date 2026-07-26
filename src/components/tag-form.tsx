@@ -16,6 +16,9 @@ import { FileUpload } from "./file-upload";
 import {
   LINK_ITEM_TYPES, defaultLabel, parseLinkItems, type LinkItem, type LinkItemType,
 } from "@/lib/link-menu";
+import {
+  parsePromoProducts, MAX_PROMO_PRODUCTS, MAX_PROMO_IMAGES, type PromoProduct,
+} from "@/lib/promo";
 
 export type TagFormValues = {
   id: string;
@@ -413,6 +416,107 @@ function LinksBuilder({
   );
 }
 
+/** Builder for the "Promoção" destination: up to 3 products, each with photos,
+ *  de/por price, coupon and validity. Serialized into destination.products. */
+function PromoBuilder({
+  value, onChange,
+}: { value: Record<string, string>; onChange: (k: string, v: string) => void }) {
+  const products = parsePromoProducts(value);
+  const commit = (next: PromoProduct[]) => onChange("products", JSON.stringify(next));
+  const update = (i: number, patch: Partial<PromoProduct>) =>
+    commit(products.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+  const setImage = (i: number, slot: number, url: string) => {
+    const imgs = [...(products[i].images ?? [])];
+    while (imgs.length < MAX_PROMO_IMAGES) imgs.push("");
+    imgs[slot] = url;
+    update(i, { images: imgs });
+  };
+  const add = () => {
+    if (products.length >= MAX_PROMO_PRODUCTS) return;
+    commit([...products, { name: "" }]);
+  };
+  const remove = (i: number) => commit(products.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Label>Título da página (opcional)</Label>
+        <Input placeholder="Ex.: Ofertas da semana" value={value.title ?? ""} onChange={(e) => onChange("title", e.target.value)} />
+      </div>
+
+      {products.length === 0 && (
+        <p className="text-sm text-muted-foreground">Nenhum produto ainda. Adicione até {MAX_PROMO_PRODUCTS}.</p>
+      )}
+
+      {products.map((p, i) => (
+        <div key={i} className="rounded-md border border-border p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Produto {i + 1}</span>
+            <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => remove(i)} title="Remover">
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Nome</Label>
+            <Input value={p.name} onChange={(e) => update(i, { name: e.target.value })} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Descrição</Label>
+            <Textarea rows={2} value={p.description ?? ""} onChange={(e) => update(i, { description: e.target.value })} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Fotos (até {MAX_PROMO_IMAGES})</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: MAX_PROMO_IMAGES }).map((_, s) => (
+                <FileUpload
+                  key={s}
+                  value={p.images?.[s] ?? ""}
+                  onChange={(url) => setImage(i, s, url)}
+                  placeholder="URL da foto"
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">De (preço antigo)</Label>
+              <Input inputMode="decimal" placeholder="0,00" value={p.price_from ?? ""} onChange={(e) => update(i, { price_from: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Por (promoção)</Label>
+              <Input inputMode="decimal" placeholder="0,00" value={p.price_to ?? ""} onChange={(e) => update(i, { price_to: e.target.value })} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Cupom</Label>
+              <Input placeholder="Ex.: PROMO10" value={p.coupon ?? ""} onChange={(e) => update(i, { coupon: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Válido até</Label>
+              <Input type="date" value={p.ends_at ?? ""} onChange={(e) => update(i, { ends_at: e.target.value })} />
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {products.length < MAX_PROMO_PRODUCTS && (
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          <Plus className="size-4" /> Adicionar produto
+        </Button>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Uma vitrine sem carrinho: mostra os produtos, preços e cupom copiável.
+      </p>
+    </div>
+  );
+}
+
 function DestinationFields({
   type, value, onChange,
 }: { type: DestinationType; value: Record<string, string>; onChange: (k: string, v: string) => void }) {
@@ -546,6 +650,8 @@ function DestinationFields({
       return <p className="text-sm text-muted-foreground">Configure a landing page personalizada em uma etapa futura.</p>;
     case "links":
       return <LinksBuilder value={value} onChange={onChange} />;
+    case "promo":
+      return <PromoBuilder value={value} onChange={onChange} />;
     case "vcard":
       return (
         <>

@@ -603,6 +603,7 @@ export type Database = {
         | "review_gate"
         | "ab_test"
         | "links"
+        | "promo"
       tag_status: "active" | "paused" | "archived"
       webhook_event: "tag.read" | "tag.created" | "tag.updated"
     }

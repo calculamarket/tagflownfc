@@ -7,6 +7,7 @@ import { QrCanvas } from "@/components/qr-canvas";
 import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads";
 import { normalizeDestinationUrl } from "@/lib/destination";
 import { parseLinkItems, defaultLabel, linkItemHref, opensInApp, type LinkItem } from "@/lib/link-menu";
+import { parsePromoProducts, formatBRL, promoStatus, type PromoProduct } from "@/lib/promo";
 
 export const Route = createFileRoute("/t/$id_/view")({
   ssr: false,
@@ -54,6 +55,7 @@ function PublicViewPage() {
   if (tag.destination_type === "vcard") return <VCardView payload={tag.destination} name={tag.name} />;
   if (tag.destination_type === "review_gate") return <ReviewGateView payload={tag.destination} name={tag.name} />;
   if (tag.destination_type === "links") return <LinksView payload={tag.destination} name={tag.name} />;
+  if (tag.destination_type === "promo") return <PromoView payload={tag.destination} name={tag.name} />;
   return <LandingView landing={landing} tag={tag} />;
 }
 
@@ -413,6 +415,88 @@ function LinksView({ payload, name }: { payload: Record<string, string>; name: s
         })}
 
         <p className="text-center text-xs text-muted-foreground pt-4">Powered by 3D QR</p>
+      </div>
+    </div>
+  );
+}
+
+function PromoView({ payload, name }: { payload: Record<string, string>; name: string }) {
+  const products = parsePromoProducts(payload);
+  const title = payload.title || name;
+  return (
+    <div className="min-h-screen bg-muted/30 py-8 px-4">
+      <div className="max-w-md mx-auto space-y-4">
+        <h1 className="text-center text-xl font-semibold">{title}</h1>
+        {products.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground">Nenhuma oferta cadastrada ainda.</p>
+        )}
+        {products.map((p, i) => (
+          <PromoCard key={i} product={p} />
+        ))}
+        <p className="text-center text-xs text-muted-foreground pt-2">Powered by 3D QR</p>
+      </div>
+    </div>
+  );
+}
+
+function PromoCard({ product }: { product: PromoProduct }) {
+  const images = (product.images ?? []).filter(Boolean);
+  const [active, setActive] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const status = promoStatus(product.ends_at);
+  const priceFrom = formatBRL(product.price_from);
+  const priceTo = formatBRL(product.price_to);
+  const ended = status.state === "ended";
+
+  return (
+    <div className={`rounded-2xl border border-border bg-card overflow-hidden shadow-sm ${ended ? "opacity-70" : ""}`}>
+      {images.length > 0 && (
+        <div>
+          <img src={images[active]} alt={product.name} className="w-full aspect-square object-cover" />
+          {images.length > 1 && (
+            <div className="flex justify-center gap-2 py-2">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActive(i)}
+                  className={`size-2 rounded-full ${i === active ? "bg-primary" : "bg-muted-foreground/30"}`}
+                  aria-label={`Foto ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="p-4 space-y-3">
+        <div>
+          <h2 className="font-semibold">{product.name}</h2>
+          {product.description && (
+            <p className="mt-1 text-sm text-muted-foreground whitespace-pre-line">{product.description}</p>
+          )}
+        </div>
+
+        {(priceFrom || priceTo) && (
+          <div className="flex items-baseline gap-2">
+            {priceFrom && priceTo && <span className="text-sm text-muted-foreground line-through">{priceFrom}</span>}
+            <span className="text-2xl font-bold text-primary">{priceTo || priceFrom}</span>
+          </div>
+        )}
+
+        {product.coupon && !ended && (
+          <button
+            onClick={async () => { await navigator.clipboard.writeText(product.coupon!); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+            className="w-full rounded-lg border-2 border-dashed border-primary/50 bg-primary/5 py-2.5 text-sm font-semibold text-primary"
+          >
+            {copied ? "✓ Cupom copiado" : `Cupom: ${product.coupon} · toque para copiar`}
+          </button>
+        )}
+
+        {status.text && (
+          <p className={`text-xs ${ended ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+            {status.text}
+          </p>
+        )}
       </div>
     </div>
   );
