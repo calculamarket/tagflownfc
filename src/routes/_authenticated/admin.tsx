@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Box, Printer } from "lucide-react";
+import { Search, Download, Box, Printer, Sticker } from "lucide-react";
 import QRCode from "qrcode";
 import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
+import { SaleFramePanel, openFrameSheet } from "@/components/sale-frame";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -197,6 +198,20 @@ function BatchesSection() {
 
   const [modelsBusy, setModelsBusy] = useState<string | null>(null);
   const [sheetBusy, setSheetBusy] = useState<string | null>(null);
+  const [frameBusy, setFrameBusy] = useState<string | null>(null);
+
+  /** A4 sheet with each batch QR composed onto the sale frame art. */
+  const exportFrames = async (batchId: string) => {
+    setFrameBusy(batchId);
+    try {
+      const rows = await adminBatchTags({ data: { batchId } });
+      await openFrameSheet(rows, window.location.origin);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setFrameBusy(null);
+    }
+  };
 
   const slug = (s: string) => s.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -380,13 +395,17 @@ body { font-family: system-ui, sans-serif; margin: 0; color: #111; }
         </Button>
       </div>
 
+      <div className="p-5 border-b border-border">
+        <SaleFramePanel />
+      </div>
+
       <div className="divide-y divide-border">
         {batches.length === 0 && (
           <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nenhum lote ainda.</p>
         )}
         {batches.map((b) => (
-          <div key={b.id} className="px-5 py-3 flex items-center gap-4 text-sm">
-            <div className="flex-1 min-w-0">
+          <div key={b.id} className="px-5 py-3 flex flex-wrap items-center gap-2 text-sm">
+            <div className="flex-1 min-w-40">
               <div className="font-medium truncate">{b.name}</div>
               <div className="text-xs text-muted-foreground">
                 {b.model ?? "Peça"}
@@ -394,6 +413,14 @@ body { font-family: system-ui, sans-serif; margin: 0; color: #111; }
                 {b.claimed} ativadas · {new Date(b.created_at).toLocaleDateString("pt-BR")}
               </div>
             </div>
+            <Button
+              variant="outline" size="sm"
+              disabled={frameBusy === b.id}
+              onClick={() => exportFrames(b.id)}
+              title="Folha A4 com os QR dentro da arte de venda"
+            >
+              <Sticker className="size-4" /> {frameBusy === b.id ? "Gerando…" : "Frame A4"}
+            </Button>
             <Button
               variant="outline" size="sm"
               disabled={sheetBusy === b.id}
