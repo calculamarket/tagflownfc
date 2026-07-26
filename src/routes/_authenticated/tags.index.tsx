@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
 import { useSuspenseQuery, queryOptions, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listTags, deleteTag } from "@/lib/tags.functions";
+import { listTags, deleteTag, deleteTags } from "@/lib/tags.functions";
 import { getMyPlan } from "@/lib/plans.functions";
 import { Button } from "@/components/ui/button";
 import { Plus, ExternalLink, Trash2, Pencil } from "lucide-react";
@@ -20,15 +21,51 @@ function TagsPage() {
   const { data: tags } = useSuspenseQuery(tagsQO);
   const { data: plan } = useQuery({ queryKey: ["my-plan"], queryFn: () => getMyPlan() });
   const qc = useQueryClient();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["tags"] });
+    qc.invalidateQueries({ queryKey: ["my-plan"] });
+  };
+
   const del = useMutation({
     mutationFn: (id: string) => deleteTag({ data: { id } }),
     onSuccess: () => {
       toast.success("Tag removida.");
-      qc.invalidateQueries({ queryKey: ["tags"] });
-      qc.invalidateQueries({ queryKey: ["my-plan"] });
+      setSelected((s) => { const n = new Set(s); return n; });
+      invalidate();
     },
     onError: (e) => toast.error((e as Error).message),
   });
+
+  const bulkDel = useMutation({
+    mutationFn: (ids: string[]) => deleteTags({ data: { ids } }),
+    onSuccess: (r) => {
+      toast.success(`${r.count} tag(s) removida(s).`);
+      setSelected(new Set());
+      invalidate();
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const allIds = useMemo(() => tags.map((t) => t.id), [tags]);
+  const allChecked = allIds.length > 0 && selected.size === allIds.length;
+  const someChecked = selected.size > 0 && !allChecked;
+
+  const toggleOne = (id: string) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  const toggleAll = () => setSelected(allChecked ? new Set() : new Set(allIds));
+
+  const removeSelected = () => {
+    const ids = allIds.filter((id) => selected.has(id));
+    if (ids.length === 0) return;
+    if (confirm(`Remover ${ids.length} tag(s) selecionada(s)? Esta ação não pode ser desfeita.`))
+      bulkDel.mutate(ids);
+  };
 
   const atLimit = plan ? plan.used >= plan.plan.max_tags : false;
   const pct = plan && plan.plan.max_tags > 0
@@ -72,6 +109,25 @@ function TagsPage() {
         </div>
       )}
 
+      {selected.size > 0 && (
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/40 px-4 py-2.5">
+          <span className="text-sm font-medium">{selected.size} selecionada(s)</span>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+              Limpar
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={bulkDel.isPending}
+              onClick={removeSelected}
+            >
+              <Trash2 className="size-3.5" /> Remover selecionadas
+            </Button>
+          </div>
+        </div>
+      )}
+
       {tags.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border bg-card p-16 text-center">
           <p className="text-sm text-muted-foreground">Nenhuma tag ainda.</p>
@@ -84,6 +140,16 @@ function TagsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">
               <tr className="text-left">
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    aria-label="Selecionar todas"
+                    className="size-4 align-middle accent-primary cursor-pointer"
+                    checked={allChecked}
+                    ref={(el) => { if (el) el.indeterminate = someChecked; }}
+                    onChange={toggleAll}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Nome</th>
                 <th className="px-4 py-3 font-medium">ID</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
@@ -95,7 +161,16 @@ function TagsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {tags.map((t) => (
-                <tr key={t.id} className="hover:bg-muted/30">
+                <tr key={t.id} className={`hover:bg-muted/30 ${selected.has(t.id) ? "bg-primary/5" : ""}`}>
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label={`Selecionar ${t.name}`}
+                      className="size-4 align-middle accent-primary cursor-pointer"
+                      checked={selected.has(t.id)}
+                      onChange={() => toggleOne(t.id)}
+                    />
+                  </td>
                   <td className="px-4 py-3 font-medium">{t.name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{t.id}</td>
                   <td className="px-4 py-3 text-muted-foreground">{DESTINATION_LABELS[t.destination_type]}</td>

@@ -152,6 +152,19 @@ export const deleteTag = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteTags = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { ids: string[] }) => {
+    if (!Array.isArray(d?.ids) || d.ids.length === 0) throw new Error("Selecione ao menos uma tag.");
+    return { ids: d.ids.slice(0, 500) };
+  })
+  .handler(async ({ data, context }) => {
+    // RLS already scopes deletes to the caller's own tags.
+    const { error } = await context.supabase.from("tags").delete().in("id", data.ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: data.ids.length };
+  });
+
 export const dashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
