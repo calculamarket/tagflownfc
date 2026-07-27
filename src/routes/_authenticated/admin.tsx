@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Box, Printer, Sticker } from "lucide-react";
+import { Search, Download, Box, Printer, Sticker, CircleDot } from "lucide-react";
 import QRCode from "qrcode";
 import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
@@ -199,6 +199,9 @@ function BatchesSection() {
   const [modelsBusy, setModelsBusy] = useState<string | null>(null);
   const [sheetBusy, setSheetBusy] = useState<string | null>(null);
   const [frameBusy, setFrameBusy] = useState<string | null>(null);
+  const [keyBusy, setKeyBusy] = useState<string | null>(null);
+  // NFC keychain label diameter, in mm. Default 2,5 cm.
+  const [keyDiam, setKeyDiam] = useState("25");
 
   /** A4 sheet with each batch QR composed onto the sale frame art. */
   const exportFrames = async (batchId: string) => {
@@ -275,6 +278,66 @@ body { font-family: system-ui, sans-serif; margin: 0; color: #111; }
       toast.error((e as Error).message);
     } finally {
       setSheetBusy(null);
+    }
+  };
+
+  /**
+   * A4 sheet of round cut-outs sized for NFC keychain labels (default Ø 2,5 cm).
+   * Each cell is a dashed circle the exact diameter of the label with the QR
+   * centered inside (~72% of the diameter, so the square fits within the round
+   * area). Cells are inline-block so the browser packs the maximum per sheet and
+   * paginates automatically across A4 pages.
+   */
+  const printKeychainSheet = async (batchId: string, batchName: string) => {
+    setKeyBusy(batchId);
+    try {
+      const rows = await adminBatchTags({ data: { batchId } });
+      const origin = window.location.origin;
+      const d = Math.min(80, Math.max(10, Number(keyDiam) || 25)); // diameter mm
+      const qrSide = +(d * 0.72).toFixed(2); // square QR that fits in the circle
+
+      const cells = await Promise.all(
+        rows.map(async (r) => {
+          const dataUrl = await QRCode.toDataURL(`${origin}/t/${r.id}`, {
+            width: 400,
+            margin: 0,
+            errorCorrectionLevel: "M",
+          });
+          return `<span class="cell"><span class="circle"><img src="${dataUrl}" alt=""/></span></span>`;
+        }),
+      );
+
+      const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>Chaveiros ${esc(batchName)}</title><style>
+@page { size: A4 portrait; margin: 6mm; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.head { font-family: system-ui, sans-serif; font-size: 12px; color: #555; padding: 0 0 4mm; }
+.wrap { font-size: 0; }
+.cell { display: inline-block; width: ${d}mm; height: ${d}mm; margin: 1mm; vertical-align: top;
+  page-break-inside: avoid; }
+.circle { width: 100%; height: 100%; border-radius: 50%; border: 0.2mm dashed #c8c8c8;
+  display: flex; align-items: center; justify-content: center; }
+.circle img { width: ${qrSide}mm; height: ${qrSide}mm; display: block; }
+@media print { .no-print { display: none; } }
+</style></head><body>
+<div class="head no-print">${rows.length} QR Codes · Ø ${d} mm — Ctrl/Cmd+P para imprimir ou salvar em PDF. A linha tracejada é só guia de corte.</div>
+<div class="wrap">${cells.join("")}</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>
+</body></html>`;
+
+      const w = window.open("", "_blank");
+      if (!w) {
+        toast.error("Permita pop-ups para abrir a folha de impressão.");
+        return;
+      }
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setKeyBusy(null);
     }
   };
 
@@ -399,6 +462,19 @@ body { font-family: system-ui, sans-serif; margin: 0; color: #111; }
         <SaleFramePanel />
       </div>
 
+      <div className="px-5 py-3 border-b border-border flex items-center gap-2 flex-wrap">
+        <Label className="text-xs">Diâmetro do chaveiro (mm)</Label>
+        <Input
+          className="w-24 h-8"
+          inputMode="numeric"
+          value={keyDiam}
+          onChange={(e) => setKeyDiam(e.target.value)}
+        />
+        <span className="text-xs text-muted-foreground">
+          usado na “Folha Chaveiro” — etiqueta NFC redonda (padrão 25 mm = 2,5 cm)
+        </span>
+      </div>
+
       <div className="divide-y divide-border">
         {batches.length === 0 && (
           <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nenhum lote ainda.</p>
@@ -428,6 +504,14 @@ body { font-family: system-ui, sans-serif; margin: 0; color: #111; }
               title="Folha com todos os QR Codes para imprimir de uma vez"
             >
               <Printer className="size-4" /> {sheetBusy === b.id ? "Gerando…" : "Folha QR"}
+            </Button>
+            <Button
+              variant="outline" size="sm"
+              disabled={keyBusy === b.id}
+              onClick={() => printKeychainSheet(b.id, b.name)}
+              title={`Folha A4 de QR redondos para chaveiros NFC (Ø ${keyDiam} mm)`}
+            >
+              <CircleDot className="size-4" /> {keyBusy === b.id ? "Gerando…" : "Folha Chaveiro"}
             </Button>
             <Button
               variant="outline" size="sm"
