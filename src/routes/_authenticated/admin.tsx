@@ -30,6 +30,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
+const KEY_DIAM_LS = "3dqr-keychain-diam-mm";
+
 const brl = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -200,8 +202,14 @@ function BatchesSection() {
   const [sheetBusy, setSheetBusy] = useState<string | null>(null);
   const [frameBusy, setFrameBusy] = useState<string | null>(null);
   const [keyBusy, setKeyBusy] = useState<string | null>(null);
-  // NFC keychain label diameter, in mm. Default 2,5 cm.
-  const [keyDiam, setKeyDiam] = useState("25");
+  // NFC keychain label diameter, in mm. Persisted so it survives sessions. Default 2,5 cm.
+  const [keyDiam, setKeyDiam] = useState(
+    () => (typeof window !== "undefined" && localStorage.getItem(KEY_DIAM_LS)) || "25",
+  );
+  const setKeyDiamPersist = (v: string) => {
+    setKeyDiam(v);
+    try { localStorage.setItem(KEY_DIAM_LS, v); } catch {}
+  };
 
   /** A4 sheet with each batch QR composed onto the sale frame art. */
   const exportFrames = async (batchId: string) => {
@@ -468,7 +476,7 @@ body { margin: 0; }
           className="w-24 h-8"
           inputMode="numeric"
           value={keyDiam}
-          onChange={(e) => setKeyDiam(e.target.value)}
+          onChange={(e) => setKeyDiamPersist(e.target.value)}
         />
         <span className="text-xs text-muted-foreground">
           usado na “Folha Chaveiro” — etiqueta NFC redonda (padrão 25 mm = 2,5 cm)
