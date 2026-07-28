@@ -298,6 +298,110 @@ export type Database = {
         }
         Relationships: []
       }
+      print_cost_calculations: {
+        Row: {
+          cost_base_cents: number
+          cost_depreciation_cents: number
+          cost_energy_cents: number
+          cost_filament_cents: number
+          cost_labor_cents: number
+          cost_with_failure_cents: number
+          created_at: string
+          extra_costs_cents: number
+          failure_rate_pct: number
+          filament_grams: number
+          filament_price_kg_cents: number
+          id: string
+          kwh_price_cents: number
+          label: string | null
+          labor_hour_cents: number
+          machine_life_hours: number
+          machine_price_cents: number
+          margin_pct: number
+          marketplace_fee_pct: number
+          net_profit_cents: number
+          power_watts: number
+          prep_minutes: number
+          print_hours: number
+          real_margin_pct: number
+          sells_marketplace: boolean
+          suggested_price_cents: number
+          tag_id: string | null
+          user_id: string
+          waste_pct: number
+        }
+        Insert: {
+          cost_base_cents: number
+          cost_depreciation_cents: number
+          cost_energy_cents: number
+          cost_filament_cents: number
+          cost_labor_cents: number
+          cost_with_failure_cents: number
+          created_at?: string
+          extra_costs_cents: number
+          failure_rate_pct: number
+          filament_grams: number
+          filament_price_kg_cents: number
+          id?: string
+          kwh_price_cents: number
+          label?: string | null
+          labor_hour_cents: number
+          machine_life_hours: number
+          machine_price_cents: number
+          margin_pct: number
+          marketplace_fee_pct?: number
+          net_profit_cents: number
+          power_watts: number
+          prep_minutes: number
+          print_hours: number
+          real_margin_pct: number
+          sells_marketplace?: boolean
+          suggested_price_cents: number
+          tag_id?: string | null
+          user_id: string
+          waste_pct: number
+        }
+        Update: {
+          cost_base_cents?: number
+          cost_depreciation_cents?: number
+          cost_energy_cents?: number
+          cost_filament_cents?: number
+          cost_labor_cents?: number
+          cost_with_failure_cents?: number
+          created_at?: string
+          extra_costs_cents?: number
+          failure_rate_pct?: number
+          filament_grams?: number
+          filament_price_kg_cents?: number
+          id?: string
+          kwh_price_cents?: number
+          label?: string | null
+          labor_hour_cents?: number
+          machine_life_hours?: number
+          machine_price_cents?: number
+          margin_pct?: number
+          marketplace_fee_pct?: number
+          net_profit_cents?: number
+          power_watts?: number
+          prep_minutes?: number
+          print_hours?: number
+          real_margin_pct?: number
+          sells_marketplace?: boolean
+          suggested_price_cents?: number
+          tag_id?: string | null
+          user_id?: string
+          waste_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_cost_calculations_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tag_kits: {
         Row: {
           batch_id: string | null

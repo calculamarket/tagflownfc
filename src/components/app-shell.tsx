@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Tags, QrCode, Link2, BarChart3, Zap, Users,
-  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes,
+  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme";
@@ -15,6 +15,7 @@ const nav = [
   { to: "/pecas", label: "Minhas Peças", icon: Boxes },
   { to: "/ativar", label: "Ativar etiqueta", icon: PackageCheck },
   { to: "/qr-codes", label: "QR Codes", icon: QrCode },
+  { to: "/calculadora-custos", label: "Calculadora de Custos", icon: Calculator },
   { to: "/links", label: "Links Inteligentes", icon: Link2 },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/leads", label: "Leads", icon: Inbox },
