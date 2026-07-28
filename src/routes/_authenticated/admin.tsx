@@ -22,7 +22,7 @@ import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
 import { SaleFramePanel, openFrameSheet } from "@/components/sale-frame";
 import { buildQrSvgSheet } from "@/lib/qr-svg-sheet";
-import { openCr80Sheet, DEFAULT_CR80_PHRASE } from "@/lib/cr80-card";
+import { openCr80Sheet, DEFAULT_CR80_PHRASE, type Cr80Orientation } from "@/lib/cr80-card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -41,6 +41,7 @@ const KEY_DIAM_LS = "3dqr-keychain-diam-mm";
 const SVG_MM_LS = "3dqr-svg-plaque-mm";
 const SVG_BORDER_LS = "3dqr-svg-plaque-border";
 const CR80_PHRASE_LS = "3dqr-cr80-phrase";
+const CR80_ORIENT_LS = "3dqr-cr80-orient";
 
 const brl = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -404,6 +405,16 @@ function BatchesSection() {
     setCr80Phrase(v);
     try { localStorage.setItem(CR80_PHRASE_LS, v); } catch {}
   };
+  const [cr80Orient, setCr80Orient] = useState<Cr80Orientation>(
+    () =>
+      (typeof window !== "undefined" && localStorage.getItem(CR80_ORIENT_LS) === "landscape"
+        ? "landscape"
+        : "portrait"),
+  );
+  const setCr80OrientPersist = (v: Cr80Orientation) => {
+    setCr80Orient(v);
+    try { localStorage.setItem(CR80_ORIENT_LS, v); } catch {}
+  };
 
   /** Folha A4 de cartões CR80 (QR + NFC + frase) para imprimir. */
   const exportCr80 = async (batchId: string) => {
@@ -411,7 +422,7 @@ function BatchesSection() {
     try {
       const rows = await adminBatchTags({ data: { batchId } });
       if (rows.length === 0) { toast.error("Lote sem QR Codes."); return; }
-      await openCr80Sheet(rows, window.location.origin, { phrase: cr80Phrase });
+      await openCr80Sheet(rows, window.location.origin, { phrase: cr80Phrase, orientation: cr80Orient });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -742,6 +753,13 @@ body { margin: 0; }
           onChange={(e) => setCr80PhrasePersist(e.target.value)}
           placeholder={DEFAULT_CR80_PHRASE}
         />
+        <Select value={cr80Orient} onValueChange={(v) => setCr80OrientPersist(v as Cr80Orientation)}>
+          <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="portrait">Vertical (retrato)</SelectItem>
+            <SelectItem value="landscape">Horizontal (paisagem)</SelectItem>
+          </SelectContent>
+        </Select>
         <span className="text-xs text-muted-foreground">
           usado no “Cartão CR80” — tamanho de cartão de crédito (85,6 × 54 mm)
         </span>
