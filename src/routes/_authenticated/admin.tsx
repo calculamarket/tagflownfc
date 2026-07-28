@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Box, Printer, Sticker, CircleDot, Store, Plus, Trash2 } from "lucide-react";
+import { Search, Download, Box, Printer, Sticker, CircleDot, Store, Plus, Trash2, FileCode } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   adminListTenants, adminCreateTenant, adminUpdateTenant,
@@ -21,6 +21,7 @@ import QRCode from "qrcode";
 import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
 import { SaleFramePanel, openFrameSheet } from "@/components/sale-frame";
+import { buildQrSvgSheet } from "@/lib/qr-svg-sheet";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -36,6 +37,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const KEY_DIAM_LS = "3dqr-keychain-diam-mm";
+const SVG_MM_LS = "3dqr-svg-plaque-mm";
+const SVG_BORDER_LS = "3dqr-svg-plaque-border";
 
 const brl = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -374,6 +377,49 @@ function BatchesSection() {
     try { localStorage.setItem(KEY_DIAM_LS, v); } catch {}
   };
 
+  const [svgBusy, setSvgBusy] = useState<string | null>(null);
+  // SVG plaque config for 3D printing. Persisted.
+  const [svgMm, setSvgMm] = useState(
+    () => (typeof window !== "undefined" && localStorage.getItem(SVG_MM_LS)) || "30",
+  );
+  const [svgBorder, setSvgBorder] = useState(
+    () => (typeof window === "undefined" ? true : localStorage.getItem(SVG_BORDER_LS) !== "0"),
+  );
+  const setSvgMmPersist = (v: string) => {
+    setSvgMm(v);
+    try { localStorage.setItem(SVG_MM_LS, v); } catch {}
+  };
+  const setSvgBorderPersist = (v: boolean) => {
+    setSvgBorder(v);
+    try { localStorage.setItem(SVG_BORDER_LS, v ? "1" : "0"); } catch {}
+  };
+
+  /** Folha SVG vetorial (plaquinhas) para impressão 3D — um arquivo com o lote. */
+  const exportSvgSheet = async (batchId: string, batchName: string) => {
+    setSvgBusy(batchId);
+    try {
+      const rows = await adminBatchTags({ data: { batchId } });
+      if (rows.length === 0) { toast.error("Lote sem QR Codes."); return; }
+      const mm = Math.min(120, Math.max(10, Number(svgMm) || 30));
+      const svg = buildQrSvgSheet(rows, window.location.origin, {
+        qrMm: mm,
+        border: svgBorder,
+        columns: 5,
+      });
+      const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `plaquinhas-${slug(batchName)}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${rows.length} plaquinhas exportadas em SVG.`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSvgBusy(null);
+    }
+  };
+
   /** A4 sheet with each batch QR composed onto the sale frame art. */
   const exportFrames = async (batchId: string) => {
     setFrameBusy(batchId);
@@ -646,6 +692,23 @@ body { margin: 0; }
         </span>
       </div>
 
+      <div className="px-5 py-3 border-b border-border flex items-center gap-2 flex-wrap">
+        <Label className="text-xs">Plaquinha SVG 3D — tamanho do QR (mm)</Label>
+        <Input
+          className="w-24 h-8"
+          inputMode="numeric"
+          value={svgMm}
+          onChange={(e) => setSvgMmPersist(e.target.value)}
+        />
+        <label className="flex items-center gap-2 text-xs text-muted-foreground ml-2">
+          <Switch checked={svgBorder} onCheckedChange={setSvgBorderPersist} />
+          contorno da plaquinha
+        </label>
+        <span className="text-xs text-muted-foreground">
+          usado na “Folha SVG (3D)” — vetor em mm para importar no CAD/slicer
+        </span>
+      </div>
+
       <div className="divide-y divide-border">
         {batches.length === 0 && (
           <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nenhum lote ainda.</p>
@@ -691,6 +754,14 @@ body { margin: 0; }
               title="Um .3mf por peça, prontos para o fatiador"
             >
               <Box className="size-4" /> {modelsBusy === b.id ? "Gerando…" : "Modelos 3D"}
+            </Button>
+            <Button
+              variant="outline" size="sm"
+              disabled={svgBusy === b.id}
+              onClick={() => exportSvgSheet(b.id, b.name)}
+              title="Folha SVG vetorial (plaquinhas) para importar no CAD/slicer e extrudar"
+            >
+              <FileCode className="size-4" /> {svgBusy === b.id ? "Gerando…" : "Folha SVG (3D)"}
             </Button>
             <Button variant="outline" size="sm" onClick={() => exportCsv(b.id, b.name)}>
               <Download className="size-4" /> CSV
