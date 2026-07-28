@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { getPublicView, DEFAULT_LEAD_FORM } from "@/lib/landing.functions";
 import type { LandingButton, LeadForm } from "@/lib/landing.functions";
 import { submitLead } from "@/lib/leads.functions";
@@ -8,7 +8,7 @@ import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads
 import { normalizeDestinationUrl } from "@/lib/destination";
 import { parseLinkItems, defaultLabel, linkItemHref, opensInApp, itemIcon, type LinkItem } from "@/lib/link-menu";
 import { parsePromoProducts, formatBRL, promoStatus, type PromoProduct } from "@/lib/promo";
-import { BRAND } from "@/lib/brand";
+import { BRAND, type Brand } from "@/lib/brand";
 
 export const Route = createFileRoute("/t/$id_/view")({
   ssr: false,
@@ -16,12 +16,18 @@ export const Route = createFileRoute("/t/$id_/view")({
   component: PublicViewPage,
 });
 
+// Marca resolvida do tenant dono da tag (white-label). Todo o conteúdo público
+// é envolvido pelo provider abaixo, então o rodapé pega a marca certa em
+// qualquer sub-view sem precisar receber prop.
+const BrandCtx = createContext<Brand>(BRAND);
+
 /** Rodapé "Powered by" das páginas públicas — some quando a marca desliga. */
 function PoweredBy({ className }: { className?: string }) {
-  if (!BRAND.poweredBy) return null;
+  const brand = useContext(BrandCtx);
+  if (!brand.poweredBy) return null;
   return (
     <p className={`text-center text-xs text-muted-foreground ${className ?? ""}`}>
-      Powered by {BRAND.name}
+      Powered by {brand.name}
     </p>
   );
 }
@@ -61,13 +67,19 @@ function PublicViewPage() {
   }
 
   const { tag, landing } = view;
-  if (tag.destination_type === "pix") return <PixView payload={tag.destination} name={tag.name} />;
-  if (tag.destination_type === "wifi") return <WifiView payload={tag.destination} name={tag.name} />;
-  if (tag.destination_type === "vcard") return <VCardView payload={tag.destination} name={tag.name} />;
-  if (tag.destination_type === "review_gate") return <ReviewGateView payload={tag.destination} name={tag.name} />;
-  if (tag.destination_type === "links") return <LinksView payload={tag.destination} name={tag.name} />;
-  if (tag.destination_type === "promo") return <PromoView payload={tag.destination} name={tag.name} />;
-  return <LandingView landing={landing} tag={tag} />;
+  const brand = "brand" in view ? view.brand : BRAND;
+
+  const content = (() => {
+    if (tag.destination_type === "pix") return <PixView payload={tag.destination} name={tag.name} />;
+    if (tag.destination_type === "wifi") return <WifiView payload={tag.destination} name={tag.name} />;
+    if (tag.destination_type === "vcard") return <VCardView payload={tag.destination} name={tag.name} />;
+    if (tag.destination_type === "review_gate") return <ReviewGateView payload={tag.destination} name={tag.name} />;
+    if (tag.destination_type === "links") return <LinksView payload={tag.destination} name={tag.name} />;
+    if (tag.destination_type === "promo") return <PromoView payload={tag.destination} name={tag.name} />;
+    return <LandingView landing={landing} tag={tag} />;
+  })();
+
+  return <BrandCtx.Provider value={brand ?? BRAND}>{content}</BrandCtx.Provider>;
 }
 
 function LeadFormBlock({ tagId, config }: { tagId: string; config: LeadForm }) {

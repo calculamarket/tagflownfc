@@ -298,6 +298,80 @@ export type Database = {
         }
         Relationships: []
       }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          monogram: string
+          name: string
+          powered_by: boolean
+          primary_color: string | null
+          slug: string
+          status: string
+          support_email: string | null
+          tagline: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          monogram?: string
+          name: string
+          powered_by?: boolean
+          primary_color?: string | null
+          slug: string
+          status?: string
+          support_email?: string | null
+          tagline?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          monogram?: string
+          name?: string
+          powered_by?: boolean
+          primary_color?: string | null
+          slug?: string
+          status?: string
+          support_email?: string | null
+          tagline?: string
+        }
+        Relationships: []
+      }
+      tenant_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       print_cost_calculations: {
         Row: {
           cost_base_cents: number
@@ -506,6 +580,7 @@ export type Database = {
           slot: number | null
           slot_label: string | null
           status: Database["public"]["Enums"]["tag_status"]
+          tenant_id: string
           updated_at: string
           user_id: string | null
         }
@@ -530,6 +605,7 @@ export type Database = {
           slot?: number | null
           slot_label?: string | null
           status?: Database["public"]["Enums"]["tag_status"]
+          tenant_id?: string
           updated_at?: string
           user_id?: string | null
         }
@@ -554,6 +630,7 @@ export type Database = {
           slot?: number | null
           slot_label?: string | null
           status?: Database["public"]["Enums"]["tag_status"]
+          tenant_id?: string
           updated_at?: string
           user_id?: string | null
         }

@@ -11,7 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Box, Printer, Sticker, CircleDot } from "lucide-react";
+import { Search, Download, Box, Printer, Sticker, CircleDot, Store, Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import {
+  adminListTenants, adminCreateTenant, adminUpdateTenant,
+  adminAddTenantMember, adminRemoveTenantMember,
+} from "@/lib/tenant.functions";
 import QRCode from "qrcode";
 import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
@@ -86,6 +91,8 @@ function AdminPage() {
         </div>
       </div>
 
+      <TenantsSection />
+
       <BatchesSection />
 
       <div className="rounded-lg border border-border bg-card">
@@ -155,6 +162,162 @@ function AdminPage() {
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Super-admin console: create/manage resellers (tenants) and their staff. */
+function TenantsSection() {
+  const qc = useQueryClient();
+  const { data: tenants = [] } = useQuery({
+    queryKey: ["admin-tenants"],
+    queryFn: () => adminListTenants(),
+  });
+
+  const [slug, setSlug] = useState("");
+  const [name, setName] = useState("");
+  const [monogram, setMonogram] = useState("");
+  const [tagline, setTagline] = useState("");
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-tenants"] });
+
+  const create = useMutation({
+    mutationFn: () =>
+      adminCreateTenant({
+        data: { slug: slug.trim().toLowerCase(), name: name.trim(), monogram: monogram.trim(), tagline: tagline.trim() },
+      }),
+    onSuccess: () => {
+      toast.success("Revendedor criado.");
+      setSlug(""); setName(""); setMonogram(""); setTagline("");
+      invalidate();
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const togglePowered = useMutation({
+    mutationFn: (v: { id: string; powered_by: boolean }) => adminUpdateTenant({ data: v }),
+    onSuccess: invalidate,
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const addMember = useMutation({
+    mutationFn: (v: { tenant_id: string; email: string }) =>
+      adminAddTenantMember({ data: { tenant_id: v.tenant_id, email: v.email, role: "owner" } }),
+    onSuccess: () => { toast.success("Membro adicionado."); invalidate(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const removeMember = useMutation({
+    mutationFn: (id: string) => adminRemoveTenantMember({ data: { id } }),
+    onSuccess: () => { toast.success("Membro removido."); invalidate(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="p-5 border-b border-border flex items-center gap-2">
+        <Store className="size-4 text-primary" />
+        <div>
+          <div className="font-semibold">Revendedores (white-label)</div>
+          <p className="text-sm text-muted-foreground">
+            Cada revendedor tem a própria marca e vende para os clientes dele. O usuário precisa se
+            cadastrar antes para poder ser adicionado como dono.
+          </p>
+        </div>
+      </div>
+
+      {/* Criar */}
+      <div className="p-5 border-b border-border flex flex-wrap items-end gap-3">
+        <div className="space-y-1 w-40">
+          <Label className="text-xs">Slug (subdomínio)</Label>
+          <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="marcadele" />
+        </div>
+        <div className="space-y-1 flex-1 min-w-40">
+          <Label className="text-xs">Nome da marca</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Marca do Cliente" />
+        </div>
+        <div className="space-y-1 w-24">
+          <Label className="text-xs">Selo</Label>
+          <Input value={monogram} onChange={(e) => setMonogram(e.target.value)} placeholder="MC" maxLength={4} />
+        </div>
+        <div className="space-y-1 flex-1 min-w-40">
+          <Label className="text-xs">Slogan</Label>
+          <Input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="opcional" />
+        </div>
+        <Button
+          disabled={!slug.trim() || !name.trim() || create.isPending}
+          onClick={() => create.mutate()}
+        >
+          <Plus className="size-4" /> {create.isPending ? "Criando…" : "Criar"}
+        </Button>
+      </div>
+
+      {/* Lista */}
+      <div className="divide-y divide-border">
+        {tenants.length === 0 && (
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nenhum revendedor ainda.</p>
+        )}
+        {tenants.map((t) => (
+          <div key={t.id} className="px-5 py-4 space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="size-8 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold shrink-0">
+                {t.monogram || "3D"}
+              </div>
+              <div className="flex-1 min-w-40">
+                <div className="font-medium">{t.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-mono">{t.slug}</span> · {t.tag_count} tags · {t.members.length} membro(s)
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                Powered by
+                <Switch
+                  checked={t.powered_by}
+                  onCheckedChange={(v) => togglePowered.mutate({ id: t.id, powered_by: v })}
+                />
+              </label>
+            </div>
+
+            {/* Membros */}
+            <div className="pl-11 space-y-2">
+              {t.members.map((m) => (
+                <div key={m.id} className="flex items-center gap-2 text-sm">
+                  <Badge variant="secondary">{m.role}</Badge>
+                  <span className="truncate">{m.email || m.full_name || m.user_id}</span>
+                  <Button
+                    size="sm" variant="ghost" className="ml-auto"
+                    onClick={() => { if (confirm("Remover este membro?")) removeMember.mutate(m.id); }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
+              ))}
+              <AddMemberRow onAdd={(email) => addMember.mutate({ tenant_id: t.id, email })} busy={addMember.isPending} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AddMemberRow({ onAdd, busy }: { onAdd: (email: string) => void; busy: boolean }) {
+  const [email, setEmail] = useState("");
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        className="h-8 max-w-xs"
+        placeholder="e-mail do dono…"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <Button
+        size="sm" variant="outline"
+        disabled={!email.trim() || busy}
+        onClick={() => { onAdd(email.trim()); setEmail(""); }}
+      >
+        <Plus className="size-3.5" /> Adicionar dono
+      </Button>
     </div>
   );
 }

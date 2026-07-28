@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
+import { BRAND } from "./brand";
+import { brandFromTenant, type TenantBrandRow } from "./tenant";
 
 const buttonSchema = z.object({
   label: z.string().min(1),
@@ -106,6 +108,23 @@ export const getPublicView = createServerFn({ method: "POST" })
     if (!tag || tag.status !== "active") return { ok: false as const };
     const { data: lp } = await supabase
       .from("landing_pages").select("*").eq("tag_id", data.id).maybeSingle();
+
+    // Marca white-label: a do tenant dono da tag. Lido via service role (o
+    // cliente anon não tem acesso à tabela tenants), caindo na marca padrão.
+    let brand = BRAND;
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: t } = await supabaseAdmin
+        .from("tags")
+        .select("tenants(name, monogram, tagline, powered_by, support_email)")
+        .eq("id", data.id)
+        .maybeSingle();
+      const tenant = (t as { tenants: TenantBrandRow | null } | null)?.tenants ?? null;
+      brand = brandFromTenant(tenant);
+    } catch {
+      // mantém a marca padrão
+    }
+
     return {
       ok: true as const,
       tag: {
@@ -115,5 +134,6 @@ export const getPublicView = createServerFn({ method: "POST" })
         destination: (tag.destination ?? {}) as Record<string, string>,
       },
       landing: lp,
+      brand,
     };
   });
