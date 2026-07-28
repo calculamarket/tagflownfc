@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Box, Printer, Sticker, CircleDot, Store, Plus, Trash2, FileCode } from "lucide-react";
+import { Search, Download, Box, Printer, Sticker, CircleDot, Store, Plus, Trash2, FileCode, CreditCard } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   adminListTenants, adminCreateTenant, adminUpdateTenant,
@@ -22,6 +22,7 @@ import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
 import { SaleFramePanel, openFrameSheet } from "@/components/sale-frame";
 import { buildQrSvgSheet } from "@/lib/qr-svg-sheet";
+import { openCr80Sheet, DEFAULT_CR80_PHRASE } from "@/lib/cr80-card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const KEY_DIAM_LS = "3dqr-keychain-diam-mm";
 const SVG_MM_LS = "3dqr-svg-plaque-mm";
 const SVG_BORDER_LS = "3dqr-svg-plaque-border";
+const CR80_PHRASE_LS = "3dqr-cr80-phrase";
 
 const brl = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -394,6 +396,29 @@ function BatchesSection() {
     try { localStorage.setItem(SVG_BORDER_LS, v ? "1" : "0"); } catch {}
   };
 
+  const [cr80Busy, setCr80Busy] = useState<string | null>(null);
+  const [cr80Phrase, setCr80Phrase] = useState(
+    () => (typeof window !== "undefined" && localStorage.getItem(CR80_PHRASE_LS)) || DEFAULT_CR80_PHRASE,
+  );
+  const setCr80PhrasePersist = (v: string) => {
+    setCr80Phrase(v);
+    try { localStorage.setItem(CR80_PHRASE_LS, v); } catch {}
+  };
+
+  /** Folha A4 de cartões CR80 (QR + NFC + frase) para imprimir. */
+  const exportCr80 = async (batchId: string) => {
+    setCr80Busy(batchId);
+    try {
+      const rows = await adminBatchTags({ data: { batchId } });
+      if (rows.length === 0) { toast.error("Lote sem QR Codes."); return; }
+      await openCr80Sheet(rows, window.location.origin, { phrase: cr80Phrase });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setCr80Busy(null);
+    }
+  };
+
   /** Folha SVG vetorial (plaquinhas) para impressão 3D — um arquivo com o lote. */
   const exportSvgSheet = async (batchId: string, batchName: string) => {
     setSvgBusy(batchId);
@@ -709,6 +734,19 @@ body { margin: 0; }
         </span>
       </div>
 
+      <div className="px-5 py-3 border-b border-border flex items-center gap-2 flex-wrap">
+        <Label className="text-xs whitespace-nowrap">Frase do cartão CR80</Label>
+        <Input
+          className="h-8 min-w-64 flex-1"
+          value={cr80Phrase}
+          onChange={(e) => setCr80PhrasePersist(e.target.value)}
+          placeholder={DEFAULT_CR80_PHRASE}
+        />
+        <span className="text-xs text-muted-foreground">
+          usado no “Cartão CR80” — tamanho de cartão de crédito (85,6 × 54 mm)
+        </span>
+      </div>
+
       <div className="divide-y divide-border">
         {batches.length === 0 && (
           <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nenhum lote ainda.</p>
@@ -746,6 +784,14 @@ body { margin: 0; }
               title={`Folha A4 de QR redondos para chaveiros NFC (Ø ${keyDiam} mm)`}
             >
               <CircleDot className="size-4" /> {keyBusy === b.id ? "Gerando…" : "Folha Chaveiro"}
+            </Button>
+            <Button
+              variant="outline" size="sm"
+              disabled={cr80Busy === b.id}
+              onClick={() => exportCr80(b.id)}
+              title="Folha A4 de cartões CR80 (QR + NFC + frase)"
+            >
+              <CreditCard className="size-4" /> {cr80Busy === b.id ? "Gerando…" : "Cartão CR80"}
             </Button>
             <Button
               variant="outline" size="sm"
