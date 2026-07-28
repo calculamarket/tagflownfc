@@ -1,13 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, QrCode, Zap, BarChart3, Shield } from "lucide-react";
+import { BRAND } from "@/lib/brand";
+
+const HOME_TITLE = `${BRAND.name} — ${BRAND.tagline}`;
+const HOME_DESC =
+  "QR Codes em impressão 3D que voce reconfigura quando quiser. Aponte para PIX, Instagram, WhatsApp, cardápio e mais - sem reimprimir a peça.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "3D QR — QR Codes em impressão 3D, reconfiguráveis" },
-      { name: "description", content: "QR Codes em impressão 3D que voce reconfigura quando quiser. Aponte para PIX, Instagram, WhatsApp, cardápio e mais - sem reimprimir a peça." },
-      { property: "og:title", content: "3D QR — QR Codes em impressão 3D, reconfiguráveis" },
-      { property: "og:description", content: "QR Codes em impressão 3D que voce reconfigura quando quiser. Aponte para PIX, Instagram, WhatsApp, cardápio e mais - sem reimprimir a peça." },
+      { title: HOME_TITLE },
+      { name: "description", content: HOME_DESC },
+      { property: "og:title", content: HOME_TITLE },
+      { property: "og:description", content: HOME_DESC },
     ],
   }),
   component: Landing,
@@ -19,8 +24,8 @@ function Landing() {
       <header className="border-b border-border">
         <div className="mx-auto max-w-6xl h-16 px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 font-semibold">
-            <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold">3D</div>
-            3D QR
+            <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold">{BRAND.monogram}</div>
+            {BRAND.name}
           </div>
           <div className="flex items-center gap-3">
             <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">
@@ -86,7 +91,7 @@ function Landing() {
 
       <footer className="border-t border-border mt-16">
         <div className="mx-auto max-w-6xl px-6 py-6 text-sm text-muted-foreground flex justify-between">
-          <span>© {new Date().getFullYear()} 3D QR</span>
+          <span>© {new Date().getFullYear()} {BRAND.name}</span>
           <span>Feito com Lovable</span>
         </div>
       </footer>

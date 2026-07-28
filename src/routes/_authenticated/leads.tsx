@@ -41,7 +41,7 @@ function LeadsPage() {
     const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "leads-3D QR.csv";
+    a.download = "leads.csv";
     a.click();
     URL.revokeObjectURL(url);
   };

@@ -8,12 +8,23 @@ import { buildPixPayload, buildWifiPayload, buildVCard } from "@/lib/qr-payloads
 import { normalizeDestinationUrl } from "@/lib/destination";
 import { parseLinkItems, defaultLabel, linkItemHref, opensInApp, itemIcon, type LinkItem } from "@/lib/link-menu";
 import { parsePromoProducts, formatBRL, promoStatus, type PromoProduct } from "@/lib/promo";
+import { BRAND } from "@/lib/brand";
 
 export const Route = createFileRoute("/t/$id_/view")({
   ssr: false,
-  head: () => ({ meta: [{ title: "3D QR" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: BRAND.name }, { name: "robots", content: "noindex" }] }),
   component: PublicViewPage,
 });
+
+/** Rodapé "Powered by" das páginas públicas — some quando a marca desliga. */
+function PoweredBy({ className }: { className?: string }) {
+  if (!BRAND.poweredBy) return null;
+  return (
+    <p className={`text-center text-xs text-muted-foreground ${className ?? ""}`}>
+      Powered by {BRAND.name}
+    </p>
+  );
+}
 
 type ViewData = Awaited<ReturnType<typeof getPublicView>>;
 
@@ -165,7 +176,7 @@ function LandingView({
           )}
         </div>
       </div>
-      <p className="text-center text-xs text-muted-foreground mt-6">Powered by 3D QR</p>
+      <PoweredBy className="mt-6" />
     </div>
   );
 }
@@ -414,7 +425,7 @@ function LinksView({ payload, name }: { payload: Record<string, string>; name: s
           );
         })}
 
-        <p className="text-center text-xs text-muted-foreground pt-4">Powered by 3D QR</p>
+        <PoweredBy className="pt-4" />
       </div>
     </div>
   );
@@ -433,7 +444,7 @@ function PromoView({ payload, name }: { payload: Record<string, string>; name: s
         {products.map((p, i) => (
           <PromoCard key={i} product={p} />
         ))}
-        <p className="text-center text-xs text-muted-foreground pt-2">Powered by 3D QR</p>
+        <PoweredBy className="pt-2" />
       </div>
     </div>
   );

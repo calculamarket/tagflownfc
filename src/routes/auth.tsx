@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { BRAND, pageTitle } from "@/lib/brand";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
@@ -21,7 +22,7 @@ function safeRedirect(value: string | undefined): string {
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "Entrar · 3D QR" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Entrar") }] }),
   component: AuthPage,
 });
 
@@ -80,8 +81,8 @@ function AuthPage() {
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       <div className="hidden lg:flex flex-col justify-between p-10 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <Link to="/" className="flex items-center gap-2 font-semibold">
-          <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold">3D</div>
-          3D QR
+          <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold">{BRAND.monogram}</div>
+          {BRAND.name}
         </Link>
         <div>
           <h2 className="text-3xl font-semibold tracking-tight">
@@ -91,7 +92,7 @@ function AuthPage() {
             Gestão profissional de NFC, QR Codes e links inteligentes com analytics em tempo real.
           </p>
         </div>
-        <div className="text-xs text-sidebar-foreground/50">© {new Date().getFullYear()} 3D QR</div>
+        <div className="text-xs text-sidebar-foreground/50">© {new Date().getFullYear()} {BRAND.name}</div>
       </div>
 
       <div className="flex items-center justify-center p-6">

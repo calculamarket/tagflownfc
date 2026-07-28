@@ -1,4 +1,5 @@
 // Pure helpers to build scannable payloads (client-safe).
+import { BRAND } from "./brand";
 
 /** EMV/CRC16-CCITT (poly 0x1021, init 0xFFFF) used by the PIX BR Code. */
 function crc16(input: string): string {
@@ -56,7 +57,7 @@ export function buildPixPayload({ key, name, city, amount, txid }: PixInput): st
     tlv("53", "986") +
     (hasAmount ? tlv("54", amountNum.toFixed(2)) : "") +
     tlv("58", "BR") +
-    tlv("59", pixText(name || "3D QR", 25) || "3D QR") +
+    tlv("59", pixText(name || BRAND.name, 25) || BRAND.name) +
     tlv("60", pixText(city || "BRASIL", 15) || "BRASIL") +
     tlv("62", additional) +
     "6304";

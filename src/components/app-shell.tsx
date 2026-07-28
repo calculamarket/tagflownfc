@@ -7,6 +7,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 
 const nav = [
@@ -62,9 +63,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="h-16 flex items-center justify-between px-5 border-b border-sidebar-border">
           <Link to="/dashboard" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
             <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold">
-              3D
+              {BRAND.monogram}
             </div>
-            3D QR
+            {BRAND.name}
           </Link>
           <button className="lg:hidden text-sidebar-foreground" onClick={() => setMobileOpen(false)}>
             <X className="size-5" />
@@ -127,7 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="lg:hidden h-14 border-b border-border flex items-center px-4 gap-3 bg-background">
           <button onClick={() => setMobileOpen(true)}><Menu className="size-5" /></button>
-          <div className="font-semibold">3D QR</div>
+          <div className="font-semibold">{BRAND.name}</div>
         </header>
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
