@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { DESTINATION_LABELS, type DestinationType } from "@/lib/destination";
 import { toast } from "sonner";
-import { QrCode, Copy, Check, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { QrCode, Copy, Check, Plus, Trash2, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
 import { TagQrPreview } from "./tag-qr-preview";
 import { FileUpload } from "./file-upload";
 import {
@@ -227,16 +227,30 @@ export function TagForm({
               </>
             )}
           </p>
-          <div className="flex gap-2">
-            <Input
-              readOnly
-              value={shownUrl}
-              onFocus={(e) => e.currentTarget.select()}
-              className="h-8 font-mono text-xs"
-            />
-            <Button type="button" variant="outline" size="sm" onClick={copyUrl} title="Copiar endereço">
+          {/* Endereço em destaque: a caixa inteira copia ao clicar. */}
+          <button
+            type="button"
+            onClick={copyUrl}
+            title="Clique para copiar o endereço"
+            className="group flex w-full items-center gap-3 rounded-lg border-2 border-primary/40 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10"
+          >
+            <span className="flex-1 break-all font-mono text-sm sm:text-base font-medium text-foreground">
+              {shownUrl}
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground">
               {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            </Button>
+              {copied ? "Copiado!" : "Copiar"}
+            </span>
+          </button>
+          <div className="flex justify-end">
+            <a
+              href={shownUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+            >
+              <ExternalLink className="size-3.5" /> Abrir link
+            </a>
           </div>
         </div>
 
