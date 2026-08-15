@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Upload, X, Download } from "lucide-react";
+import { Sparkles, Upload, X, Download, Box } from "lucide-react";
 import { generateFigurine } from "@/lib/figurine.functions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
