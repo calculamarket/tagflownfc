@@ -446,6 +446,12 @@ function HookPage() {
           </div>
         </aside>
       </div>
+      </TabsContent>
+
+      <TabsContent value="encaixe">
+        <HookMountGenerator />
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }
