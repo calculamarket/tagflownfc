@@ -53,6 +53,13 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     )
     .join("");
 
+  // Child meshes + one assembly object that references them as components.
+  // Shipping the meshes as separate build items makes slicers treat each as an
+  // independent object and drop it onto the bed, which flipped the QR plate
+  // under the body. As components of a single object the relative Z is kept,
+  // so the code always stays on top of the piece.
+  const assemblyId = objects.length + 2;
+
   const resources = objects
     .map(
       (o, i) =>
@@ -60,53 +67,70 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     )
     .join("");
 
-  const items = objects.map((_, i) => `<item objectid="${i + 2}"/>`).join("");
+  const components = objects
+    .map((_, i) => `<component objectid="${i + 2}"/>`)
+    .join("");
+
+  const assembly =
+    `<object id="${assemblyId}" type="model" name="${objects[0]?.name ?? "Peca"}">` +
+    `<components>${components}</components></object>`;
+
+  const items = `<item objectid="${assemblyId}"/>`;
 
   const model =
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<model unit="millimeter" xml:lang="en-US" ` +
     `xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">` +
-    `<resources><basematerials id="1">${materials}</basematerials>${resources}</resources>` +
+    `<resources><basematerials id="1">${materials}</basematerials>${resources}${assembly}</resources>` +
     `<build>${items}</build>` +
     `</model>`;
 
-  // PrusaSlicer / SuperSlicer dialect.
+
+  // PrusaSlicer / SuperSlicer dialect: one object with a volume per component.
+  let firstTriangle = 0;
+  const prusaVolumes = objects
+    .map((o) => {
+      const first = firstTriangle;
+      const last = Math.max(first, first + o.triangleCount - 1);
+      firstTriangle = last + 1;
+      return (
+        `<volume firstid="${first}" lastid="${last}">` +
+        `<metadata type="volume" key="name" value="${o.name}"/>` +
+        `<metadata type="volume" key="extruder" value="${o.slot.extruder}"/>` +
+        `</volume>`
+      );
+    })
+    .join("");
+
   const prusaConfig =
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<config>` +
-    objects
-      .map(
-        (o, i) =>
-          `<object id="${i + 2}">` +
-          `<metadata type="object" key="name" value="${o.name}"/>` +
-          `<metadata type="object" key="extruder" value="${o.slot.extruder}"/>` +
-          `<volume firstid="0" lastid="${Math.max(0, o.triangleCount - 1)}">` +
-          `<metadata type="volume" key="name" value="${o.name}"/>` +
-          `<metadata type="volume" key="extruder" value="${o.slot.extruder}"/>` +
-          `</volume>` +
-          `</object>`,
-      )
-      .join("") +
+    `<object id="${assemblyId}">` +
+    `<metadata type="object" key="name" value="${objects[0]?.name ?? "Peca"}"/>` +
+    `<metadata type="object" key="extruder" value="${objects[0]?.slot.extruder ?? 1}"/>` +
+    prusaVolumes +
+    `</object>` +
     `</config>`;
 
-  // Bambu Studio / OrcaSlicer dialect.
+  // Bambu Studio / OrcaSlicer dialect: parts reference the component objects.
   const orcaConfig =
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<config>` +
+    `<object id="${assemblyId}">` +
+    `<metadata key="name" value="${objects[0]?.name ?? "Peca"}"/>` +
+    `<metadata key="extruder" value="${objects[0]?.slot.extruder ?? 1}"/>` +
     objects
       .map(
         (o, i) =>
-          `<object id="${i + 2}">` +
+          `<part id="${i + 2}" subtype="normal_part">` +
           `<metadata key="name" value="${o.name}"/>` +
           `<metadata key="extruder" value="${o.slot.extruder}"/>` +
-          `<part id="${i + 1}" subtype="normal_part">` +
-          `<metadata key="name" value="${o.name}"/>` +
-          `<metadata key="extruder" value="${o.slot.extruder}"/>` +
-          `</part>` +
-          `</object>`,
+          `</part>`,
       )
       .join("") +
+    `</object>` +
     `</config>`;
+
 
   const projectSettings = JSON.stringify({
     filament_type: objects.map((o) => o.slot.material),
