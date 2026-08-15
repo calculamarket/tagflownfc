@@ -310,11 +310,13 @@ function PixPlatePage() {
   };
 
   const buildOne = async (format: "3mf" | "stl", secondOverride?: string) => {
-    const opts = options(secondOverride);
+    const opts = { ...options(secondOverride), part: exportPart };
     return format === "3mf"
       ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
       : buildPixPlateStl(opts);
   };
+
+  const partSuffix = exportPart === "plate" ? "-placa" : exportPart === "base" ? "-base" : "";
 
   const saveBlob = (blob: Blob, name: string) => {
     const href = URL.createObjectURL(blob);
