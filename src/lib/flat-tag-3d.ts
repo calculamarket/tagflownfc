@@ -135,15 +135,17 @@ function stadium(cx: number, cy: number, w: number, h: number, segments = 16): P
   const r = Math.min(w, h) / 2;
   const straight = Math.max(0, h / 2 - r);
   const pts: Pt[] = [];
+  // CCW: top cap (0 -> pi around the upper centre), then bottom cap (pi -> 2pi).
   for (let i = 0; i <= segments; i++) {
-    const a = -Math.PI / 2 + (Math.PI * i) / segments;
-    pts.push([cx + r * Math.cos(a), cy - straight + r * Math.sin(a)]);
-  }
-  for (let i = 0; i <= segments; i++) {
-    const a = Math.PI / 2 + (Math.PI * i) / segments;
+    const a = (Math.PI * i) / segments;
     pts.push([cx + r * Math.cos(a), cy + straight + r * Math.sin(a)]);
   }
+  for (let i = 0; i <= segments; i++) {
+    const a = Math.PI + (Math.PI * i) / segments;
+    pts.push([cx + r * Math.cos(a), cy - straight + r * Math.sin(a)]);
+  }
   return pts;
+
 }
 
 /** Side walls of one ring; winding decides which way the normals face. */
