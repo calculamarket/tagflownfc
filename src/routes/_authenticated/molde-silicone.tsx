@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Box, Download } from "lucide-react";
+import { Box, Download, Upload, X } from "lucide-react";
+import { measureMeshFile } from "@/lib/mesh-measure";
 import { buildMoldBox3mf, buildMoldBoxGeometry, buildMoldBoxStl } from "@/lib/mold-box-3d";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
