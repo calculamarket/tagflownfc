@@ -84,7 +84,7 @@ function FlatTagPage() {
 
   const [bodyColor, setBodyColor] = useState("#ffffff");
   const [codeColor, setCodeColor] = useState("#000000");
-  const [slots, setSlots] = useState(4);
+  const [printerSlots, setPrinterSlots] = useState(4);
   const [bodySlot, setBodySlot] = useState<MaterialSlot>({ extruder: 1, material: "PLA", color: "#ffffff" });
   const [codeSlot, setCodeSlot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#000000" });
   const [filename, setFilename] = useState("etiqueta-qr");
@@ -304,18 +304,18 @@ function FlatTagPage() {
               <Input id="sm" inputMode="decimal" disabled={!slots} value={slotMarginMm} onChange={(e) => setSlotMarginMm(e.target.value)} />
             </div>
 
-            <SlotCountField value={slots} onChange={setSlots} />
+            <SlotCountField value={printerSlots} onChange={setPrinterSlots} />
             <MaterialSlotFields
               label="Corpo"
               idPrefix="corpo"
-              slots={slots}
+              slots={printerSlots}
               value={bodySlot}
               onChange={(v) => { setBodySlot(v); setBodyColor(v.color); }}
             />
             <MaterialSlotFields
               label="Código"
               idPrefix="codigo"
-              slots={slots}
+              slots={printerSlots}
               value={codeSlot}
               onChange={(v) => { setCodeSlot(v); setCodeColor(v.color); }}
             />
