@@ -132,6 +132,110 @@ export type Database = {
         }
         Relationships: []
       }
+      print_cost_calculations: {
+        Row: {
+          cost_base_cents: number
+          cost_depreciation_cents: number
+          cost_energy_cents: number
+          cost_filament_cents: number
+          cost_labor_cents: number
+          cost_with_failure_cents: number
+          created_at: string
+          extra_costs_cents: number
+          failure_rate_pct: number
+          filament_grams: number
+          filament_price_kg_cents: number
+          id: string
+          kwh_price_cents: number
+          label: string | null
+          labor_hour_cents: number
+          machine_life_hours: number
+          machine_price_cents: number
+          margin_pct: number
+          marketplace_fee_pct: number
+          net_profit_cents: number
+          power_watts: number
+          prep_minutes: number
+          print_hours: number
+          real_margin_pct: number
+          sells_marketplace: boolean
+          suggested_price_cents: number
+          tag_id: string | null
+          user_id: string
+          waste_pct: number
+        }
+        Insert: {
+          cost_base_cents: number
+          cost_depreciation_cents: number
+          cost_energy_cents: number
+          cost_filament_cents: number
+          cost_labor_cents: number
+          cost_with_failure_cents: number
+          created_at?: string
+          extra_costs_cents: number
+          failure_rate_pct: number
+          filament_grams: number
+          filament_price_kg_cents: number
+          id?: string
+          kwh_price_cents: number
+          label?: string | null
+          labor_hour_cents: number
+          machine_life_hours: number
+          machine_price_cents: number
+          margin_pct: number
+          marketplace_fee_pct?: number
+          net_profit_cents: number
+          power_watts: number
+          prep_minutes: number
+          print_hours: number
+          real_margin_pct: number
+          sells_marketplace?: boolean
+          suggested_price_cents: number
+          tag_id?: string | null
+          user_id: string
+          waste_pct: number
+        }
+        Update: {
+          cost_base_cents?: number
+          cost_depreciation_cents?: number
+          cost_energy_cents?: number
+          cost_filament_cents?: number
+          cost_labor_cents?: number
+          cost_with_failure_cents?: number
+          created_at?: string
+          extra_costs_cents?: number
+          failure_rate_pct?: number
+          filament_grams?: number
+          filament_price_kg_cents?: number
+          id?: string
+          kwh_price_cents?: number
+          label?: string | null
+          labor_hour_cents?: number
+          machine_life_hours?: number
+          machine_price_cents?: number
+          margin_pct?: number
+          marketplace_fee_pct?: number
+          net_profit_cents?: number
+          power_watts?: number
+          prep_minutes?: number
+          print_hours?: number
+          real_margin_pct?: number
+          sells_marketplace?: boolean
+          suggested_price_cents?: number
+          tag_id?: string | null
+          user_id?: string
+          waste_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_cost_calculations_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -298,184 +402,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tenants: {
-        Row: {
-          created_at: string
-          id: string
-          logo_url: string | null
-          monogram: string
-          name: string
-          powered_by: boolean
-          primary_color: string | null
-          slug: string
-          status: string
-          support_email: string | null
-          tagline: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          logo_url?: string | null
-          monogram?: string
-          name: string
-          powered_by?: boolean
-          primary_color?: string | null
-          slug: string
-          status?: string
-          support_email?: string | null
-          tagline?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          logo_url?: string | null
-          monogram?: string
-          name?: string
-          powered_by?: boolean
-          primary_color?: string | null
-          slug?: string
-          status?: string
-          support_email?: string | null
-          tagline?: string
-        }
-        Relationships: []
-      }
-      tenant_members: {
-        Row: {
-          created_at: string
-          id: string
-          role: string
-          tenant_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role?: string
-          tenant_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: string
-          tenant_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tenant_members_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      print_cost_calculations: {
-        Row: {
-          cost_base_cents: number
-          cost_depreciation_cents: number
-          cost_energy_cents: number
-          cost_filament_cents: number
-          cost_labor_cents: number
-          cost_with_failure_cents: number
-          created_at: string
-          extra_costs_cents: number
-          failure_rate_pct: number
-          filament_grams: number
-          filament_price_kg_cents: number
-          id: string
-          kwh_price_cents: number
-          label: string | null
-          labor_hour_cents: number
-          machine_life_hours: number
-          machine_price_cents: number
-          margin_pct: number
-          marketplace_fee_pct: number
-          net_profit_cents: number
-          power_watts: number
-          prep_minutes: number
-          print_hours: number
-          real_margin_pct: number
-          sells_marketplace: boolean
-          suggested_price_cents: number
-          tag_id: string | null
-          user_id: string
-          waste_pct: number
-        }
-        Insert: {
-          cost_base_cents: number
-          cost_depreciation_cents: number
-          cost_energy_cents: number
-          cost_filament_cents: number
-          cost_labor_cents: number
-          cost_with_failure_cents: number
-          created_at?: string
-          extra_costs_cents: number
-          failure_rate_pct: number
-          filament_grams: number
-          filament_price_kg_cents: number
-          id?: string
-          kwh_price_cents: number
-          label?: string | null
-          labor_hour_cents: number
-          machine_life_hours: number
-          machine_price_cents: number
-          margin_pct: number
-          marketplace_fee_pct?: number
-          net_profit_cents: number
-          power_watts: number
-          prep_minutes: number
-          print_hours: number
-          real_margin_pct: number
-          sells_marketplace?: boolean
-          suggested_price_cents: number
-          tag_id?: string | null
-          user_id: string
-          waste_pct: number
-        }
-        Update: {
-          cost_base_cents?: number
-          cost_depreciation_cents?: number
-          cost_energy_cents?: number
-          cost_filament_cents?: number
-          cost_labor_cents?: number
-          cost_with_failure_cents?: number
-          created_at?: string
-          extra_costs_cents?: number
-          failure_rate_pct?: number
-          filament_grams?: number
-          filament_price_kg_cents?: number
-          id?: string
-          kwh_price_cents?: number
-          label?: string | null
-          labor_hour_cents?: number
-          machine_life_hours?: number
-          machine_price_cents?: number
-          margin_pct?: number
-          marketplace_fee_pct?: number
-          net_profit_cents?: number
-          power_watts?: number
-          prep_minutes?: number
-          print_hours?: number
-          real_margin_pct?: number
-          sells_marketplace?: boolean
-          suggested_price_cents?: number
-          tag_id?: string | null
-          user_id?: string
-          waste_pct?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "print_cost_calculations_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tag_kits: {
         Row: {
           batch_id: string | null
@@ -580,7 +506,6 @@ export type Database = {
           slot: number | null
           slot_label: string | null
           status: Database["public"]["Enums"]["tag_status"]
-          tenant_id: string
           updated_at: string
           user_id: string | null
         }
@@ -605,7 +530,6 @@ export type Database = {
           slot?: number | null
           slot_label?: string | null
           status?: Database["public"]["Enums"]["tag_status"]
-          tenant_id?: string
           updated_at?: string
           user_id?: string | null
         }
@@ -630,7 +554,6 @@ export type Database = {
           slot?: number | null
           slot_label?: string | null
           status?: Database["public"]["Enums"]["tag_status"]
-          tenant_id?: string
           updated_at?: string
           user_id?: string | null
         }
@@ -650,6 +573,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenant_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          monogram: string
+          name: string
+          powered_by: boolean
+          primary_color: string | null
+          slug: string
+          status: string
+          support_email: string | null
+          tagline: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          monogram?: string
+          name: string
+          powered_by?: boolean
+          primary_color?: string | null
+          slug: string
+          status?: string
+          support_email?: string | null
+          tagline?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          monogram?: string
+          name?: string
+          powered_by?: boolean
+          primary_color?: string | null
+          slug?: string
+          status?: string
+          support_email?: string | null
+          tagline?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -934,6 +931,8 @@ export const Constants = {
         "vcard",
         "review_gate",
         "ab_test",
+        "links",
+        "promo",
       ],
       tag_status: ["active", "paused", "archived"],
       webhook_event: ["tag.read", "tag.created", "tag.updated"],
