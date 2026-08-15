@@ -9,6 +9,7 @@ import {
   buildPetTagGeometry,
   type PetTagOptions,
 } from "@/lib/pet-tag-3d";
+import { BatchGenerator } from "@/components/batch-generator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -276,6 +277,17 @@ function PetTagPage() {
           </p>
         </aside>
       </div>
+
+      <BatchGenerator
+        sameText={text}
+        filename={filename || "pet-tag-qr"}
+        build={(content, format) => {
+          const opts = { ...options(), text: content };
+          return format === "3mf"
+            ? buildPetTag3mf({ ...opts, bodyColor, codeColor })
+            : buildPetTagStl(opts);
+        }}
+      />
     </div>
   );
 }

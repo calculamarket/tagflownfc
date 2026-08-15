@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Box, Download } from "lucide-react";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { buildQrStl } from "@/lib/qr-stl";
+import { BatchGenerator } from "@/components/batch-generator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -217,6 +218,17 @@ function Gerador3dPage() {
           </p>
         </aside>
       </div>
+
+      <BatchGenerator
+        sameText={text}
+        filename={filename || "qrcode-3d"}
+        build={(content, format) => {
+          const opts = options();
+          return format === "3mf"
+            ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor })
+            : buildQrStl(content, opts);
+        }}
+      />
     </div>
   );
 }

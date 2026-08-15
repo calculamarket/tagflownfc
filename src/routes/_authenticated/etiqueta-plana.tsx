@@ -9,6 +9,7 @@ import {
   buildFlatTagGeometry,
   type FlatTagOptions,
 } from "@/lib/flat-tag-3d";
+import { BatchGenerator } from "@/components/batch-generator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -351,6 +352,17 @@ function FlatTagPage() {
           </p>
         </aside>
       </div>
+
+      <BatchGenerator
+        sameText={text}
+        filename={filename || "etiqueta-qr"}
+        build={(content, format) => {
+          const opts = { ...options(), text: content };
+          return format === "3mf"
+            ? buildFlatTag3mf({ ...opts, bodyColor, codeColor })
+            : buildFlatTagStl(opts);
+        }}
+      />
     </div>
   );
 }
