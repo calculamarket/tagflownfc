@@ -365,7 +365,7 @@ function PixPlatePage() {
         build: (text) => buildOne(format, useSecond ? text : undefined),
         onProgress: (done, total) => setBatchProgress({ done, total }),
       });
-      saveBlob(zip, `${base}-lote-${quantity}.zip`);
+      saveBlob(zip, `${base}${partSuffix}-lote-${quantity}.zip`);
       toast.success(`${quantity} placas geradas em ZIP (com a lista de códigos).`);
     } catch (e) {
       toast.error((e as Error).message);
