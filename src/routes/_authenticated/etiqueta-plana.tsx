@@ -70,10 +70,15 @@ function FlatTagPage() {
   const [hole, setHole] = useState(false);
   const [holeDiameterMm, setHoleDiameterMm] = useState("4");
   const [holeMarginMm, setHoleMarginMm] = useState("5");
+  const [slots, setSlots] = useState(true);
+  const [slotWidthMm, setSlotWidthMm] = useState("4");
+  const [slotHeightMm, setSlotHeightMm] = useState("25");
+  const [slotMarginMm, setSlotMarginMm] = useState("7");
   const [qrSizeMm, setQrSizeMm] = useState("25");
   const [quietMm, setQuietMm] = useState("2");
   const [codeMm, setCodeMm] = useState("1");
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");
+
   const [bodyColor, setBodyColor] = useState("#ffffff");
   const [codeColor, setCodeColor] = useState("#000000");
   const [filename, setFilename] = useState("etiqueta-qr");
