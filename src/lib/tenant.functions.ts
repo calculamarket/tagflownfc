@@ -64,15 +64,19 @@ export const adminListTenants = createServerFn({ method: "GET" })
         supabaseAdmin.from("tenants").select("*").order("created_at", { ascending: true }),
         supabaseAdmin.from("tenant_members").select("id, tenant_id, user_id, role, created_at"),
         supabaseAdmin.from("profiles").select("id, email, full_name"),
-        supabaseAdmin.from("tags").select("tenant_id"),
+        supabaseAdmin.from("tags").select("user_id"),
       ]);
     if (error) throw new Error(error.message);
 
     const profById = new Map((profiles ?? []).map((p) => [p.id, p]));
+    // `tags` não guarda tenant: o vínculo vem da associação do dono ao tenant.
+    const tenantByUser = new Map((members ?? []).map((m) => [m.user_id, m.tenant_id]));
     const tagCount = new Map<string, number>();
     for (const t of tagRows ?? []) {
-      if (t.tenant_id) tagCount.set(t.tenant_id, (tagCount.get(t.tenant_id) ?? 0) + 1);
+      const tenantId = t.user_id ? tenantByUser.get(t.user_id) : undefined;
+      if (tenantId) tagCount.set(tenantId, (tagCount.get(tenantId) ?? 0) + 1);
     }
+
 
     return (tenants ?? []).map((t) => ({
       ...t,
