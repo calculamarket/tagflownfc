@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
-import { Download, QrCode as QrIcon } from "lucide-react";
+import { Download, Layers, QrCode as QrIcon } from "lucide-react";
 import {
   buildPixPlate3mf,
   buildPixPlateGeometry,
@@ -12,6 +12,10 @@ import {
 } from "@/lib/pix-plate-3d";
 import { imageToMask, maskToDataUrl, textToMask } from "@/lib/relief-raster";
 import { buildPixPayload } from "@/lib/qr-payloads";
+import { useServerFn } from "@tanstack/react-start";
+import { createStockTags } from "@/lib/stock.functions";
+import { buildBatchZip } from "@/lib/batch-qr";
+import { formatClaimCode } from "@/lib/claim-code";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
@@ -48,6 +52,10 @@ export const Route = createFileRoute("/_authenticated/placa-pix")({
 const num = (v: string) => parseFloat(v.replace(",", "."));
 type Level = "L" | "M" | "Q" | "H";
 
+/** Public link of a system tag — scanning it opens the activation flow. */
+const tagUrl = (id: string) =>
+  `${typeof window === "undefined" ? "https://www.3dqr.com.br" : window.location.origin}/t/${id}`;
+
 function PixPlatePage() {
   // Conteúdo do QR
   const [source, setSource] = useState<"pix" | "livre">("pix");
@@ -71,10 +79,19 @@ function PixPlatePage() {
 
   // Segundo QR (cardápio, redes sociais, WhatsApp...)
   const [useSecond, setUseSecond] = useState(false);
-  const [secondType, setSecondType] = useState<"link" | "whatsapp" | "instagram" | "texto">("link");
+  const [secondType, setSecondType] =
+    useState<"ativacao" | "link" | "whatsapp" | "instagram" | "texto">("ativacao");
   const [secondValue, setSecondValue] = useState("https://www.3dqr.com.br");
   const [secondWhatsMsg, setSecondWhatsMsg] = useState("");
   const [secondQrSizeMm, setSecondQrSizeMm] = useState("34");
+  // Código do sistema reservado para o QR de ativação (placa avulsa).
+  const [activationId, setActivationId] = useState("");
+  const [activationCode, setActivationCode] = useState("");
+
+  // Produção em série
+  const [batchQty, setBatchQty] = useState("10");
+  const [batchMode, setBatchMode] = useState<"same" | "unique">("same");
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
   // Área livre (logo / imagem / texto)
   const [artType, setArtType] = useState<"nenhum" | "texto" | "imagem">("texto");
@@ -121,6 +138,7 @@ function PixPlatePage() {
 
   const secondPayload = useMemo(() => {
     if (!useSecond) return "";
+    if (secondType === "ativacao") return activationId ? tagUrl(activationId) : "";
     const v = secondValue.trim();
     if (!v) return "";
     if (secondType === "whatsapp") {
@@ -138,7 +156,7 @@ function PixPlatePage() {
       return /^[a-z][\w+.-]*:/i.test(v) ? v : `https://${v}`;
     }
     return v;
-  }, [useSecond, secondType, secondValue, secondWhatsMsg]);
+  }, [useSecond, secondType, secondValue, secondWhatsMsg, activationId]);
 
   const artMask = useMemo(() => {
     if (artType === "texto") return textToMask(artText);
@@ -173,13 +191,20 @@ function PixPlatePage() {
     }).catch(() => undefined);
   }, [secondPayload, level, code2Slot.color, plateSlot.color]);
 
-  const options = (): PixPlateOptions => {
+  const options = (secondOverride?: string): PixPlateOptions => {
+    const second = secondOverride ?? secondPayload;
     if (!payload) {
       throw new Error(
         source === "pix" ? "Informe a chave Pix." : "Informe o conteúdo do QR Code.",
       );
     }
-    if (useSecond && !secondPayload) throw new Error("Informe o conteúdo do segundo QR Code.");
+    if (useSecond && !second) {
+      throw new Error(
+        secondType === "ativacao"
+          ? "Gere o QR de ativação antes de baixar a peça."
+          : "Informe o conteúdo do segundo QR Code.",
+      );
+    }
     const values = {
       plateWidthMm: num(plateWidthMm),
       plateHeightMm: num(plateHeightMm),
@@ -222,7 +247,7 @@ function PixPlatePage() {
     return {
       text: payload,
       ...values,
-      secondText: useSecond ? secondPayload : null,
+      secondText: useSecond ? second : null,
       qrPosition,
       errorCorrectionLevel: level,
       recessed: mode === "recess",
@@ -265,6 +290,88 @@ function PixPlatePage() {
       setArtType("imagem");
     } catch (e) {
       toast.error((e as Error).message);
+    }
+  };
+
+  const makeStock = useServerFn(createStockTags);
+
+  /** Reserve one system code for a single plate. */
+  const generateActivation = async () => {
+    setBusy(true);
+    try {
+      const res = await makeStock({ data: { name: filename || "Placa Pix", quantity: 1, model: "Placa Pix" } });
+      const tag = res.tags[0];
+      setActivationId(tag.id);
+      setActivationCode(tag.code);
+      toast.success("QR de ativação criado. O cliente ativa ao escanear.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const buildOne = async (format: "3mf" | "stl", secondOverride?: string) => {
+    const opts = options(secondOverride);
+    return format === "3mf"
+      ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
+      : buildPixPlateStl(opts);
+  };
+
+  const saveBlob = (blob: Blob, name: string) => {
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(href);
+  };
+
+  /** Production run: N plates sharing one QR, or one unique QR per plate. */
+  const downloadBatch = async (format: "3mf" | "stl") => {
+    const quantity = Math.round(Number(batchQty.replace(",", ".")));
+    setBusy(true);
+    setBatchProgress({ done: 0, total: quantity });
+    try {
+      if (!Number.isFinite(quantity) || quantity < 1) throw new Error("Informe uma quantidade válida.");
+      if (quantity > 200) throw new Error("Máximo de 200 placas por lote.");
+
+      const base = filename || "placa-pix";
+      let items: { index: number; id: string; text: string }[];
+
+      if (batchMode === "unique") {
+        if (!useSecond) throw new Error("Ative o segundo QR Code para gerar códigos diferentes por placa.");
+        if (secondType !== "ativacao") {
+          throw new Error("Códigos diferentes por placa só valem para o 2º QR de ativação pelo cliente.");
+        }
+        const res = await makeStock({
+          data: { name: base, quantity, model: "Placa Pix" },
+        });
+        items = res.tags.map((t) => ({ index: t.index, id: t.id, text: tagUrl(t.id) }));
+      } else {
+        // Mesmo QR em todas: valida uma vez e repete o mesmo arquivo.
+        options();
+        items = Array.from({ length: quantity }, (_, i) => ({
+          index: i + 1,
+          id: activationId,
+          text: secondPayload,
+        }));
+      }
+
+      const zip = await buildBatchZip({
+        items,
+        filename: base,
+        format,
+        build: (text) => buildOne(format, useSecond ? text : undefined),
+        onProgress: (done, total) => setBatchProgress({ done, total }),
+      });
+      saveBlob(zip, `${base}-lote-${quantity}.zip`);
+      toast.success(`${quantity} placas geradas em ZIP (com a lista de códigos).`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBatchProgress(null);
+      setBusy(false);
     }
   };
 
@@ -425,6 +532,7 @@ function PixPlatePage() {
                     <Select value={secondType} onValueChange={(v) => setSecondType(v as typeof secondType)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="ativacao">Ativação pelo cliente (QR do sistema)</SelectItem>
                         <SelectItem value="link">Link (cardápio, site, catálogo)</SelectItem>
                         <SelectItem value="whatsapp">WhatsApp</SelectItem>
                         <SelectItem value="instagram">Instagram</SelectItem>
@@ -436,29 +544,31 @@ function PixPlatePage() {
                     <Label htmlFor="q2s">Tamanho do 2º QR (mm)</Label>
                     <Input id="q2s" inputMode="decimal" value={secondQrSizeMm} onChange={(e) => setSecondQrSizeMm(e.target.value)} />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="q2v">
-                      {secondType === "whatsapp"
-                        ? "Número com DDD"
-                        : secondType === "instagram"
-                          ? "Usuário do Instagram"
-                          : secondType === "link"
-                            ? "Endereço do link"
-                            : "Texto"}
-                    </Label>
-                    <Input
-                      id="q2v"
-                      value={secondValue}
-                      onChange={(e) => setSecondValue(e.target.value)}
-                      placeholder={
-                        secondType === "whatsapp"
-                          ? "(11) 99999-9999"
+                  {secondType !== "ativacao" && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="q2v">
+                        {secondType === "whatsapp"
+                          ? "Número com DDD"
                           : secondType === "instagram"
-                            ? "@minhaloja"
-                            : "https://www.3dqr.com.br/cardapio"
-                      }
-                    />
-                  </div>
+                            ? "Usuário do Instagram"
+                            : secondType === "link"
+                              ? "Endereço do link"
+                              : "Texto"}
+                      </Label>
+                      <Input
+                        id="q2v"
+                        value={secondValue}
+                        onChange={(e) => setSecondValue(e.target.value)}
+                        placeholder={
+                          secondType === "whatsapp"
+                            ? "(11) 99999-9999"
+                            : secondType === "instagram"
+                              ? "@minhaloja"
+                              : "https://www.3dqr.com.br/cardapio"
+                        }
+                      />
+                    </div>
+                  )}
                   {secondType === "whatsapp" && (
                     <div className="space-y-1.5">
                       <Label htmlFor="q2m">Mensagem inicial (opcional)</Label>
@@ -466,6 +576,27 @@ function PixPlatePage() {
                     </div>
                   )}
                 </div>
+
+                {secondType === "ativacao" && (
+                  <div className="space-y-2 rounded-md bg-muted/40 p-3">
+                    <p className="text-xs text-muted-foreground">
+                      Reserva um código no sistema e imprime o link dele na placa. Ao escanear pela
+                      primeira vez, o cliente entra, ativa a placa e escolhe o destino (cardápio,
+                      WhatsApp, redes sociais…) — igual ao fluxo de ativação das etiquetas.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button size="sm" variant="secondary" disabled={busy} onClick={generateActivation}>
+                        {activationId ? "Gerar outro código" : "Gerar QR de ativação"}
+                      </Button>
+                      {activationId && (
+                        <span className="text-xs text-muted-foreground">
+                          Código de ativação: <strong>{formatClaimCode(activationCode)}</strong>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {secondPayload && (
                   <p className="break-all text-xs text-muted-foreground">{secondPayload}</p>
                 )}
@@ -574,6 +705,52 @@ function PixPlatePage() {
               </div>
             </div>
           </div>
+
+          <div className="space-y-4 rounded-md border border-border p-4">
+            <Label className="flex items-center gap-2">
+              <Layers className="size-4 text-primary" /> Produção em série
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Gere várias placas de uma vez em um ZIP, com a lista de códigos em CSV para o
+              controle da produção.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="lote-qtd">Quantidade de placas</Label>
+                <Input id="lote-qtd" inputMode="numeric" value={batchQty} onChange={(e) => setBatchQty(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>QR Codes do lote</Label>
+                <Select value={batchMode} onValueChange={(v) => setBatchMode(v as typeof batchMode)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="same">Mesmo QR em todas as placas</SelectItem>
+                    <SelectItem value="unique">Um QR de ativação diferente por placa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {batchMode === "unique" && (
+              <p className="text-xs text-muted-foreground">
+                Cada placa recebe um código próprio do sistema: o comprador escaneia, ativa e
+                define o destino. Requer o 2º QR no modo “Ativação pelo cliente”.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary" disabled={busy} onClick={() => downloadBatch("3mf")}>
+                <Download className="size-4" /> Lote em 3MF (ZIP)
+              </Button>
+              <Button variant="outline" disabled={busy} onClick={() => downloadBatch("stl")}>
+                <Download className="size-4" /> Lote em STL (ZIP)
+              </Button>
+              {batchProgress && (
+                <span className="self-center text-xs text-muted-foreground">
+                  Gerando {batchProgress.done}/{batchProgress.total}…
+                </span>
+              )}
+            </div>
+          </div>
+
 
           <div className="grid gap-4 sm:grid-cols-3">
             <SlotCountField value={printerSlots} onChange={setPrinterSlots} />
