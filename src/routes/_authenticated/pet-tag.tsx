@@ -119,12 +119,13 @@ function PetTagPage() {
         slot: `${(num(widthMm) - 2 * num(legWidthMm)).toFixed(0)} × ${num(legHeightMm).toFixed(0)} mm`,
         maxQr: geo.maxQrSizeMm,
         changeZ: geo.codeStartZ,
+        free: geo.freeWidthMm,
       };
     } catch {
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, level, widthMm, depthMm, plateMm, legWidthMm, legHeightMm, floorMm, qrSizeMm, quietMm, codeMm, mode]);
+  }, [text, level, widthMm, depthMm, plateMm, legWidthMm, legHeightMm, floorMm, qrSizeMm, quietMm, codeMm, mode, qrAlign, qrMarginMm]);
 
   const download = async (format: "3mf" | "stl") => {
     setBusy(true);
