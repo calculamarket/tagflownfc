@@ -20,6 +20,7 @@ import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/t
 import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
+import { Route as AuthenticatedPlacaPixRouteImport } from './routes/_authenticated/placa-pix'
 import { Route as AuthenticatedPetTagRouteImport } from './routes/_authenticated/pet-tag'
 import { Route as AuthenticatedMoldeSiliconeRouteImport } from './routes/_authenticated/molde-silicone'
 import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
@@ -94,6 +95,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedQrCodesRoute = AuthenticatedQrCodesRouteImport.update({
   id: '/qr-codes',
   path: '/qr-codes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlacaPixRoute = AuthenticatedPlacaPixRouteImport.update({
+  id: '/placa-pix',
+  path: '/placa-pix',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPetTagRoute = AuthenticatedPetTagRouteImport.update({
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/links': typeof AuthenticatedLinksRoute
   '/molde-silicone': typeof AuthenticatedMoldeSiliconeRoute
   '/pet-tag': typeof AuthenticatedPetTagRoute
+  '/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tags': typeof AuthenticatedTagsRouteWithChildren
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/links': typeof AuthenticatedLinksRoute
   '/molde-silicone': typeof AuthenticatedMoldeSiliconeRoute
   '/pet-tag': typeof AuthenticatedPetTagRoute
+  '/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
@@ -295,6 +303,7 @@ export interface FileRoutesById {
   '/_authenticated/links': typeof AuthenticatedLinksRoute
   '/_authenticated/molde-silicone': typeof AuthenticatedMoldeSiliconeRoute
   '/_authenticated/pet-tag': typeof AuthenticatedPetTagRoute
+  '/_authenticated/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tags': typeof AuthenticatedTagsRouteWithChildren
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/links'
     | '/molde-silicone'
     | '/pet-tag'
+    | '/placa-pix'
     | '/qr-codes'
     | '/settings'
     | '/tags'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/links'
     | '/molde-silicone'
     | '/pet-tag'
+    | '/placa-pix'
     | '/qr-codes'
     | '/settings'
     | '/team'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/_authenticated/links'
     | '/_authenticated/molde-silicone'
     | '/_authenticated/pet-tag'
+    | '/_authenticated/placa-pix'
     | '/_authenticated/qr-codes'
     | '/_authenticated/settings'
     | '/_authenticated/tags'
@@ -499,6 +511,13 @@ declare module '@tanstack/react-router' {
       path: '/qr-codes'
       fullPath: '/qr-codes'
       preLoaderRoute: typeof AuthenticatedQrCodesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/placa-pix': {
+      id: '/_authenticated/placa-pix'
+      path: '/placa-pix'
+      fullPath: '/placa-pix'
+      preLoaderRoute: typeof AuthenticatedPlacaPixRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pet-tag': {
@@ -681,6 +700,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLinksRoute: typeof AuthenticatedLinksRoute
   AuthenticatedMoldeSiliconeRoute: typeof AuthenticatedMoldeSiliconeRoute
   AuthenticatedPetTagRoute: typeof AuthenticatedPetTagRoute
+  AuthenticatedPlacaPixRoute: typeof AuthenticatedPlacaPixRoute
   AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRouteWithChildren
@@ -705,6 +725,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLinksRoute: AuthenticatedLinksRoute,
   AuthenticatedMoldeSiliconeRoute: AuthenticatedMoldeSiliconeRoute,
   AuthenticatedPetTagRoute: AuthenticatedPetTagRoute,
+  AuthenticatedPlacaPixRoute: AuthenticatedPlacaPixRoute,
   AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTagsRoute: AuthenticatedTagsRouteWithChildren,

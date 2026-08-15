@@ -21,6 +21,7 @@ const nav = [
   { to: "/gerador-3d", label: "Gerador QR 3D", icon: Box },
   { to: "/pet-tag", label: "Pet Tag", icon: PawPrint },
   { to: "/etiqueta-plana", label: "Etiqueta Plana", icon: Tags },
+  { to: "/placa-pix", label: "Placa Pix", icon: QrCode },
   { to: "/estudio-bonecos", label: "Estúdio de Bonecos", icon: Sparkles },
   { to: "/molde-silicone", label: "Molde de Silicone", icon: Boxes },
 
