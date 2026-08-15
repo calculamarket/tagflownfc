@@ -25,6 +25,7 @@ import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedGerador3dRouteImport } from './routes/_authenticated/gerador-3d'
+import { Route as AuthenticatedEtiquetaPlanaRouteImport } from './routes/_authenticated/etiqueta-plana'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCalculadoraCustosRouteImport } from './routes/_authenticated/calculadora-custos'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
@@ -119,6 +120,12 @@ const AuthenticatedGerador3dRoute = AuthenticatedGerador3dRouteImport.update({
   path: '/gerador-3d',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEtiquetaPlanaRoute =
+  AuthenticatedEtiquetaPlanaRouteImport.update({
+    id: '/etiqueta-plana',
+    path: '/etiqueta-plana',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -199,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/automations': typeof AuthenticatedAutomationsRoute
   '/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
   '/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -229,6 +237,7 @@ export interface FileRoutesByTo {
   '/automations': typeof AuthenticatedAutomationsRoute
   '/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
   '/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -260,6 +269,7 @@ export interface FileRoutesById {
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
   '/_authenticated/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
@@ -292,6 +302,7 @@ export interface FileRouteTypes {
     | '/automations'
     | '/calculadora-custos'
     | '/dashboard'
+    | '/etiqueta-plana'
     | '/gerador-3d'
     | '/integrations'
     | '/leads'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/automations'
     | '/calculadora-custos'
     | '/dashboard'
+    | '/etiqueta-plana'
     | '/gerador-3d'
     | '/integrations'
     | '/leads'
@@ -352,6 +364,7 @@ export interface FileRouteTypes {
     | '/_authenticated/automations'
     | '/_authenticated/calculadora-custos'
     | '/_authenticated/dashboard'
+    | '/_authenticated/etiqueta-plana'
     | '/_authenticated/gerador-3d'
     | '/_authenticated/integrations'
     | '/_authenticated/leads'
@@ -497,6 +510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGerador3dRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/etiqueta-plana': {
+      id: '/_authenticated/etiqueta-plana'
+      path: '/etiqueta-plana'
+      fullPath: '/etiqueta-plana'
+      preLoaderRoute: typeof AuthenticatedEtiquetaPlanaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -613,6 +633,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedCalculadoraCustosRoute: typeof AuthenticatedCalculadoraCustosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEtiquetaPlanaRoute: typeof AuthenticatedEtiquetaPlanaRoute
   AuthenticatedGerador3dRoute: typeof AuthenticatedGerador3dRoute
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
@@ -634,6 +655,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
   AuthenticatedCalculadoraCustosRoute: AuthenticatedCalculadoraCustosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEtiquetaPlanaRoute: AuthenticatedEtiquetaPlanaRoute,
   AuthenticatedGerador3dRoute: AuthenticatedGerador3dRoute,
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
