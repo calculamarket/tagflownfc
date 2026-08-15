@@ -161,6 +161,42 @@ function MoldeSiliconePage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
+          <div className="space-y-2 rounded-md border border-dashed border-border p-4">
+            <Label>Arquivo da peça (.stl ou .3mf)</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => meshRef.current?.click()}>
+                <Upload className="size-4" /> Enviar STL/3MF
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => imgRef.current?.click()}>
+                <Upload className="size-4" /> Enviar PNG de referência
+              </Button>
+              {meshInfo && <span className="text-xs text-muted-foreground">{meshInfo}</span>}
+            </div>
+            <input ref={meshRef} type="file" accept=".stl,.3mf" className="hidden" onChange={loadMesh} />
+            <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={loadReference} />
+            <p className="text-xs text-muted-foreground">
+              O arquivo é lido no seu navegador só para medir a caixa envolvente e preencher
+              largura, profundidade e altura. Nada é enviado para o servidor.
+            </p>
+            {reference && (
+              <div className="relative w-fit">
+                <img
+                  src={reference}
+                  alt="Referência da peça"
+                  className="h-24 rounded-md border border-border object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={() => setReferenceImage(null)}
+                  className="absolute -right-2 -top-2 rounded-full border border-border bg-background p-1"
+                  aria-label="Remover referência"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="pw">Largura da peça (mm)</Label>
