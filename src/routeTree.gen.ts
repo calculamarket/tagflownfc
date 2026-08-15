@@ -20,6 +20,7 @@ import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/t
 import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
+import { Route as AuthenticatedPetTagRouteImport } from './routes/_authenticated/pet-tag'
 import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
@@ -90,6 +91,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedQrCodesRoute = AuthenticatedQrCodesRouteImport.update({
   id: '/qr-codes',
   path: '/qr-codes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPetTagRoute = AuthenticatedPetTagRouteImport.update({
+  id: '/pet-tag',
+  path: '/pet-tag',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLinksRoute = AuthenticatedLinksRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/links': typeof AuthenticatedLinksRoute
+  '/pet-tag': typeof AuthenticatedPetTagRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tags': typeof AuthenticatedTagsRouteWithChildren
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/links': typeof AuthenticatedLinksRoute
+  '/pet-tag': typeof AuthenticatedPetTagRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/links': typeof AuthenticatedLinksRoute
+  '/_authenticated/pet-tag': typeof AuthenticatedPetTagRoute
   '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tags': typeof AuthenticatedTagsRouteWithChildren
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/leads'
     | '/links'
+    | '/pet-tag'
     | '/qr-codes'
     | '/settings'
     | '/tags'
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/leads'
     | '/links'
+    | '/pet-tag'
     | '/qr-codes'
     | '/settings'
     | '/team'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/_authenticated/integrations'
     | '/_authenticated/leads'
     | '/_authenticated/links'
+    | '/_authenticated/pet-tag'
     | '/_authenticated/qr-codes'
     | '/_authenticated/settings'
     | '/_authenticated/tags'
@@ -448,6 +460,13 @@ declare module '@tanstack/react-router' {
       path: '/qr-codes'
       fullPath: '/qr-codes'
       preLoaderRoute: typeof AuthenticatedQrCodesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pet-tag': {
+      id: '/_authenticated/pet-tag'
+      path: '/pet-tag'
+      fullPath: '/pet-tag'
+      preLoaderRoute: typeof AuthenticatedPetTagRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/links': {
@@ -598,6 +617,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLinksRoute: typeof AuthenticatedLinksRoute
+  AuthenticatedPetTagRoute: typeof AuthenticatedPetTagRoute
   AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRouteWithChildren
@@ -618,6 +638,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLinksRoute: AuthenticatedLinksRoute,
+  AuthenticatedPetTagRoute: AuthenticatedPetTagRoute,
   AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTagsRoute: AuthenticatedTagsRouteWithChildren,
