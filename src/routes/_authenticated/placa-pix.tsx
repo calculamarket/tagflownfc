@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
-import { Download, QrCode as QrIcon } from "lucide-react";
+import { Download, Layers, QrCode as QrIcon } from "lucide-react";
 import {
   buildPixPlate3mf,
   buildPixPlateGeometry,
