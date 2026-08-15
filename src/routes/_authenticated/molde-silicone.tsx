@@ -50,6 +50,55 @@ function MoldeSiliconePage() {
   const [pedestalSlot, setPedestalSlot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#f6ad55" });
   const [filename, setFilename] = useState("molde-silicone");
   const [busy, setBusy] = useState(false);
+  const [meshInfo, setMeshInfo] = useState<string | null>(null);
+  const [reference, setReference] = useState<string | null>(null);
+  const meshRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLInputElement>(null);
+
+  // Arte enviada a partir do Estúdio de Bonecos ("Usar no molde").
+  useEffect(() => {
+    const saved = sessionStorage.getItem("tagflow:mold-reference");
+    if (saved) setReference(saved);
+  }, []);
+
+  const setReferenceImage = (url: string | null) => {
+    setReference(url);
+    if (url) sessionStorage.setItem("tagflow:mold-reference", url);
+    else sessionStorage.removeItem("tagflow:mold-reference");
+  };
+
+  const loadMesh = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (meshRef.current) meshRef.current.value = "";
+    if (!file) return;
+    setBusy(true);
+    try {
+      const b = await measureMeshFile(file);
+      const round = (n: number) => String(Math.round(n * 10) / 10);
+      setW(round(b.widthMm));
+      setD(round(b.depthMm));
+      setH(round(b.heightMm));
+      if (!filename || filename === "molde-silicone") {
+        setFilename(`molde-${file.name.replace(/\.(stl|3mf)$/i, "")}`);
+      }
+      setMeshInfo(`${file.name} · ${b.triangles.toLocaleString("pt-BR")} triângulos`);
+      toast.success("Medidas preenchidas a partir do arquivo.");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const loadReference = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (imgRef.current) imgRef.current.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setReferenceImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
 
   const options = () => {
     const o = {
