@@ -21,9 +21,18 @@ export type QrStlOptions = {
   moduleHeightMm?: number;
   /** Quiet zone in modules. The QR spec asks for 4; below 2 scanning suffers. */
   marginModules?: number;
+  /**
+   * Quiet zone in millimetres. When set, it wins over `marginModules`: the code
+   * itself measures `sizeMm` and the plate grows to `sizeMm + 2 * quietZoneMm`,
+   * which is how the OpenSCAD generator states its dimensions.
+   */
+  quietZoneMm?: number;
+  /** Error correction level: L ~7%, M ~15%, Q ~25%, H ~30%. */
+  errorCorrectionLevel?: "L" | "M" | "Q" | "H";
   /** Engrave the dark modules instead of embossing them. */
   recessed?: boolean;
 };
+
 
 export type Box = [number, number, number, number, number, number]; // x0,y0,z0,x1,y1,z1
 
