@@ -274,7 +274,7 @@ function PixPlatePage() {
       const opts = options();
       const blob =
         format === "3mf"
-          ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, artSlot, baseSlot })
+          ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
           : buildPixPlateStl(opts);
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
