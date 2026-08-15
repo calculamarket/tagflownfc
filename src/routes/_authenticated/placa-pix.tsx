@@ -71,10 +71,19 @@ function PixPlatePage() {
 
   // Segundo QR (cardápio, redes sociais, WhatsApp...)
   const [useSecond, setUseSecond] = useState(false);
-  const [secondType, setSecondType] = useState<"link" | "whatsapp" | "instagram" | "texto">("link");
+  const [secondType, setSecondType] =
+    useState<"ativacao" | "link" | "whatsapp" | "instagram" | "texto">("ativacao");
   const [secondValue, setSecondValue] = useState("https://www.3dqr.com.br");
   const [secondWhatsMsg, setSecondWhatsMsg] = useState("");
   const [secondQrSizeMm, setSecondQrSizeMm] = useState("34");
+  // Código do sistema reservado para o QR de ativação (placa avulsa).
+  const [activationId, setActivationId] = useState("");
+  const [activationCode, setActivationCode] = useState("");
+
+  // Produção em série
+  const [batchQty, setBatchQty] = useState("10");
+  const [batchMode, setBatchMode] = useState<"same" | "unique">("same");
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
   // Área livre (logo / imagem / texto)
   const [artType, setArtType] = useState<"nenhum" | "texto" | "imagem">("texto");
