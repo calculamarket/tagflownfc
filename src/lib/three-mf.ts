@@ -132,11 +132,37 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     `</config>`;
 
 
+  // Filament arrays are indexed by EXTRUDER SLOT (position 0 = slot 1), not by
+  // object. Emitting them per object shifted every colour when two parts share
+  // a slot, which is why prints came out with the wrong colours.
+  const maxSlot = objects.reduce((m, o) => Math.max(m, o.slot.extruder), 1);
+  const bySlot: (MaterialSlot | undefined)[] = Array.from({ length: maxSlot });
+  for (const o of objects) if (!bySlot[o.slot.extruder - 1]) bySlot[o.slot.extruder - 1] = o.slot;
+  const slotList = Array.from({ length: maxSlot }, (_, i) =>
+    bySlot[i] ?? { extruder: i + 1, material: "PLA" as FilamentType, color: "#FFFFFF" },
+  );
+
   const projectSettings = JSON.stringify({
-    filament_type: objects.map((o) => o.slot.material),
-    filament_colour: objects.map((o) => o.slot.color.toUpperCase()),
-    filament_settings_id: objects.map((o) => `${o.slot.material}`),
+    filament_type: slotList.map((s) => s.material),
+    filament_colour: slotList.map((s) => s.color.toUpperCase()),
+    filament_settings_id: slotList.map((s) => `${s.material}`),
+    // Fast-but-safe speed profile so plates don't take hours to print.
+    outer_wall_speed: "200",
+    inner_wall_speed: "300",
+    sparse_infill_speed: "350",
+    internal_solid_infill_speed: "300",
+    top_surface_speed: "200",
+    gap_infill_speed: "250",
+    travel_speed: "500",
+    initial_layer_speed: "50",
+    initial_layer_infill_speed: "105",
+    bridge_speed: "50",
+    default_acceleration: "10000",
+    outer_wall_acceleration: "5000",
+    inner_wall_acceleration: "10000",
+    travel_acceleration: "10000",
   });
+
 
   const contentTypes =
     `<?xml version="1.0" encoding="UTF-8"?>` +

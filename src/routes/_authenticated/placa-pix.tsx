@@ -15,7 +15,7 @@ import { buildPixPayload } from "@/lib/qr-payloads";
 import { useServerFn } from "@tanstack/react-start";
 import { createStockTags } from "@/lib/stock.functions";
 import { buildBatchZip } from "@/lib/batch-qr";
-import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
+import { SlotPalette, PartSlotPicker } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,13 +112,25 @@ function PixPlatePage() {
   const [slotDepthMm, setSlotDepthMm] = useState("14");
   const [slotClearanceMm, setSlotClearanceMm] = useState("0.4");
 
-  // Cores / slots
-  const [printerSlots, setPrinterSlots] = useState(4);
-  const [plateSlot, setPlateSlot] = useState<MaterialSlot>({ extruder: 1, material: "PLA", color: "#ffffff" });
-  const [codeSlot, setCodeSlot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#111111" });
-  const [code2Slot, setCode2Slot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#111111" });
-  const [artSlot, setArtSlot] = useState<MaterialSlot>({ extruder: 3, material: "PLA", color: "#32bcad" });
-  const [baseSlot, setBaseSlot] = useState<MaterialSlot>({ extruder: 1, material: "PLA", color: "#ffffff" });
+  // Cores: uma paleta por slot da impressora; cada peça aponta para um slot,
+  // então a cor mostrada na tela é exatamente a do filamento daquele slot.
+  const [palette, setPalette] = useState<MaterialSlot[]>([
+    { extruder: 1, material: "PLA", color: "#ffffff" },
+    { extruder: 2, material: "PLA", color: "#111111" },
+  ]);
+  const [plateExtruder, setPlateExtruder] = useState(1);
+  const [codeExtruder, setCodeExtruder] = useState(2);
+  const [code2Extruder, setCode2Extruder] = useState(2);
+  const [artExtruder, setArtExtruder] = useState(2);
+  const [baseExtruder, setBaseExtruder] = useState(1);
+
+  const slotOf = (n: number): MaterialSlot =>
+    palette[Math.min(palette.length, Math.max(1, n)) - 1] ?? palette[0];
+  const plateSlot = slotOf(plateExtruder);
+  const codeSlot = slotOf(codeExtruder);
+  const code2Slot = slotOf(code2Extruder);
+  const artSlot = slotOf(artExtruder);
+  const baseSlot = slotOf(baseExtruder);
 
 
   const [filename, setFilename] = useState("placa-pix");
@@ -749,16 +761,31 @@ function PixPlatePage() {
           </div>
 
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <SlotCountField value={printerSlots} onChange={setPrinterSlots} />
-            <MaterialSlotFields label="Placa" idPrefix="placa" slots={printerSlots} value={plateSlot} onChange={setPlateSlot} />
-            <MaterialSlotFields label="Código" idPrefix="codigo" slots={printerSlots} value={codeSlot} onChange={setCodeSlot} />
-            {useSecond && (
-              <MaterialSlotFields label="2º QR" idPrefix="codigo2" slots={printerSlots} value={code2Slot} onChange={setCode2Slot} />
-            )}
-            <MaterialSlotFields label="Arte" idPrefix="arte" slots={printerSlots} value={artSlot} onChange={setArtSlot} />
-
-            <MaterialSlotFields label="Base" idPrefix="base-slot" slots={printerSlots} value={baseSlot} onChange={setBaseSlot} />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Cores da impressora</Label>
+              <SlotPalette value={palette} onChange={setPalette} />
+              <p className="text-xs text-muted-foreground">
+                Defina o filamento de cada slot. As peças abaixo usam exatamente essas cores.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Cor de cada peça</Label>
+              <div className="space-y-2 rounded-md border border-border p-3">
+                <PartSlotPicker label="Placa" palette={palette} value={plateExtruder} onChange={setPlateExtruder} />
+                <PartSlotPicker label="QR Code Pix" palette={palette} value={codeExtruder} onChange={setCodeExtruder} />
+                {useSecond && (
+                  <PartSlotPicker label="2º QR Code" palette={palette} value={code2Extruder} onChange={setCode2Extruder} />
+                )}
+                <PartSlotPicker label="Arte / logo" palette={palette} value={artExtruder} onChange={setArtExtruder} />
+                {includeBase && (
+                  <PartSlotPicker label="Base" palette={palette} value={baseExtruder} onChange={setBaseExtruder} />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Para 2 cores, deixe placa e base no slot 1 e QR/arte no slot 2.
+              </p>
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="arquivo">Nome do arquivo</Label>
               <Input id="arquivo" value={filename} onChange={(e) => setFilename(e.target.value)} />
