@@ -59,6 +59,8 @@ function PetTagPage() {
   const [quietMm, setQuietMm] = useState("2");
   const [codeMm, setCodeMm] = useState("0.8");
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");
+  const [qrAlign, setQrAlign] = useState<"left" | "center" | "right">("center");
+  const [qrMarginMm, setQrMarginMm] = useState("3");
   const [bodyColor, setBodyColor] = useState("#ffffff");
   const [codeColor, setCodeColor] = useState("#000000");
   const [slots, setSlots] = useState(4);
@@ -90,6 +92,7 @@ function PetTagPage() {
       qrSizeMm: num(qrSizeMm),
       quietZoneMm: num(quietMm),
       codeMm: num(codeMm),
+      qrMarginMm: num(qrMarginMm),
     };
     if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     for (const [key, v] of Object.entries(values)) {
@@ -104,6 +107,7 @@ function PetTagPage() {
       radiusMm: 4,
       errorCorrectionLevel: level,
       recessed: mode === "recess",
+      qrAlign,
     };
   };
 
@@ -115,12 +119,13 @@ function PetTagPage() {
         slot: `${(num(widthMm) - 2 * num(legWidthMm)).toFixed(0)} × ${num(legHeightMm).toFixed(0)} mm`,
         maxQr: geo.maxQrSizeMm,
         changeZ: geo.codeStartZ,
+        free: geo.freeWidthMm,
       };
     } catch {
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, level, widthMm, depthMm, plateMm, legWidthMm, legHeightMm, floorMm, qrSizeMm, quietMm, codeMm, mode]);
+  }, [text, level, widthMm, depthMm, plateMm, legWidthMm, legHeightMm, floorMm, qrSizeMm, quietMm, codeMm, mode, qrAlign, qrMarginMm]);
 
   const download = async (format: "3mf" | "stl") => {
     setBusy(true);
@@ -229,6 +234,27 @@ function PetTagPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <Label>Posição do QR</Label>
+              <Select value={qrAlign} onValueChange={(v) => setQrAlign(v as "left" | "center" | "right")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="center">Centralizado</SelectItem>
+                  <SelectItem value="left">À esquerda (espaço à direita)</SelectItem>
+                  <SelectItem value="right">À direita (espaço à esquerda)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="qm">Margem da borda (mm)</Label>
+              <Input
+                id="qm"
+                inputMode="decimal"
+                value={qrMarginMm}
+                onChange={(e) => setQrMarginMm(e.target.value)}
+                disabled={qrAlign === "center"}
+              />
+            </div>
             <SlotCountField value={slots} onChange={setSlots} />
             <MaterialSlotFields
               label="Corpo"
@@ -275,6 +301,10 @@ function PetTagPage() {
             </div>
             <div className="flex justify-between">
               <dt>Troca de cor em</dt><dd>{summary ? `${summary.changeZ.toFixed(2)} mm` : "—"}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>Espaço livre p/ logo</dt>
+              <dd>{summary ? (summary.free > 0 ? `${summary.free.toFixed(1)} mm` : "—") : "—"}</dd>
             </div>
           </dl>
           <p className="text-xs text-muted-foreground">

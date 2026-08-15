@@ -39,6 +39,10 @@ export type PetTagOptions = {
   errorCorrectionLevel?: "L" | "M" | "Q" | "H";
   /** Raise the light modules instead of the dark ones. */
   recessed?: boolean;
+  /** Horizontal placement of the QR on the plate. */
+  qrAlign?: "left" | "center" | "right";
+  /** Margin from the plate edge when the QR is aligned to a side, in mm. */
+  qrMarginMm?: number;
 };
 
 export type Tri = [
@@ -58,6 +62,8 @@ export type PetTagGeometry = {
   codeStartZ: number;
   /** Largest QR side that still fits with the current quiet zone. */
   maxQrSizeMm: number;
+  /** Free plate area left beside the QR (for logo/text), in mm. */
+  freeWidthMm: number;
 };
 
 const OVERLAP = 0.2;
@@ -165,6 +171,8 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     codeMm = 0.8,
     errorCorrectionLevel = "Q",
     recessed = false,
+    qrAlign = "center",
+    qrMarginMm = 2,
   } = options;
 
   // Solid block sitting flat on the bed: a floor, two side walls and the QR
@@ -200,13 +208,25 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
   const count = qr.modules.size;
   const data = qr.modules.data;
 
+  const edge = Math.max(quietZoneMm, qrMarginMm);
+  const widthLimit =
+    qrAlign === "center" ? widthMm - 2 * quietZoneMm - 2 : widthMm - 2 * edge;
   const maxQrSizeMm = Math.max(
     0,
-    Math.min(widthMm, depthMm) - 2 * quietZoneMm - 2,
+    Math.min(widthLimit, depthMm - 2 * quietZoneMm - 2),
   );
   const side = Math.min(qrSizeMm, maxQrSizeMm > 0 ? maxQrSizeMm : qrSizeMm);
   const moduleMm = side / count;
-  const originX = (widthMm - side) / 2;
+  const originX =
+    qrAlign === "left"
+      ? edge
+      : qrAlign === "right"
+        ? Math.max(edge, widthMm - side - edge)
+        : (widthMm - side) / 2;
+  const freeWidthMm =
+    qrAlign === "center"
+      ? 0
+      : Math.max(0, widthMm - side - edge - quietZoneMm);
   const originY = (depthMm - side) / 2;
   const z0 = plateZ1 - OVERLAP;
 
@@ -246,6 +266,7 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     totalHeightMm: topZ,
     codeStartZ: plateZ1,
     maxQrSizeMm,
+    freeWidthMm,
   };
 }
 
