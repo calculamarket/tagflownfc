@@ -6,6 +6,8 @@ import { Box, Download } from "lucide-react";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { buildQrStl } from "@/lib/qr-stl";
 import { BatchGenerator } from "@/components/batch-generator";
+import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
+import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +51,9 @@ function Gerador3dPage() {
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");
   const [fillColor, setFillColor] = useState("#ffffff");
   const [codeColor, setCodeColor] = useState("#000000");
+  const [slots, setSlots] = useState(4);
+  const [bodySlot, setBodySlot] = useState<MaterialSlot>({ extruder: 1, material: "PLA", color: "#ffffff" });
+  const [codeSlot, setCodeSlot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#000000" });
   const [filename, setFilename] = useState("qrcode-3d");
   const [busy, setBusy] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -169,26 +174,21 @@ function Gerador3dPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="corbase">Cor da base</Label>
-              <input
-                id="corbase"
-                type="color"
-                value={fillColor}
-                onChange={(e) => setFillColor(e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-background"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="corcode">Cor do código</Label>
-              <input
-                id="corcode"
-                type="color"
-                value={codeColor}
-                onChange={(e) => setCodeColor(e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-background"
-              />
-            </div>
+            <SlotCountField value={slots} onChange={setSlots} />
+            <MaterialSlotFields
+              label="Base"
+              idPrefix="corbase"
+              slots={slots}
+              value={bodySlot}
+              onChange={(v) => { setBodySlot(v); setFillColor(v.color); }}
+            />
+            <MaterialSlotFields
+              label="Código"
+              idPrefix="codigo"
+              slots={slots}
+              value={codeSlot}
+              onChange={(v) => { setCodeSlot(v); setCodeColor(v.color); }}
+            />
             <div className="space-y-1.5">
               <Label htmlFor="arquivo">Nome do arquivo</Label>
               <Input id="arquivo" value={filename} onChange={(e) => setFilename(e.target.value)} />
