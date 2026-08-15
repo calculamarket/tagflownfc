@@ -27,6 +27,8 @@ export type PetTagOptions = {
   legWidthMm?: number;
   /** Height of the strap slot (leg height) in mm. */
   legHeightMm?: number;
+  /** Thickness of the floor below the strap slot in mm. */
+  floorMm?: number;
   /** Side of the QR code itself in mm (quiet zone is added around it). */
   qrSizeMm?: number;
   /** Quiet zone around the code in mm. */
@@ -157,6 +159,7 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     radiusMm = 4,
     legWidthMm = 10,
     legHeightMm = 7,
+    floorMm = 1.2,
     qrSizeMm = 24,
     quietZoneMm = 2,
     codeMm = 0.8,
@@ -164,28 +167,32 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     recessed = false,
   } = options;
 
-  // Print orientation: the two collar legs sit on the bed and the QR plate
-  // bridges over them, so the strap channel is a real opening and the QR still
-  // faces +Z (up) — no supports needed, the plate just bridges the gap.
-  const legZ0 = 0;
-  const legZ1 = legHeightMm;
+  // Solid block sitting flat on the bed: a floor, two side walls and the QR
+  // plate on top. The strap channel is a real rectangular slot that goes right
+  // through the piece (front to back), exactly like the reference part, and the
+  // QR faces +Z — no supports needed, the plate just bridges the slot.
+  const floorZ0 = 0;
+  const floorZ1 = floorMm;
+  const legZ1 = floorZ1 + legHeightMm;
   const plateZ0 = legZ1;
   const plateZ1 = plateZ0 + plateMm;
   const topZ = plateZ1 + codeMm;
 
-  const legR = Math.min(1.5, legWidthMm / 3);
+  const outer = roundedRect(0, 0, widthMm, depthMm, radiusMm);
+  const wallR = Math.min(radiusMm, legWidthMm / 2);
   const body: Tri[] = [
+    ...extrude(outer, floorZ0, floorZ1 + OVERLAP),
     ...extrude(
-      roundedRect(0, 0, legWidthMm, depthMm, legR),
-      legZ0,
+      roundedRect(0, 0, legWidthMm, depthMm, wallR),
+      floorZ1,
       legZ1 + OVERLAP,
     ),
     ...extrude(
-      roundedRect(widthMm - legWidthMm, 0, legWidthMm, depthMm, legR),
-      legZ0,
+      roundedRect(widthMm - legWidthMm, 0, legWidthMm, depthMm, wallR),
+      floorZ1,
       legZ1 + OVERLAP,
     ),
-    ...extrude(roundedRect(0, 0, widthMm, depthMm, radiusMm), plateZ0, plateZ1),
+    ...extrude(outer, plateZ0, plateZ1),
   ];
 
   // QR code, centred on the plate top face.
