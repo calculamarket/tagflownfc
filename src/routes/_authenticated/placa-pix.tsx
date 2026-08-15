@@ -243,7 +243,7 @@ function PixPlatePage() {
     return {
       text: payload,
       ...values,
-      secondText: useSecond ? secondPayload : null,
+      secondText: useSecond ? second : null,
       qrPosition,
       errorCorrectionLevel: level,
       recessed: mode === "recess",
