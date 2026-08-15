@@ -1,12 +1,14 @@
 import QRCode from "qrcode";
+import earcut from "earcut";
 import { createZip } from "./zip";
 import type { Tri } from "./pet-tag-3d";
 
 /**
  * Parametric "Etiqueta Plana" — a flat rounded plate with a QR code on top and
- * an optional hanging hole. Matches the reference model (49 x 33 x 2.5 mm plate
- * with a 25 mm / 1 mm-tall QR on top) but every measure is adjustable, so the
- * same generator serves pet tags, luggage tags, keychains, asset labels, etc.
+ * optional cut-outs: a hanging hole and/or the two strap slots of the reference
+ * model (49 x 33 x 2.5 mm plate, 4 x 25 mm slots 7 mm from each edge). Every
+ * measure is adjustable, so the same generator serves pet tags, luggage tags,
+ * keychains, asset labels, etc.
  */
 export type FlatTagOptions = {
   text: string;
@@ -19,6 +21,12 @@ export type FlatTagOptions = {
   holeDiameterMm?: number;
   /** Distance from the left edge to the hole centre. */
   holeMarginMm?: number;
+  /** Add the two strap slots (collar / lanyard) of the reference tag. */
+  slots?: boolean;
+  slotWidthMm?: number;
+  slotHeightMm?: number;
+  /** Distance from each edge to the slot centre. */
+  slotMarginMm?: number;
   qrSizeMm?: number;
   quietZoneMm?: number;
   codeMm?: number;
@@ -37,6 +45,7 @@ export type FlatTagGeometry = {
   /** Centre of the QR area (used by the UI summary). */
   qrCenterXMm: number;
 };
+
 
 const OVERLAP = 0.2;
 type Pt = [number, number];
