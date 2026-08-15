@@ -765,14 +765,42 @@ function PixPlatePage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => download("3mf")} disabled={busy}>
-              <Download className="size-4" /> Baixar 3MF multicor
-            </Button>
-            <Button variant="outline" onClick={() => download("stl")} disabled={busy}>
-              <Download className="size-4" /> Baixar STL
-            </Button>
+          <div className="space-y-3 rounded-md border border-border p-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Peças no arquivo</Label>
+                <Select value={exportPart} onValueChange={(v) => setExportPart(v as typeof exportPart)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Placa + base (conjunto)</SelectItem>
+                    <SelectItem value="plate">Somente a placa</SelectItem>
+                    <SelectItem value="base">Somente a base</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground sm:self-end sm:pb-2">
+                Separe as peças para imprimir bases em uma impressora e placas em outra. Vale também
+                para o lote em ZIP.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={() => download("3mf")} disabled={busy}>
+                <Download className="size-4" /> Baixar 3MF multicor
+              </Button>
+              <Button variant="outline" onClick={() => download("stl")} disabled={busy}>
+                <Download className="size-4" /> Baixar STL
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary" disabled={busy || !includeBase} onClick={() => download("3mf", "base")}>
+                <Download className="size-4" /> Só a base (3MF)
+              </Button>
+              <Button variant="secondary" disabled={busy} onClick={() => download("3mf", "plate")}>
+                <Download className="size-4" /> Só a placa (3MF)
+              </Button>
+            </div>
           </div>
+
         </div>
 
         <aside className="space-y-4">
