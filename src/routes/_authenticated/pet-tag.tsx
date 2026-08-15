@@ -302,6 +302,10 @@ function PetTagPage() {
             <div className="flex justify-between">
               <dt>Troca de cor em</dt><dd>{summary ? `${summary.changeZ.toFixed(2)} mm` : "—"}</dd>
             </div>
+            <div className="flex justify-between">
+              <dt>Espaço livre p/ logo</dt>
+              <dd>{summary ? (summary.free > 0 ? `${summary.free.toFixed(1)} mm` : "—") : "—"}</dd>
+            </div>
           </dl>
           <p className="text-xs text-muted-foreground">
             No 3MF, corpo e código saem como dois objetos — basta atribuir o filamento de
