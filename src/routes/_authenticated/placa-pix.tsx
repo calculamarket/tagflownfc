@@ -15,7 +15,6 @@ import { buildPixPayload } from "@/lib/qr-payloads";
 import { useServerFn } from "@tanstack/react-start";
 import { createStockTags } from "@/lib/stock.functions";
 import { buildBatchZip } from "@/lib/batch-qr";
-import { formatClaimCode } from "@/lib/claim-code";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
@@ -86,7 +85,6 @@ function PixPlatePage() {
   const [secondQrSizeMm, setSecondQrSizeMm] = useState("34");
   // Código do sistema reservado para o QR de ativação (placa avulsa).
   const [activationId, setActivationId] = useState("");
-  const [activationCode, setActivationCode] = useState("");
 
   // Produção em série
   const [batchQty, setBatchQty] = useState("10");
