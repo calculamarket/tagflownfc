@@ -101,6 +101,7 @@ function FlatTagPage() {
     if (!p) return;
     setWidthMm(p.w); setDepthMm(p.d); setPlateMm(p.p); setRadiusMm(p.r);
     setHole(p.hole); setHoleDiameterMm(p.hd); setHoleMarginMm(p.hm); setQrSizeMm(p.qr);
+    setSlots(p.slots); setSlotWidthMm(p.sw); setSlotHeightMm(p.sh); setSlotMarginMm(p.sm);
   };
 
   const options = (): FlatTagOptions => {
@@ -111,6 +112,9 @@ function FlatTagPage() {
       radiusMm: num(radiusMm),
       holeDiameterMm: num(holeDiameterMm),
       holeMarginMm: num(holeMarginMm),
+      slotWidthMm: num(slotWidthMm),
+      slotHeightMm: num(slotHeightMm),
+      slotMarginMm: num(slotMarginMm),
       qrSizeMm: num(qrSizeMm),
       quietZoneMm: num(quietMm),
       codeMm: num(codeMm),
@@ -123,7 +127,13 @@ function FlatTagPage() {
     if (hole && values.holeDiameterMm + 3 > values.depthMm) {
       throw new Error("O furo é grande demais para a profundidade da peça.");
     }
-    return { text, ...values, hole, errorCorrectionLevel: level, recessed: mode === "recess" };
+    if (slots && values.slotHeightMm + 4 > values.depthMm) {
+      throw new Error("Os passadores são altos demais para a profundidade da peça.");
+    }
+    if (slots && 2 * (values.slotMarginMm + values.slotWidthMm / 2) + 10 > values.widthMm) {
+      throw new Error("Não há largura suficiente entre os passadores.");
+    }
+    return { text, ...values, hole, slots, errorCorrectionLevel: level, recessed: mode === "recess" };
   };
 
   const summary = useMemo(() => {
@@ -138,7 +148,8 @@ function FlatTagPage() {
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, level, widthMm, depthMm, plateMm, radiusMm, hole, holeDiameterMm, holeMarginMm, qrSizeMm, quietMm, codeMm, mode]);
+  }, [text, level, widthMm, depthMm, plateMm, radiusMm, hole, holeDiameterMm, holeMarginMm, slots, slotWidthMm, slotHeightMm, slotMarginMm, qrSizeMm, quietMm, codeMm, mode]);
+
 
   const download = async (format: "3mf" | "stl") => {
     setBusy(true);
