@@ -130,6 +130,7 @@ function PixPlatePage() {
 
   const secondPayload = useMemo(() => {
     if (!useSecond) return "";
+    if (secondType === "ativacao") return activationId ? tagUrl(activationId) : "";
     const v = secondValue.trim();
     if (!v) return "";
     if (secondType === "whatsapp") {
@@ -147,7 +148,7 @@ function PixPlatePage() {
       return /^[a-z][\w+.-]*:/i.test(v) ? v : `https://${v}`;
     }
     return v;
-  }, [useSecond, secondType, secondValue, secondWhatsMsg]);
+  }, [useSecond, secondType, secondValue, secondWhatsMsg, activationId]);
 
   const artMask = useMemo(() => {
     if (artType === "texto") return textToMask(artText);
