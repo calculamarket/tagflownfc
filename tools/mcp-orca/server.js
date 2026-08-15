@@ -138,7 +138,10 @@ server.registerTool(
     },
     annotations: { readOnlyHint: false, openWorldHint: false },
   },
-  async (input) => {
+  generateQrModel,
+);
+
+async function generateQrModel(input) {
     const cfg = await loadConfig();
     const payload = input.url || (input.tagId ? `${cfg.tagBaseUrl}${input.tagId}` : "");
     if (!payload) return fail("Informe `tagId` ou `url`.");
@@ -161,8 +164,7 @@ server.registerTool(
       content: [{ type: "text", text: `Modelo gerado: ${file}\nConteúdo do QR: ${payload}` }],
       structuredContent: { path: file, payload, format: input.format },
     };
-  },
-);
+}
 
 server.registerTool(
   "slice_model",
@@ -181,7 +183,10 @@ server.registerTool(
     },
     annotations: { readOnlyHint: false, openWorldHint: false },
   },
-  async (input) => {
+  sliceModel,
+);
+
+async function sliceModel(input) {
     const cfg = await loadConfig();
     if (!cfg.slicerPath || !existsSync(cfg.slicerPath)) {
       return fail(
@@ -240,8 +245,7 @@ server.registerTool(
       ],
       structuredContent: { gcodePath, outputDir: outDir, files: produced },
     };
-  },
-);
+}
 
 server.registerTool(
   "send_to_printer",
@@ -256,7 +260,10 @@ server.registerTool(
     },
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
   },
-  async ({ gcodePath, target, startPrint }) => {
+  sendToPrinter,
+);
+
+async function sendToPrinter({ gcodePath, target, startPrint }) {
     const cfg = await loadConfig();
     if (!existsSync(gcodePath)) return fail(`Arquivo não encontrado: ${gcodePath}`);
     const data = await readFile(gcodePath);
@@ -287,8 +294,7 @@ server.registerTool(
     const body = await res.text();
     if (!res.ok) return fail(`Moonraker respondeu ${res.status}: ${body.slice(0, 500)}`);
     return text(`Enviado para a impressora${startPrint ? " e impressão iniciada" : ""}: ${filename}`);
-  },
-);
+}
 
 server.registerTool(
   "print_qr_tag",
@@ -307,7 +313,7 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
   },
   async (input) => {
-    const gen = await server._registeredTools["generate_qr_model"].callback({
+    const gen = await generateQrModel({
       tagId: input.tagId,
       url: input.url,
       format: "3mf",
@@ -321,7 +327,7 @@ server.registerTool(
     });
     if (gen.isError) return gen;
 
-    const sliced = await server._registeredTools["slice_model"].callback({
+    const sliced = await sliceModel({
       modelPath: gen.structuredContent.path,
       printer: input.printer,
     });
@@ -329,7 +335,7 @@ server.registerTool(
 
     if (input.send === "none") return sliced;
 
-    const sent = await server._registeredTools["send_to_printer"].callback({
+    const sent = await sendToPrinter({
       gcodePath: sliced.structuredContent.gcodePath,
       target: input.send,
       startPrint: input.startPrint,

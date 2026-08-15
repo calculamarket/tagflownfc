@@ -4,9 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Servidor MCP local: gera QR 3D, fatia com Orca Slicer / Anycubic Slicer Next e envia para a impressora.",
-  "bin": { "3dqr-mcp-slicer": "./server.js" },
+  "bin": {
+    "3dqr-mcp-slicer": "./server.js"
+  },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "smoke": "node smoke-test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
