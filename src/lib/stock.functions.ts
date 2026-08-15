@@ -24,7 +24,6 @@ export const createStockTags = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { newTagId } = await import("./tag-id");
-    const { generateClaimCode, normalizeClaimCode } = await import("./claim-code");
 
     const { data: batch, error: batchError } = await supabaseAdmin
       .from("tag_batches")
@@ -39,6 +38,8 @@ export const createStockTags = createServerFn({ method: "POST" })
       .single();
     if (batchError) throw new Error(batchError.message);
 
+    // No activation code: whoever scans the printed QR just creates/logs into an
+    // account and the piece binds to them (claimByTagId).
     const rows = Array.from({ length: data.quantity }, (_, i) => ({
       id: newTagId(),
       name: data.quantity > 1 ? `${data.name} #${i + 1}` : data.name,
@@ -48,7 +49,6 @@ export const createStockTags = createServerFn({ method: "POST" })
       status: "active" as const,
       destination_type: "url" as const,
       destination: {},
-      claim_code: normalizeClaimCode(generateClaimCode()),
     }));
 
     const { error } = await supabaseAdmin.from("tags").insert(rows);
@@ -56,6 +56,6 @@ export const createStockTags = createServerFn({ method: "POST" })
 
     return {
       batchId: batch.id,
-      tags: rows.map((r, i) => ({ index: i + 1, id: r.id, code: r.claim_code })),
+      tags: rows.map((r, i) => ({ index: i + 1, id: r.id })),
     };
   });
