@@ -48,14 +48,17 @@ type Preset = {
   label: string;
   w: string; d: string; p: string; r: string;
   hole: boolean; hd: string; hm: string; qr: string;
+  slots: boolean; sw: string; sh: string; sm: string;
 };
 
 const PRESETS: Preset[] = [
-  { id: "padrao", label: "Padrão (49 × 33 mm)", w: "49", d: "33", p: "2.5", r: "5", hole: false, hd: "4", hm: "5", qr: "25" },
-  { id: "chaveiro", label: "Chaveiro com furo (45 × 30 mm)", w: "45", d: "30", p: "3", r: "6", hole: true, hd: "4", hm: "5", qr: "22" },
-  { id: "bagagem", label: "Bagagem (70 × 40 mm)", w: "70", d: "40", p: "3", r: "6", hole: true, hd: "6", hm: "7", qr: "30" },
-  { id: "patrimonio", label: "Patrimônio (40 × 40 mm)", w: "40", d: "40", p: "2", r: "3", hole: false, hd: "4", hm: "5", qr: "32" },
+  { id: "padrao", label: "Padrão com passadores (49 × 33 mm)", w: "49", d: "33", p: "2.5", r: "5", hole: false, hd: "4", hm: "5", qr: "25", slots: true, sw: "4", sh: "25", sm: "7" },
+  { id: "lisa", label: "Placa lisa (49 × 33 mm)", w: "49", d: "33", p: "2.5", r: "5", hole: false, hd: "4", hm: "5", qr: "25", slots: false, sw: "4", sh: "25", sm: "7" },
+  { id: "chaveiro", label: "Chaveiro com furo (45 × 30 mm)", w: "45", d: "30", p: "3", r: "6", hole: true, hd: "4", hm: "5", qr: "22", slots: false, sw: "4", sh: "22", sm: "7" },
+  { id: "bagagem", label: "Bagagem (70 × 40 mm)", w: "70", d: "40", p: "3", r: "6", hole: true, hd: "6", hm: "7", qr: "30", slots: false, sw: "5", sh: "30", sm: "8" },
+  { id: "patrimonio", label: "Patrimônio (40 × 40 mm)", w: "40", d: "40", p: "2", r: "3", hole: false, hd: "4", hm: "5", qr: "32", slots: false, sw: "4", sh: "30", sm: "6" },
 ];
+
 
 function FlatTagPage() {
   const [text, setText] = useState("https://www.3dqr.com.br/t/tag");
