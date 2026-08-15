@@ -430,11 +430,13 @@ function trisToStl(tris: Tri[], header: string): ArrayBuffer {
 }
 
 export function buildPixPlateStl(options: PixPlateOptions): Blob {
-  const { base, plate, code, art } = buildPixPlateGeometry(options);
-  return new Blob([trisToStl([...plate, ...code, ...art, ...base], "Placa Pix QR - 3D QR")], {
-    type: "model/stl",
-  });
+  const { base, plate, code, code2, art } = buildPixPlateGeometry(options);
+  return new Blob(
+    [trisToStl([...plate, ...code, ...code2, ...art, ...base], "Placa Pix QR - 3D QR")],
+    { type: "model/stl" },
+  );
 }
+
 
 const fmt = (n: number) => (Math.round(n * 1000) / 1000).toString();
 
