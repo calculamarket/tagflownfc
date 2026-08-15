@@ -208,13 +208,15 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
   const count = qr.modules.size;
   const data = qr.modules.data;
 
+  const edge = Math.max(quietZoneMm, qrMarginMm);
+  const widthLimit =
+    qrAlign === "center" ? widthMm - 2 * quietZoneMm - 2 : widthMm - 2 * edge;
   const maxQrSizeMm = Math.max(
     0,
-    Math.min(widthMm, depthMm) - 2 * quietZoneMm - 2,
+    Math.min(widthLimit, depthMm - 2 * quietZoneMm - 2),
   );
   const side = Math.min(qrSizeMm, maxQrSizeMm > 0 ? maxQrSizeMm : qrSizeMm);
   const moduleMm = side / count;
-  const edge = Math.max(quietZoneMm, qrMarginMm);
   const originX =
     qrAlign === "left"
       ? edge
