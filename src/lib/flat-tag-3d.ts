@@ -1,12 +1,14 @@
 import QRCode from "qrcode";
+import earcut from "earcut";
 import { createZip } from "./zip";
 import type { Tri } from "./pet-tag-3d";
 
 /**
  * Parametric "Etiqueta Plana" — a flat rounded plate with a QR code on top and
- * an optional hanging hole. Matches the reference model (49 x 33 x 2.5 mm plate
- * with a 25 mm / 1 mm-tall QR on top) but every measure is adjustable, so the
- * same generator serves pet tags, luggage tags, keychains, asset labels, etc.
+ * optional cut-outs: a hanging hole and/or the two strap slots of the reference
+ * model (49 x 33 x 2.5 mm plate, 4 x 25 mm slots 7 mm from each edge). Every
+ * measure is adjustable, so the same generator serves pet tags, luggage tags,
+ * keychains, asset labels, etc.
  */
 export type FlatTagOptions = {
   text: string;
@@ -19,6 +21,12 @@ export type FlatTagOptions = {
   holeDiameterMm?: number;
   /** Distance from the left edge to the hole centre. */
   holeMarginMm?: number;
+  /** Add the two strap slots (collar / lanyard) of the reference tag. */
+  slots?: boolean;
+  slotWidthMm?: number;
+  slotHeightMm?: number;
+  /** Distance from each edge to the slot centre. */
+  slotMarginMm?: number;
   qrSizeMm?: number;
   quietZoneMm?: number;
   codeMm?: number;
@@ -37,6 +45,7 @@ export type FlatTagGeometry = {
   /** Centre of the QR area (used by the UI summary). */
   qrCenterXMm: number;
 };
+
 
 const OVERLAP = 0.2;
 type Pt = [number, number];
@@ -112,96 +121,89 @@ function box(x0: number, y0: number, z0: number, x1: number, y1: number, z1: num
   );
 }
 
-/** Cast a ray from `c` at angle `a` and return where it leaves the polygon. */
-function rayHit(poly: Pt[], c: Pt, a: number): Pt {
-  const dx = Math.cos(a);
-  const dy = Math.sin(a);
-  let best: Pt | null = null;
-  let bestT = Infinity;
-  for (let i = 0; i < poly.length; i++) {
-    const p = poly[i];
-    const q = poly[(i + 1) % poly.length];
-    const ex = q[0] - p[0];
-    const ey = q[1] - p[1];
-    const den = dx * ey - dy * ex;
-    if (Math.abs(den) < 1e-9) continue;
-    const t = ((p[0] - c[0]) * ey - (p[1] - c[1]) * ex) / den;
-    const u = ((p[0] - c[0]) * dy - (p[1] - c[1]) * dx) / den;
-    if (t > 1e-9 && u >= -1e-9 && u <= 1 + 1e-9 && t < bestT) {
-      bestT = t;
-      best = [c[0] + dx * t, c[1] + dy * t];
-    }
+function circle(cx: number, cy: number, r: number, segments = 48): Pt[] {
+  const pts: Pt[] = [];
+  for (let i = 0; i < segments; i++) {
+    const a = (2 * Math.PI * i) / segments;
+    pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
   }
-  return best ?? [c[0], c[1]];
+  return pts;
 }
 
-/** Plate with a circular hole: ring faces + outer walls + hole walls. */
-function plateWithHole(
-  outer: Pt[],
-  center: Pt,
-  radius: number,
-  z0: number,
-  z1: number,
-  rays = 72,
-): Tri[] {
+/** Vertical stadium (rounded slot) centred on (cx, cy). */
+function stadium(cx: number, cy: number, w: number, h: number, segments = 16): Pt[] {
+  const r = Math.min(w, h) / 2;
+  const straight = Math.max(0, h / 2 - r);
+  const pts: Pt[] = [];
+  // CCW: top cap (0 -> pi around the upper centre), then bottom cap (pi -> 2pi).
+  for (let i = 0; i <= segments; i++) {
+    const a = (Math.PI * i) / segments;
+    pts.push([cx + r * Math.cos(a), cy + straight + r * Math.sin(a)]);
+  }
+  for (let i = 0; i <= segments; i++) {
+    const a = Math.PI + (Math.PI * i) / segments;
+    pts.push([cx + r * Math.cos(a), cy - straight + r * Math.sin(a)]);
+  }
+  return pts;
+
+}
+
+/** Side walls of one ring; winding decides which way the normals face. */
+function wall(ring: Pt[], z0: number, z1: number): Tri[] {
   const tris: Tri[] = [];
-  const inner: Pt[] = [];
-  const rim: Pt[] = [];
-  for (let i = 0; i < rays; i++) {
-    const a = (2 * Math.PI * i) / rays;
-    inner.push([center[0] + radius * Math.cos(a), center[1] + radius * Math.sin(a)]);
-    rim.push(rayHit(outer, center, a));
-  }
-  for (let i = 0; i < rays; i++) {
-    const j = (i + 1) % rays;
-    const ai = inner[i];
-    const aj = inner[j];
-    const bi = rim[i];
-    const bj = rim[j];
-    // bottom (normals down), top (normals up)
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
     tris.push([
-      [ai[0], ai[1], z0],
-      [bi[0], bi[1], z0],
-      [bj[0], bj[1], z0],
+      [a[0], a[1], z0],
+      [b[0], b[1], z0],
+      [b[0], b[1], z1],
     ]);
     tris.push([
-      [ai[0], ai[1], z0],
-      [bj[0], bj[1], z0],
-      [aj[0], aj[1], z0],
-    ]);
-    tris.push([
-      [ai[0], ai[1], z1],
-      [bj[0], bj[1], z1],
-      [bi[0], bi[1], z1],
-    ]);
-    tris.push([
-      [ai[0], ai[1], z1],
-      [aj[0], aj[1], z1],
-      [bj[0], bj[1], z1],
-    ]);
-    // outer wall
-    tris.push([
-      [bi[0], bi[1], z0],
-      [bi[0], bi[1], z1],
-      [bj[0], bj[1], z1],
-    ]);
-    tris.push([
-      [bi[0], bi[1], z0],
-      [bj[0], bj[1], z1],
-      [bj[0], bj[1], z0],
-    ]);
-    // hole wall (normals point inward)
-    tris.push([
-      [ai[0], ai[1], z0],
-      [aj[0], aj[1], z1],
-      [ai[0], ai[1], z1],
-    ]);
-    tris.push([
-      [ai[0], ai[1], z0],
-      [aj[0], aj[1], z0],
-      [aj[0], aj[1], z1],
+      [a[0], a[1], z0],
+      [b[0], b[1], z1],
+      [a[0], a[1], z1],
     ]);
   }
+  return tris;
+}
+
+/**
+ * Plate with any number of cut-outs. Top/bottom faces come from earcut (which
+ * handles the non-convex ring-with-holes case), walls are extruded per ring.
+ * Holes are wound clockwise so their walls face into the material.
+ */
+function plateWithHoles(outer: Pt[], holes: Pt[][], z0: number, z1: number): Tri[] {
+  const coords: number[] = [];
+  const holeIndices: number[] = [];
+  for (const p of outer) coords.push(p[0], p[1]);
+  for (const ring of holes) {
+    holeIndices.push(coords.length / 2);
+    for (const p of ring) coords.push(p[0], p[1]);
+  }
+  const indices = earcut(coords, holeIndices.length ? holeIndices : undefined, 2);
+  const at = (i: number): Pt => [coords[i * 2], coords[i * 2 + 1]];
+
+  const tris: Tri[] = [];
+  for (let i = 0; i < indices.length; i += 3) {
+    const a = at(indices[i]);
+    const b = at(indices[i + 1]);
+    const c = at(indices[i + 2]);
+    // bottom (normals down)
+    tris.push([
+      [a[0], a[1], z0],
+      [c[0], c[1], z0],
+      [b[0], b[1], z0],
+    ]);
+    // top (normals up)
+    tris.push([
+      [a[0], a[1], z1],
+      [b[0], b[1], z1],
+      [c[0], c[1], z1],
+    ]);
+  }
+  tris.push(...wall(outer, z0, z1));
+  for (const ring of holes) tris.push(...wall([...ring].reverse(), z0, z1));
   return tris;
 }
 
@@ -215,6 +217,10 @@ export function buildFlatTagGeometry(options: FlatTagOptions): FlatTagGeometry {
     hole = false,
     holeDiameterMm = 4,
     holeMarginMm = 5,
+    slots = false,
+    slotWidthMm = 4,
+    slotHeightMm = 25,
+    slotMarginMm = 7,
     qrSizeMm = 25,
     quietZoneMm = 2,
     codeMm = 1,
@@ -228,15 +234,34 @@ export function buildFlatTagGeometry(options: FlatTagOptions): FlatTagGeometry {
 
   const holeR = Math.max(0.5, holeDiameterMm / 2);
   const holeCx = Math.max(holeMarginMm, holeR + 0.8);
-  const body: Tri[] = hole
-    ? plateWithHole(outer, [holeCx, depthMm / 2], holeR, 0, plateZ1)
+
+  const slotW = Math.max(1, slotWidthMm);
+  const slotH = Math.max(slotW, Math.min(slotHeightMm, depthMm - 4));
+  const slotCx = Math.max(slotMarginMm, slotW / 2 + 1.5);
+
+  const cuts: Pt[][] = [];
+  if (hole) cuts.push(circle(holeCx, depthMm / 2, holeR));
+  if (slots) {
+    cuts.push(stadium(slotCx, depthMm / 2, slotW, slotH));
+    cuts.push(stadium(widthMm - slotCx, depthMm / 2, slotW, slotH));
+  }
+
+  const body: Tri[] = cuts.length
+    ? plateWithHoles(outer, cuts, 0, plateZ1)
     : extrude(outer, 0, plateZ1);
 
-  // Usable area for the code: full plate, minus the hole column when present.
-  const areaX0 = hole ? holeCx + holeR + 1.5 : 0;
-  const areaW = widthMm - areaX0;
+  // Usable area for the code: full plate, minus the hole / slot columns.
+  let areaX0 = 0;
+  let areaX1 = widthMm;
+  if (hole) areaX0 = Math.max(areaX0, holeCx + holeR + 1.5);
+  if (slots) {
+    areaX0 = Math.max(areaX0, slotCx + slotW / 2 + 1.5);
+    areaX1 = Math.min(areaX1, widthMm - slotCx - slotW / 2 - 1.5);
+  }
+  const areaW = Math.max(0, areaX1 - areaX0);
   const maxQrSizeMm = Math.max(0, Math.min(areaW, depthMm) - 2 * quietZoneMm);
   const side = Math.min(qrSizeMm, maxQrSizeMm > 0 ? maxQrSizeMm : qrSizeMm);
+
 
   const qr = QRCode.create(text || " ", { errorCorrectionLevel });
   const count = qr.modules.size;
