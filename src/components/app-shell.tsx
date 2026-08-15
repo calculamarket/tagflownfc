@@ -18,6 +18,8 @@ const nav = [
   { to: "/pecas", label: "Minhas Peças", icon: Boxes },
   { to: "/ativar", label: "Ativar etiqueta", icon: PackageCheck },
   { to: "/qr-codes", label: "QR Codes", icon: QrCode },
+  { to: "/gerador-3d", label: "Gerador QR 3D", icon: Box },
+
   { to: "/calculadora-custos", label: "Calculadora de Custos", icon: Calculator },
   { to: "/links", label: "Links Inteligentes", icon: Link2 },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
