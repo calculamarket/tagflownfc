@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Upload, X, Download } from "lucide-react";
+import { Sparkles, Upload, X, Download, Box } from "lucide-react";
 import { generateFigurine } from "@/lib/figurine.functions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -75,6 +75,7 @@ function toDataUrl(file: File): Promise<string> {
 
 function EstudioBonecosPage() {
   const generate = useServerFn(generateFigurine);
+  const navigate = useNavigate();
   const [photos, setPhotos] = useState<string[]>([]);
   const [style, setStyle] = useState<(typeof STYLES)[number]["value"]>("funko");
   const [view, setView] = useState<(typeof VIEWS)[number]["value"]>("turnaround");
@@ -222,9 +223,21 @@ function EstudioBonecosPage() {
           {result ? (
             <>
               <img src={result} alt="Boneco gerado" className="w-full rounded-md border border-border" />
-              <Button variant="outline" size="sm" onClick={download}>
-                <Download className="size-4" /> Baixar PNG
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={download}>
+                  <Download className="size-4" /> Baixar PNG
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    sessionStorage.setItem("tagflow:mold-reference", result);
+                    navigate({ to: "/molde-silicone" });
+                  }}
+                >
+                  <Box className="size-4" /> Usar no molde
+                </Button>
+              </div>
             </>
           ) : (
             <p className="text-xs text-muted-foreground">

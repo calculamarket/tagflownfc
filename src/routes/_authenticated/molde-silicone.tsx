@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Box, Download } from "lucide-react";
+import { Box, Download, Upload, X } from "lucide-react";
+import { measureMeshFile } from "@/lib/mesh-measure";
 import { buildMoldBox3mf, buildMoldBoxGeometry, buildMoldBoxStl } from "@/lib/mold-box-3d";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
@@ -49,6 +50,55 @@ function MoldeSiliconePage() {
   const [pedestalSlot, setPedestalSlot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#f6ad55" });
   const [filename, setFilename] = useState("molde-silicone");
   const [busy, setBusy] = useState(false);
+  const [meshInfo, setMeshInfo] = useState<string | null>(null);
+  const [reference, setReference] = useState<string | null>(null);
+  const meshRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLInputElement>(null);
+
+  // Arte enviada a partir do Estúdio de Bonecos ("Usar no molde").
+  useEffect(() => {
+    const saved = sessionStorage.getItem("tagflow:mold-reference");
+    if (saved) setReference(saved);
+  }, []);
+
+  const setReferenceImage = (url: string | null) => {
+    setReference(url);
+    if (url) sessionStorage.setItem("tagflow:mold-reference", url);
+    else sessionStorage.removeItem("tagflow:mold-reference");
+  };
+
+  const loadMesh = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (meshRef.current) meshRef.current.value = "";
+    if (!file) return;
+    setBusy(true);
+    try {
+      const b = await measureMeshFile(file);
+      const round = (n: number) => String(Math.round(n * 10) / 10);
+      setW(round(b.widthMm));
+      setD(round(b.depthMm));
+      setH(round(b.heightMm));
+      if (!filename || filename === "molde-silicone") {
+        setFilename(`molde-${file.name.replace(/\.(stl|3mf)$/i, "")}`);
+      }
+      setMeshInfo(`${file.name} · ${b.triangles.toLocaleString("pt-BR")} triângulos`);
+      toast.success("Medidas preenchidas a partir do arquivo.");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const loadReference = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (imgRef.current) imgRef.current.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setReferenceImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
 
   const options = () => {
     const o = {
@@ -111,6 +161,42 @@ function MoldeSiliconePage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
+          <div className="space-y-2 rounded-md border border-dashed border-border p-4">
+            <Label>Arquivo da peça (.stl ou .3mf)</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => meshRef.current?.click()}>
+                <Upload className="size-4" /> Enviar STL/3MF
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => imgRef.current?.click()}>
+                <Upload className="size-4" /> Enviar PNG de referência
+              </Button>
+              {meshInfo && <span className="text-xs text-muted-foreground">{meshInfo}</span>}
+            </div>
+            <input ref={meshRef} type="file" accept=".stl,.3mf" className="hidden" onChange={loadMesh} />
+            <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={loadReference} />
+            <p className="text-xs text-muted-foreground">
+              O arquivo é lido no seu navegador só para medir a caixa envolvente e preencher
+              largura, profundidade e altura. Nada é enviado para o servidor.
+            </p>
+            {reference && (
+              <div className="relative w-fit">
+                <img
+                  src={reference}
+                  alt="Referência da peça"
+                  className="h-24 rounded-md border border-border object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={() => setReferenceImage(null)}
+                  className="absolute -right-2 -top-2 rounded-full border border-border bg-background p-1"
+                  aria-label="Remover referência"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="pw">Largura da peça (mm)</Label>
