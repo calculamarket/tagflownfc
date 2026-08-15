@@ -164,20 +164,26 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     recessed = false,
   } = options;
 
-  const plateZ0 = legHeightMm;
-  const plateZ1 = plateZ0 + plateMm;
+  // Print orientation: the plate lies flat on the bed and the collar legs grow
+  // upwards, so nothing overhangs and the QR code always faces +Z (up).
+  const plateZ0 = 0;
+  const plateZ1 = plateMm;
   const topZ = plateZ1 + codeMm;
 
-  // Legs: two rounded blocks at each end, strap slot in between.
+  // Legs: two rounded blocks rising from the plate, strap channel in between.
   const legR = Math.min(1.5, legWidthMm / 3);
   const body: Tri[] = [
-    ...extrude(roundedRect(0, 0, legWidthMm, depthMm, legR), 0, plateZ0 + OVERLAP),
+    ...extrude(roundedRect(0, 0, widthMm, depthMm, radiusMm), plateZ0, plateZ1),
+    ...extrude(
+      roundedRect(0, 0, legWidthMm, depthMm, legR),
+      plateZ1 - OVERLAP,
+      plateZ1 + legHeightMm,
+    ),
     ...extrude(
       roundedRect(widthMm - legWidthMm, 0, legWidthMm, depthMm, legR),
-      0,
-      plateZ0 + OVERLAP,
+      plateZ1 - OVERLAP,
+      plateZ1 + legHeightMm,
     ),
-    ...extrude(roundedRect(0, 0, widthMm, depthMm, radiusMm), plateZ0, plateZ1),
   ];
 
   // QR code, centred on the plate top face.
