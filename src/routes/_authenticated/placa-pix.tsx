@@ -289,6 +289,88 @@ function PixPlatePage() {
     }
   };
 
+  const makeStock = useServerFn(createStockTags);
+
+  /** Reserve one system code for a single plate. */
+  const generateActivation = async () => {
+    setBusy(true);
+    try {
+      const res = await makeStock({ data: { name: filename || "Placa Pix", quantity: 1, model: "Placa Pix" } });
+      const tag = res.tags[0];
+      setActivationId(tag.id);
+      setActivationCode(tag.code);
+      toast.success("QR de ativação criado. O cliente ativa ao escanear.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const buildOne = async (format: "3mf" | "stl", secondOverride?: string) => {
+    const opts = options(secondOverride);
+    return format === "3mf"
+      ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
+      : buildPixPlateStl(opts);
+  };
+
+  const saveBlob = (blob: Blob, name: string) => {
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(href);
+  };
+
+  /** Production run: N plates sharing one QR, or one unique QR per plate. */
+  const downloadBatch = async (format: "3mf" | "stl") => {
+    const quantity = Math.round(Number(batchQty.replace(",", ".")));
+    setBusy(true);
+    setBatchProgress({ done: 0, total: quantity });
+    try {
+      if (!Number.isFinite(quantity) || quantity < 1) throw new Error("Informe uma quantidade válida.");
+      if (quantity > 200) throw new Error("Máximo de 200 placas por lote.");
+
+      const base = filename || "placa-pix";
+      let items: { index: number; id: string; text: string }[];
+
+      if (batchMode === "unique") {
+        if (!useSecond) throw new Error("Ative o segundo QR Code para gerar códigos diferentes por placa.");
+        if (secondType !== "ativacao") {
+          throw new Error("Códigos diferentes por placa só valem para o 2º QR de ativação pelo cliente.");
+        }
+        const res = await makeStock({
+          data: { name: base, quantity, model: "Placa Pix" },
+        });
+        items = res.tags.map((t) => ({ index: t.index, id: t.id, text: tagUrl(t.id) }));
+      } else {
+        // Mesmo QR em todas: valida uma vez e repete o mesmo arquivo.
+        options();
+        items = Array.from({ length: quantity }, (_, i) => ({
+          index: i + 1,
+          id: activationId,
+          text: secondPayload,
+        }));
+      }
+
+      const zip = await buildBatchZip({
+        items,
+        filename: base,
+        format,
+        build: (text) => buildOne(format, useSecond ? text : undefined),
+        onProgress: (done, total) => setBatchProgress({ done, total }),
+      });
+      saveBlob(zip, `${base}-lote-${quantity}.zip`);
+      toast.success(`${quantity} placas geradas em ZIP (com a lista de códigos).`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBatchProgress(null);
+      setBusy(false);
+    }
+  };
+
   const download = async (format: "3mf" | "stl") => {
     setBusy(true);
     try {
