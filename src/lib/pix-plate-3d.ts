@@ -475,6 +475,7 @@ function trisToMesh(tris: Tri[]): string {
 
 export function buildPixPlate3mf(
   options: PixPlateOptions & {
+    part?: PixPlatePart;
     plateSlot?: Partial<MaterialSlot>;
     codeSlot?: Partial<MaterialSlot>;
     code2Slot?: Partial<MaterialSlot>;
@@ -482,7 +483,11 @@ export function buildPixPlate3mf(
     baseSlot?: Partial<MaterialSlot>;
   },
 ): Promise<Blob> {
-  const { base, plate, code, code2, art } = buildPixPlateGeometry(options);
+  const part = options.part ?? "both";
+  const { base, plate, code, code2, art } = buildPixPlateGeometry({
+    ...options,
+    includeBase: part === "plate" ? false : options.includeBase,
+  });
   const plateSlot = normalizeSlot(options.plateSlot, {
     extruder: 1,
     material: "PLA",
@@ -496,6 +501,13 @@ export function buildPixPlate3mf(
   const code2Slot = normalizeSlot(options.code2Slot, codeSlot);
   const artSlot = normalizeSlot(options.artSlot, codeSlot);
   const baseSlot = normalizeSlot(options.baseSlot, plateSlot);
+
+  if (part === "base") {
+    const only = shiftToOriginX(base);
+    return pack3mf([
+      { name: "Base", mesh: trisToMesh(only), triangleCount: only.length, slot: baseSlot },
+    ]);
+  }
 
   const objects = [
     { name: "Placa", mesh: trisToMesh(plate), triangleCount: plate.length, slot: plateSlot },
@@ -513,9 +525,10 @@ export function buildPixPlate3mf(
     objects.push({ name: "Arte", mesh: trisToMesh(art), triangleCount: art.length, slot: artSlot });
   }
 
-  if (base.length) {
+  if (part === "both" && base.length) {
     objects.push({ name: "Base", mesh: trisToMesh(base), triangleCount: base.length, slot: baseSlot });
   }
 
   return pack3mf(objects);
 }
+
