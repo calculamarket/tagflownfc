@@ -295,15 +295,13 @@ function PixPlatePage() {
 
   const makeStock = useServerFn(createStockTags);
 
-  /** Reserve one system code for a single plate. */
+  /** Reserve one system code for a single plate (no activation code needed). */
   const generateActivation = async () => {
     setBusy(true);
     try {
       const res = await makeStock({ data: { name: filename || "Placa Pix", quantity: 1, model: "Placa Pix" } });
-      const tag = res.tags[0];
-      setActivationId(tag.id);
-      setActivationCode(tag.code);
-      toast.success("QR de ativação criado. O cliente ativa ao escanear.");
+      setActivationId(res.tags[0].id);
+      toast.success("QR criado. Quem escanear cria a conta e assume a placa.");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
