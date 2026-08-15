@@ -256,6 +256,15 @@ function HookPage() {
         </p>
       </header>
 
+      <Tabs defaultValue="placa">
+        <TabsList>
+          <TabsTrigger value="placa">Gancho de placa</TabsTrigger>
+          <TabsTrigger value="encaixe">Base parafusada + encaixe</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="placa" className="mt-6">
+
+
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
           <div className="grid gap-4 sm:grid-cols-2">
