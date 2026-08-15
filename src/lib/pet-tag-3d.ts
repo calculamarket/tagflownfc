@@ -39,6 +39,10 @@ export type PetTagOptions = {
   errorCorrectionLevel?: "L" | "M" | "Q" | "H";
   /** Raise the light modules instead of the dark ones. */
   recessed?: boolean;
+  /** Horizontal placement of the QR on the plate. */
+  qrAlign?: "left" | "center" | "right";
+  /** Margin from the plate edge when the QR is aligned to a side, in mm. */
+  qrMarginMm?: number;
 };
 
 export type Tri = [
