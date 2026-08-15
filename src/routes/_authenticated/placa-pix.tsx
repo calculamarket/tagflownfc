@@ -375,20 +375,16 @@ function PixPlatePage() {
     }
   };
 
-  const download = async (format: "3mf" | "stl") => {
+  const download = async (format: "3mf" | "stl", part: "both" | "plate" | "base" = exportPart) => {
     setBusy(true);
     try {
-      const opts = options();
+      const opts = { ...options(), part };
       const blob =
         format === "3mf"
           ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
           : buildPixPlateStl(opts);
-      const href = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = href;
-      a.download = `${filename || "placa-pix"}.${format}`;
-      a.click();
-      URL.revokeObjectURL(href);
+      const suffix = part === "plate" ? "-placa" : part === "base" ? "-base" : "";
+      saveBlob(blob, `${filename || "placa-pix"}${suffix}.${format}`);
       toast.success(`Peça .${format} gerada.`);
     } catch (e) {
       toast.error((e as Error).message);
