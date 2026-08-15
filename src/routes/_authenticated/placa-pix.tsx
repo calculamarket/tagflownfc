@@ -107,6 +107,7 @@ function PixPlatePage() {
   const [filename, setFilename] = useState("placa-pix");
   const [busy, setBusy] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvas2Ref = useRef<HTMLCanvasElement>(null);
 
   const payload = useMemo(() => {
     if (source === "livre") return freeText.trim();
@@ -117,6 +118,27 @@ function PixPlatePage() {
       amount: pixAmount ? num(pixAmount) : null,
     });
   }, [source, freeText, pixKey, pixName, pixCity, pixAmount]);
+
+  const secondPayload = useMemo(() => {
+    if (!useSecond) return "";
+    const v = secondValue.trim();
+    if (!v) return "";
+    if (secondType === "whatsapp") {
+      const digits = v.replace(/\D/g, "");
+      if (!digits) return "";
+      const phone = digits.length <= 11 ? `55${digits}` : digits;
+      const msg = secondWhatsMsg.trim();
+      return `https://wa.me/${phone}${msg ? `?text=${encodeURIComponent(msg)}` : ""}`;
+    }
+    if (secondType === "instagram") {
+      const handle = v.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/$/, "");
+      return `https://instagram.com/${handle}`;
+    }
+    if (secondType === "link") {
+      return /^[a-z][\w+.-]*:/i.test(v) ? v : `https://${v}`;
+    }
+    return v;
+  }, [useSecond, secondType, secondValue, secondWhatsMsg]);
 
   const artMask = useMemo(() => {
     if (artType === "texto") return textToMask(artText);
@@ -140,12 +162,24 @@ function PixPlatePage() {
     }).catch(() => undefined);
   }, [payload, level, codeSlot.color, plateSlot.color]);
 
+  useEffect(() => {
+    const canvas = canvas2Ref.current;
+    if (!canvas || !secondPayload) return;
+    QRCode.toCanvas(canvas, secondPayload, {
+      width: 160,
+      margin: 2,
+      errorCorrectionLevel: level,
+      color: { dark: code2Slot.color, light: plateSlot.color },
+    }).catch(() => undefined);
+  }, [secondPayload, level, code2Slot.color, plateSlot.color]);
+
   const options = (): PixPlateOptions => {
     if (!payload) {
       throw new Error(
         source === "pix" ? "Informe a chave Pix." : "Informe o conteúdo do QR Code.",
       );
     }
+    if (useSecond && !secondPayload) throw new Error("Informe o conteúdo do segundo QR Code.");
     const values = {
       plateWidthMm: num(plateWidthMm),
       plateHeightMm: num(plateHeightMm),
@@ -154,6 +188,7 @@ function PixPlatePage() {
       qrSizeMm: num(qrSizeMm),
       marginMm: num(marginMm),
       codeMm: num(codeMm),
+      secondQrSizeMm: num(secondQrSizeMm),
       artHeightMm: num(artHeightMm),
       artPocketDepthMm: num(artPocketDepthMm),
       baseDepthMm: num(baseDepthMm),
@@ -170,12 +205,24 @@ function PixPlatePage() {
     if (values.qrSizeMm + 2 * values.marginMm > values.plateWidthMm) {
       throw new Error("O QR é maior que a largura útil da placa.");
     }
+    const gap = Math.min(values.marginMm, 6);
+    if (
+      useSecond &&
+      values.qrSizeMm + values.secondQrSizeMm + gap + 2 * values.marginMm >
+        values.plateHeightMm
+    ) {
+      throw new Error("Os dois QR Codes não cabem na altura da placa — reduza um deles.");
+    }
+    if (useSecond && values.secondQrSizeMm < 18) {
+      throw new Error("O segundo QR precisa ter pelo menos 18 mm para ser lido.");
+    }
     if (includeBase && values.slotDepthMm + 3 > values.baseHeightMm) {
       throw new Error("O encaixe é fundo demais para a altura da base.");
     }
     return {
       text: payload,
       ...values,
+      secondText: useSecond ? secondPayload : null,
       qrPosition,
       errorCorrectionLevel: level,
       recessed: mode === "recess",
@@ -191,6 +238,7 @@ function PixPlatePage() {
       return {
         plate: `${geo.plateWidthMm.toFixed(0)} × ${geo.plateHeightMm.toFixed(0)} × ${(geo.plateTopZ + num(codeMm)).toFixed(2)} mm`,
         qr: geo.qrSideMm,
+        qr2: geo.qr2SideMm,
         maxQr: geo.maxQrSizeMm,
         area: `${geo.artAreaWMm.toFixed(0)} × ${geo.artAreaHMm.toFixed(0)} mm`,
         changeZ: geo.plateTopZ,
@@ -200,10 +248,12 @@ function PixPlatePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    payload, level, plateWidthMm, plateHeightMm, plateThickMm, radiusMm, qrSizeMm, marginMm,
+    payload, secondPayload, useSecond, secondQrSizeMm, level, plateWidthMm, plateHeightMm,
+    plateThickMm, radiusMm, qrSizeMm, marginMm,
     codeMm, qrPosition, mode, artMask, artHeightMm, artPocket, artPocketDepthMm, includeBase,
     baseDepthMm, baseHeightMm, baseWidthMm, slotAngleDeg, slotDepthMm, slotClearanceMm,
   ]);
+
 
   const onImage = async (file?: File) => {
     if (!file) return;
