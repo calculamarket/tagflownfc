@@ -53,6 +53,13 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     )
     .join("");
 
+  // Child meshes + one assembly object that references them as components.
+  // Shipping the meshes as separate build items makes slicers treat each as an
+  // independent object and drop it onto the bed, which flipped the QR plate
+  // under the body. As components of a single object the relative Z is kept,
+  // so the code always stays on top of the piece.
+  const assemblyId = objects.length + 2;
+
   const resources = objects
     .map(
       (o, i) =>
@@ -60,15 +67,24 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     )
     .join("");
 
-  const items = objects.map((_, i) => `<item objectid="${i + 2}"/>`).join("");
+  const components = objects
+    .map((_, i) => `<component objectid="${i + 2}"/>`)
+    .join("");
+
+  const assembly =
+    `<object id="${assemblyId}" type="model" name="${objects[0]?.name ?? "Peca"}">` +
+    `<components>${components}</components></object>`;
+
+  const items = `<item objectid="${assemblyId}"/>`;
 
   const model =
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<model unit="millimeter" xml:lang="en-US" ` +
     `xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">` +
-    `<resources><basematerials id="1">${materials}</basematerials>${resources}</resources>` +
+    `<resources><basematerials id="1">${materials}</basematerials>${resources}${assembly}</resources>` +
     `<build>${items}</build>` +
     `</model>`;
+
 
   // PrusaSlicer / SuperSlicer dialect.
   const prusaConfig =
