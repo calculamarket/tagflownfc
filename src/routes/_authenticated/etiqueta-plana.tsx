@@ -276,6 +276,28 @@ function FlatTagPage() {
               <Label htmlFor="hm">Distância da borda (mm)</Label>
               <Input id="hm" inputMode="decimal" disabled={!hole} value={holeMarginMm} onChange={(e) => setHoleMarginMm(e.target.value)} />
             </div>
+            <div className="space-y-1.5 flex flex-col justify-end">
+              <Label htmlFor="passadores">Passadores da fita</Label>
+              <div className="flex h-9 items-center gap-2">
+                <Switch id="passadores" checked={slots} onCheckedChange={setSlots} />
+                <span className="text-xs text-muted-foreground">
+                  {slots ? "Com recortes" : "Sem recortes"}
+                </span>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sw">Largura do passador (mm)</Label>
+              <Input id="sw" inputMode="decimal" disabled={!slots} value={slotWidthMm} onChange={(e) => setSlotWidthMm(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sh">Altura do passador (mm)</Label>
+              <Input id="sh" inputMode="decimal" disabled={!slots} value={slotHeightMm} onChange={(e) => setSlotHeightMm(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sm">Passador: distância da borda (mm)</Label>
+              <Input id="sm" inputMode="decimal" disabled={!slots} value={slotMarginMm} onChange={(e) => setSlotMarginMm(e.target.value)} />
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="corpo">Cor do corpo</Label>
               <input
