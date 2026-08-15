@@ -187,13 +187,20 @@ function PixPlatePage() {
     }).catch(() => undefined);
   }, [secondPayload, level, code2Slot.color, plateSlot.color]);
 
-  const options = (): PixPlateOptions => {
+  const options = (secondOverride?: string): PixPlateOptions => {
+    const second = secondOverride ?? secondPayload;
     if (!payload) {
       throw new Error(
         source === "pix" ? "Informe a chave Pix." : "Informe o conteúdo do QR Code.",
       );
     }
-    if (useSecond && !secondPayload) throw new Error("Informe o conteúdo do segundo QR Code.");
+    if (useSecond && !second) {
+      throw new Error(
+        secondType === "ativacao"
+          ? "Gere o QR de ativação antes de baixar a peça."
+          : "Informe o conteúdo do segundo QR Code.",
+      );
+    }
     const values = {
       plateWidthMm: num(plateWidthMm),
       plateHeightMm: num(plateHeightMm),
