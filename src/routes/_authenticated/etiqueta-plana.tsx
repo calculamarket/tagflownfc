@@ -163,7 +163,7 @@ function FlatTagPage() {
       const opts = options();
       const blob =
         format === "3mf"
-          ? await buildFlatTag3mf({ ...opts, bodyColor, codeColor })
+          ? await buildFlatTag3mf({ ...opts, bodyColor, codeColor, bodySlot, codeSlot })
           : buildFlatTagStl(opts);
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -359,7 +359,7 @@ function FlatTagPage() {
         build={(content, format) => {
           const opts = { ...options(), text: content };
           return format === "3mf"
-            ? buildFlatTag3mf({ ...opts, bodyColor, codeColor })
+            ? buildFlatTag3mf({ ...opts, bodyColor, codeColor, bodySlot, codeSlot })
             : buildFlatTagStl(opts);
         }}
       />

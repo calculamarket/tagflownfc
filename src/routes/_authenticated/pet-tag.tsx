@@ -126,7 +126,7 @@ function PetTagPage() {
       const opts = options();
       const blob =
         format === "3mf"
-          ? await buildPetTag3mf({ ...opts, bodyColor, codeColor })
+          ? await buildPetTag3mf({ ...opts, bodyColor, codeColor, bodySlot, codeSlot })
           : buildPetTagStl(opts);
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -284,7 +284,7 @@ function PetTagPage() {
         build={(content, format) => {
           const opts = { ...options(), text: content };
           return format === "3mf"
-            ? buildPetTag3mf({ ...opts, bodyColor, codeColor })
+            ? buildPetTag3mf({ ...opts, bodyColor, codeColor, bodySlot, codeSlot })
             : buildPetTagStl(opts);
         }}
       />

@@ -94,7 +94,7 @@ function Gerador3dPage() {
       const opts = options();
       const blob =
         format === "3mf"
-          ? await buildQr3mf(text, { ...opts, baseColor: fillColor, codeColor })
+          ? await buildQr3mf(text, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
           : buildQrStl(text, opts);
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -225,7 +225,7 @@ function Gerador3dPage() {
         build={(content, format) => {
           const opts = options();
           return format === "3mf"
-            ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor })
+            ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
             : buildQrStl(content, opts);
         }}
       />
