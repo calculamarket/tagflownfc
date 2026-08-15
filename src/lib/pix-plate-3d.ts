@@ -246,6 +246,8 @@ export function buildPixPlateGeometry(options: PixPlateOptions): PixPlateGeometr
     errorCorrectionLevel = "Q",
     recessed = false,
     qrPosition = "bottom",
+    secondText = null,
+    secondQrSizeMm = 34,
     artMask = null,
     artHeightMm = 1,
     artPocket = false,
@@ -268,12 +270,25 @@ export function buildPixPlateGeometry(options: PixPlateOptions): PixPlateGeometr
   const side = Math.min(qrSizeMm, maxQrSizeMm > 0 ? maxQrSizeMm : qrSizeMm);
 
   const gap = Math.min(marginMm, 6);
-  const artAreaHMm = Math.max(0, usableH - side - gap);
+  const second = (secondText || "").trim();
+  const side2 = second
+    ? Math.max(0, Math.min(secondQrSizeMm, usableW, Math.max(0, usableH - side - gap)))
+    : 0;
+  const secondBand = side2 > 0 ? side2 + gap : 0;
+
+  const artAreaHMm = Math.max(0, usableH - side - gap - secondBand);
   const artAreaWMm = usableW;
+
+  // Vertical stack, from the bottom of the plate upwards.
+  // qrPosition "bottom": [Pix QR] [2nd QR] [art]; "top": [art] [2nd QR] [Pix QR].
+  const qrY0 =
+    qrPosition === "bottom" ? marginMm : marginMm + artAreaHMm + gap + secondBand;
+  const qr2Y0 =
+    qrPosition === "bottom" ? marginMm + side + gap : marginMm + artAreaHMm + gap;
   const artY0 =
-    qrPosition === "bottom" ? marginMm + side + gap : marginMm;
-  const qrY0 = qrPosition === "bottom" ? marginMm : marginMm + artAreaHMm + gap;
+    qrPosition === "bottom" ? marginMm + side + gap + secondBand : marginMm;
   const qrX0 = marginMm + (usableW - side) / 2;
+  const qr2X0 = marginMm + (usableW - side2) / 2;
 
   // Plate body — optionally with a recessed pocket over the free area.
   const pocketDepth = Math.min(Math.max(0.2, artPocketDepthMm), plateThickMm - 1);
@@ -289,24 +304,31 @@ export function buildPixPlateGeometry(options: PixPlateOptions): PixPlateGeometr
       ]
     : plateWithHoles(outer, [], 0, topZ);
 
-  // QR modules.
-  const qr = QRCode.create(text || " ", { errorCorrectionLevel });
-  const count = qr.modules.size;
-  const data = qr.modules.data;
-  const moduleMm = side / count;
   const codeZ0 = topZ - OVERLAP;
   const codeZ1 = topZ + codeMm;
 
-  const code: Tri[] = [];
-  for (let row = 0; row < count; row++) {
-    for (let col = 0; col < count; col++) {
-      const dark = data[row * count + col] === 1;
-      if (recessed ? dark : !dark) continue;
-      const x = qrX0 + col * moduleMm;
-      const y = qrY0 + (count - 1 - row) * moduleMm;
-      code.push(...box(x, y, codeZ0, x + moduleMm, y + moduleMm, codeZ1));
+  const buildCode = (content: string, x0: number, y0: number, sideMm: number): Tri[] => {
+    const tris: Tri[] = [];
+    if (sideMm <= 0) return tris;
+    const qr = QRCode.create(content || " ", { errorCorrectionLevel });
+    const count = qr.modules.size;
+    const data = qr.modules.data;
+    const moduleMm = sideMm / count;
+    for (let row = 0; row < count; row++) {
+      for (let col = 0; col < count; col++) {
+        const dark = data[row * count + col] === 1;
+        if (recessed ? dark : !dark) continue;
+        const x = x0 + col * moduleMm;
+        const y = y0 + (count - 1 - row) * moduleMm;
+        tris.push(...box(x, y, codeZ0, x + moduleMm, y + moduleMm, codeZ1));
+      }
     }
-  }
+    return tris;
+  };
+
+  const code = buildCode(text, qrX0, qrY0, side);
+  const code2 = second ? buildCode(second, qr2X0, qr2Y0, side2) : [];
+
 
   // Logo / image / text relief inside the free area.
   const art: Tri[] = [];
