@@ -103,6 +103,8 @@ function PixPlatePage() {
 
   // Base
   const [includeBase, setIncludeBase] = useState(true);
+  /** Peças a exportar: conjunto, só a placa ou só a base (impressoras separadas). */
+  const [exportPart, setExportPart] = useState<"both" | "plate" | "base">("both");
   const [baseDepthMm, setBaseDepthMm] = useState("76");
   const [baseHeightMm, setBaseHeightMm] = useState("24");
   const [baseWidthMm, setBaseWidthMm] = useState("80");
@@ -308,11 +310,13 @@ function PixPlatePage() {
   };
 
   const buildOne = async (format: "3mf" | "stl", secondOverride?: string) => {
-    const opts = options(secondOverride);
+    const opts = { ...options(secondOverride), part: exportPart };
     return format === "3mf"
       ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
       : buildPixPlateStl(opts);
   };
+
+  const partSuffix = exportPart === "plate" ? "-placa" : exportPart === "base" ? "-base" : "";
 
   const saveBlob = (blob: Blob, name: string) => {
     const href = URL.createObjectURL(blob);
@@ -361,7 +365,7 @@ function PixPlatePage() {
         build: (text) => buildOne(format, useSecond ? text : undefined),
         onProgress: (done, total) => setBatchProgress({ done, total }),
       });
-      saveBlob(zip, `${base}-lote-${quantity}.zip`);
+      saveBlob(zip, `${base}${partSuffix}-lote-${quantity}.zip`);
       toast.success(`${quantity} placas geradas em ZIP (com a lista de códigos).`);
     } catch (e) {
       toast.error((e as Error).message);
@@ -371,20 +375,16 @@ function PixPlatePage() {
     }
   };
 
-  const download = async (format: "3mf" | "stl") => {
+  const download = async (format: "3mf" | "stl", part: "both" | "plate" | "base" = exportPart) => {
     setBusy(true);
     try {
-      const opts = options();
+      const opts = { ...options(), part };
       const blob =
         format === "3mf"
           ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
           : buildPixPlateStl(opts);
-      const href = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = href;
-      a.download = `${filename || "placa-pix"}.${format}`;
-      a.click();
-      URL.revokeObjectURL(href);
+      const suffix = part === "plate" ? "-placa" : part === "base" ? "-base" : "";
+      saveBlob(blob, `${filename || "placa-pix"}${suffix}.${format}`);
       toast.success(`Peça .${format} gerada.`);
     } catch (e) {
       toast.error((e as Error).message);
@@ -765,14 +765,42 @@ function PixPlatePage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => download("3mf")} disabled={busy}>
-              <Download className="size-4" /> Baixar 3MF multicor
-            </Button>
-            <Button variant="outline" onClick={() => download("stl")} disabled={busy}>
-              <Download className="size-4" /> Baixar STL
-            </Button>
+          <div className="space-y-3 rounded-md border border-border p-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Peças no arquivo</Label>
+                <Select value={exportPart} onValueChange={(v) => setExportPart(v as typeof exportPart)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Placa + base (conjunto)</SelectItem>
+                    <SelectItem value="plate">Somente a placa</SelectItem>
+                    <SelectItem value="base">Somente a base</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground sm:self-end sm:pb-2">
+                Separe as peças para imprimir bases em uma impressora e placas em outra. Vale também
+                para o lote em ZIP.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={() => download("3mf")} disabled={busy}>
+                <Download className="size-4" /> Baixar 3MF multicor
+              </Button>
+              <Button variant="outline" onClick={() => download("stl")} disabled={busy}>
+                <Download className="size-4" /> Baixar STL
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary" disabled={busy || !includeBase} onClick={() => download("3mf", "base")}>
+                <Download className="size-4" /> Só a base (3MF)
+              </Button>
+              <Button variant="secondary" disabled={busy} onClick={() => download("3mf", "plate")}>
+                <Download className="size-4" /> Só a placa (3MF)
+              </Button>
+            </div>
           </div>
+
         </div>
 
         <aside className="space-y-4">
