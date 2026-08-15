@@ -233,7 +233,7 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     code,
     totalWidthMm: widthMm,
     totalDepthMm: depthMm,
-    totalHeightMm: topZ,
+    totalHeightMm: Math.max(topZ, plateZ1 + legHeightMm),
     codeStartZ: plateZ1,
     maxQrSizeMm,
   };
