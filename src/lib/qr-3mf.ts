@@ -1,5 +1,5 @@
 import { buildQrGeometry, type Box, type QrStlOptions } from "./qr-stl";
-import { createZip } from "./zip";
+import { normalizeSlot, pack3mf, type MaterialSlot } from "./three-mf";
 
 /**
  * 3MF export for two-colour printing.
@@ -17,6 +17,10 @@ export type Qr3mfOptions = QrStlOptions & {
   baseColor?: string;
   /** Code colour, as #RRGGBB. */
   codeColor?: string;
+  /** Extruder slot + filament for the plate. */
+  baseSlot?: Partial<MaterialSlot>;
+  /** Extruder slot + filament for the code. */
+  codeSlot?: Partial<MaterialSlot>;
 };
 
 /** 8 corner vertices of a box, in the winding used by `TRIANGLES`. */
@@ -60,51 +64,20 @@ function boxesToMesh(boxes: Box[]): string {
   return `<mesh><vertices>${vertices.join("")}</vertices><triangles>${triangles.join("")}</triangles></mesh>`;
 }
 
-/** #RRGGBB -> #RRGGBBAA, which is what 3MF's displaycolor expects. */
-function toDisplayColor(color: string, fallback: string): string {
-  const c = /^#[0-9a-f]{6}$/i.test(color) ? color : fallback;
-  return `${c.toUpperCase()}FF`;
-}
-
 export function buildQr3mf(text: string, options: Qr3mfOptions = {}): Promise<Blob> {
   const { base, modules } = buildQrGeometry(text, options);
-  const baseColor = toDisplayColor(options.baseColor ?? "#FFFFFF", "#FFFFFF");
-  const codeColor = toDisplayColor(options.codeColor ?? "#111111", "#111111");
+  const baseSlot = normalizeSlot(
+    { color: options.baseColor, ...options.baseSlot },
+    { extruder: 1, material: "PLA", color: "#FFFFFF" },
+  );
+  const codeSlot = normalizeSlot(
+    { color: options.codeColor, ...options.codeSlot },
+    { extruder: 2, material: "PLA", color: "#111111" },
+  );
 
-  const model =
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<model unit="millimeter" xml:lang="en-US" ` +
-    `xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">` +
-    `<resources>` +
-    `<basematerials id="1">` +
-    `<base name="Base" displaycolor="${baseColor}"/>` +
-    `<base name="Codigo" displaycolor="${codeColor}"/>` +
-    `</basematerials>` +
-    `<object id="2" type="model" pid="1" pindex="0">${boxesToMesh(base)}</object>` +
-    `<object id="3" type="model" pid="1" pindex="1">${boxesToMesh(modules)}</object>` +
-    `</resources>` +
-    `<build><item objectid="2"/><item objectid="3"/></build>` +
-    `</model>`;
-
-  const contentTypes =
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
-    `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
-    `<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>` +
-    `</Types>`;
-
-  const rels =
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
-    `<Relationship Target="/3D/3dmodel.model" Id="rel0" ` +
-    `Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>` +
-    `</Relationships>`;
-
-  const encoder = new TextEncoder();
-  return createZip([
-    { name: "[Content_Types].xml", data: encoder.encode(contentTypes) },
-    { name: "_rels/.rels", data: encoder.encode(rels) },
-    { name: "3D/3dmodel.model", data: encoder.encode(model) },
+  return pack3mf([
+    { name: "Base", mesh: boxesToMesh(base), triangleCount: base.length * 12, slot: baseSlot },
+    { name: "Codigo", mesh: boxesToMesh(modules), triangleCount: modules.length * 12, slot: codeSlot },
   ]);
 }
 

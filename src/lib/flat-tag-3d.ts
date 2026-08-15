@@ -1,6 +1,6 @@
 import QRCode from "qrcode";
 import earcut from "earcut";
-import { createZip } from "./zip";
+import { normalizeSlot, pack3mf, type MaterialSlot } from "./three-mf";
 import type { Tri } from "./pet-tag-3d";
 
 /**
@@ -367,51 +367,26 @@ function trisToMesh(tris: Tri[]): string {
   return `<mesh><vertices>${vertices.join("")}</vertices><triangles>${triangles.join("")}</triangles></mesh>`;
 }
 
-function displayColor(color: string | undefined, fallback: string): string {
-  const c = color && /^#[0-9a-f]{6}$/i.test(color) ? color : fallback;
-  return `${c.toUpperCase()}FF`;
-}
-
 export function buildFlatTag3mf(
-  options: FlatTagOptions & { bodyColor?: string; codeColor?: string },
+  options: FlatTagOptions & {
+    bodyColor?: string;
+    codeColor?: string;
+    bodySlot?: Partial<MaterialSlot>;
+    codeSlot?: Partial<MaterialSlot>;
+  },
 ): Promise<Blob> {
   const { body, code } = buildFlatTagGeometry(options);
-  const bodyColor = displayColor(options.bodyColor, "#FFFFFF");
-  const codeColor = displayColor(options.codeColor, "#111111");
+  const bodySlot = normalizeSlot(
+    { color: options.bodyColor, ...options.bodySlot },
+    { extruder: 1, material: "PLA", color: "#FFFFFF" },
+  );
+  const codeSlot = normalizeSlot(
+    { color: options.codeColor, ...options.codeSlot },
+    { extruder: 2, material: "PLA", color: "#111111" },
+  );
 
-  const model =
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<model unit="millimeter" xml:lang="en-US" ` +
-    `xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">` +
-    `<resources>` +
-    `<basematerials id="1">` +
-    `<base name="Corpo" displaycolor="${bodyColor}"/>` +
-    `<base name="Codigo" displaycolor="${codeColor}"/>` +
-    `</basematerials>` +
-    `<object id="2" type="model" pid="1" pindex="0">${trisToMesh(body)}</object>` +
-    `<object id="3" type="model" pid="1" pindex="1">${trisToMesh(code)}</object>` +
-    `</resources>` +
-    `<build><item objectid="2"/><item objectid="3"/></build>` +
-    `</model>`;
-
-  const contentTypes =
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
-    `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
-    `<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>` +
-    `</Types>`;
-
-  const rels =
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
-    `<Relationship Target="/3D/3dmodel.model" Id="rel0" ` +
-    `Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>` +
-    `</Relationships>`;
-
-  const encoder = new TextEncoder();
-  return createZip([
-    { name: "[Content_Types].xml", data: encoder.encode(contentTypes) },
-    { name: "_rels/.rels", data: encoder.encode(rels) },
-    { name: "3D/3dmodel.model", data: encoder.encode(model) },
+  return pack3mf([
+    { name: "Corpo", mesh: trisToMesh(body), triangleCount: body.length, slot: bodySlot },
+    { name: "Codigo", mesh: trisToMesh(code), triangleCount: code.length, slot: codeSlot },
   ]);
 }
