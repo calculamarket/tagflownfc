@@ -171,6 +171,8 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     codeMm = 0.8,
     errorCorrectionLevel = "Q",
     recessed = false,
+    qrAlign = "center",
+    qrMarginMm = 2,
   } = options;
 
   // Solid block sitting flat on the bed: a floor, two side walls and the QR
@@ -212,7 +214,17 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
   );
   const side = Math.min(qrSizeMm, maxQrSizeMm > 0 ? maxQrSizeMm : qrSizeMm);
   const moduleMm = side / count;
-  const originX = (widthMm - side) / 2;
+  const edge = Math.max(quietZoneMm, qrMarginMm);
+  const originX =
+    qrAlign === "left"
+      ? edge
+      : qrAlign === "right"
+        ? Math.max(edge, widthMm - side - edge)
+        : (widthMm - side) / 2;
+  const freeWidthMm =
+    qrAlign === "center"
+      ? 0
+      : Math.max(0, widthMm - side - edge - quietZoneMm);
   const originY = (depthMm - side) / 2;
   const z0 = plateZ1 - OVERLAP;
 
