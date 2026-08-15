@@ -30,6 +30,9 @@ export type PixPlateOptions = {
   recessed?: boolean;
   /** "bottom" keeps the free area at the top of the plate, "top" inverts it. */
   qrPosition?: "bottom" | "top";
+  /** Optional second QR (menu, social, WhatsApp...) printed next to the Pix one. */
+  secondText?: string | null;
+  secondQrSizeMm?: number;
   /** Raster of the logo / image / text to emboss on the free area. */
   artMask?: ReliefMask | null;
   artHeightMm?: number;
@@ -49,15 +52,18 @@ export type PixPlateGeometry = {
   base: Tri[];
   plate: Tri[];
   code: Tri[];
+  code2: Tri[];
   art: Tri[];
   plateWidthMm: number;
   plateHeightMm: number;
   plateTopZ: number;
   qrSideMm: number;
+  qr2SideMm: number;
   maxQrSizeMm: number;
   artAreaWMm: number;
   artAreaHMm: number;
 };
+
 
 const OVERLAP = 0.2;
 type Pt = [number, number];
@@ -240,6 +246,8 @@ export function buildPixPlateGeometry(options: PixPlateOptions): PixPlateGeometr
     errorCorrectionLevel = "Q",
     recessed = false,
     qrPosition = "bottom",
+    secondText = null,
+    secondQrSizeMm = 34,
     artMask = null,
     artHeightMm = 1,
     artPocket = false,
@@ -262,12 +270,25 @@ export function buildPixPlateGeometry(options: PixPlateOptions): PixPlateGeometr
   const side = Math.min(qrSizeMm, maxQrSizeMm > 0 ? maxQrSizeMm : qrSizeMm);
 
   const gap = Math.min(marginMm, 6);
-  const artAreaHMm = Math.max(0, usableH - side - gap);
+  const second = (secondText || "").trim();
+  const side2 = second
+    ? Math.max(0, Math.min(secondQrSizeMm, usableW, Math.max(0, usableH - side - gap)))
+    : 0;
+  const secondBand = side2 > 0 ? side2 + gap : 0;
+
+  const artAreaHMm = Math.max(0, usableH - side - gap - secondBand);
   const artAreaWMm = usableW;
+
+  // Vertical stack, from the bottom of the plate upwards.
+  // qrPosition "bottom": [Pix QR] [2nd QR] [art]; "top": [art] [2nd QR] [Pix QR].
+  const qrY0 =
+    qrPosition === "bottom" ? marginMm : marginMm + artAreaHMm + gap + secondBand;
+  const qr2Y0 =
+    qrPosition === "bottom" ? marginMm + side + gap : marginMm + artAreaHMm + gap;
   const artY0 =
-    qrPosition === "bottom" ? marginMm + side + gap : marginMm;
-  const qrY0 = qrPosition === "bottom" ? marginMm : marginMm + artAreaHMm + gap;
+    qrPosition === "bottom" ? marginMm + side + gap + secondBand : marginMm;
   const qrX0 = marginMm + (usableW - side) / 2;
+  const qr2X0 = marginMm + (usableW - side2) / 2;
 
   // Plate body — optionally with a recessed pocket over the free area.
   const pocketDepth = Math.min(Math.max(0.2, artPocketDepthMm), plateThickMm - 1);
@@ -283,24 +304,31 @@ export function buildPixPlateGeometry(options: PixPlateOptions): PixPlateGeometr
       ]
     : plateWithHoles(outer, [], 0, topZ);
 
-  // QR modules.
-  const qr = QRCode.create(text || " ", { errorCorrectionLevel });
-  const count = qr.modules.size;
-  const data = qr.modules.data;
-  const moduleMm = side / count;
   const codeZ0 = topZ - OVERLAP;
   const codeZ1 = topZ + codeMm;
 
-  const code: Tri[] = [];
-  for (let row = 0; row < count; row++) {
-    for (let col = 0; col < count; col++) {
-      const dark = data[row * count + col] === 1;
-      if (recessed ? dark : !dark) continue;
-      const x = qrX0 + col * moduleMm;
-      const y = qrY0 + (count - 1 - row) * moduleMm;
-      code.push(...box(x, y, codeZ0, x + moduleMm, y + moduleMm, codeZ1));
+  const buildCode = (content: string, x0: number, y0: number, sideMm: number): Tri[] => {
+    const tris: Tri[] = [];
+    if (sideMm <= 0) return tris;
+    const qr = QRCode.create(content || " ", { errorCorrectionLevel });
+    const count = qr.modules.size;
+    const data = qr.modules.data;
+    const moduleMm = sideMm / count;
+    for (let row = 0; row < count; row++) {
+      for (let col = 0; col < count; col++) {
+        const dark = data[row * count + col] === 1;
+        if (recessed ? dark : !dark) continue;
+        const x = x0 + col * moduleMm;
+        const y = y0 + (count - 1 - row) * moduleMm;
+        tris.push(...box(x, y, codeZ0, x + moduleMm, y + moduleMm, codeZ1));
+      }
     }
-  }
+    return tris;
+  };
+
+  const code = buildCode(text, qrX0, qrY0, side);
+  const code2 = second ? buildCode(second, qr2X0, qr2Y0, side2) : [];
+
 
   // Logo / image / text relief inside the free area.
   const art: Tri[] = [];
@@ -348,11 +376,14 @@ export function buildPixPlateGeometry(options: PixPlateOptions): PixPlateGeometr
     base: baseTris,
     plate,
     code,
+    code2,
     art,
     plateWidthMm,
     plateHeightMm,
     plateTopZ: topZ,
     qrSideMm: side,
+    qr2SideMm: side2,
+
     maxQrSizeMm,
     artAreaWMm,
     artAreaHMm,
@@ -399,11 +430,13 @@ function trisToStl(tris: Tri[], header: string): ArrayBuffer {
 }
 
 export function buildPixPlateStl(options: PixPlateOptions): Blob {
-  const { base, plate, code, art } = buildPixPlateGeometry(options);
-  return new Blob([trisToStl([...plate, ...code, ...art, ...base], "Placa Pix QR - 3D QR")], {
-    type: "model/stl",
-  });
+  const { base, plate, code, code2, art } = buildPixPlateGeometry(options);
+  return new Blob(
+    [trisToStl([...plate, ...code, ...code2, ...art, ...base], "Placa Pix QR - 3D QR")],
+    { type: "model/stl" },
+  );
 }
+
 
 const fmt = (n: number) => (Math.round(n * 1000) / 1000).toString();
 
@@ -425,11 +458,12 @@ export function buildPixPlate3mf(
   options: PixPlateOptions & {
     plateSlot?: Partial<MaterialSlot>;
     codeSlot?: Partial<MaterialSlot>;
+    code2Slot?: Partial<MaterialSlot>;
     artSlot?: Partial<MaterialSlot>;
     baseSlot?: Partial<MaterialSlot>;
   },
 ): Promise<Blob> {
-  const { base, plate, code, art } = buildPixPlateGeometry(options);
+  const { base, plate, code, code2, art } = buildPixPlateGeometry(options);
   const plateSlot = normalizeSlot(options.plateSlot, {
     extruder: 1,
     material: "PLA",
@@ -440,6 +474,7 @@ export function buildPixPlate3mf(
     material: "PLA",
     color: "#111111",
   });
+  const code2Slot = normalizeSlot(options.code2Slot, codeSlot);
   const artSlot = normalizeSlot(options.artSlot, codeSlot);
   const baseSlot = normalizeSlot(options.baseSlot, plateSlot);
 
@@ -447,9 +482,18 @@ export function buildPixPlate3mf(
     { name: "Placa", mesh: trisToMesh(plate), triangleCount: plate.length, slot: plateSlot },
     { name: "Codigo", mesh: trisToMesh(code), triangleCount: code.length, slot: codeSlot },
   ];
+  if (code2.length) {
+    objects.push({
+      name: "Codigo 2",
+      mesh: trisToMesh(code2),
+      triangleCount: code2.length,
+      slot: code2Slot,
+    });
+  }
   if (art.length) {
     objects.push({ name: "Arte", mesh: trisToMesh(art), triangleCount: art.length, slot: artSlot });
   }
+
   if (base.length) {
     objects.push({ name: "Base", mesh: trisToMesh(base), triangleCount: base.length, slot: baseSlot });
   }

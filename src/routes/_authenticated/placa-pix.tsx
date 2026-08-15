@@ -69,6 +69,13 @@ function PixPlatePage() {
   const [qrPosition, setQrPosition] = useState<"bottom" | "top">("bottom");
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");
 
+  // Segundo QR (cardápio, redes sociais, WhatsApp...)
+  const [useSecond, setUseSecond] = useState(false);
+  const [secondType, setSecondType] = useState<"link" | "whatsapp" | "instagram" | "texto">("link");
+  const [secondValue, setSecondValue] = useState("https://www.3dqr.com.br");
+  const [secondWhatsMsg, setSecondWhatsMsg] = useState("");
+  const [secondQrSizeMm, setSecondQrSizeMm] = useState("34");
+
   // Área livre (logo / imagem / texto)
   const [artType, setArtType] = useState<"nenhum" | "texto" | "imagem">("texto");
   const [artText, setArtText] = useState("PAGUE COM PIX");
@@ -92,12 +99,15 @@ function PixPlatePage() {
   const [printerSlots, setPrinterSlots] = useState(4);
   const [plateSlot, setPlateSlot] = useState<MaterialSlot>({ extruder: 1, material: "PLA", color: "#ffffff" });
   const [codeSlot, setCodeSlot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#111111" });
+  const [code2Slot, setCode2Slot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#111111" });
   const [artSlot, setArtSlot] = useState<MaterialSlot>({ extruder: 3, material: "PLA", color: "#32bcad" });
   const [baseSlot, setBaseSlot] = useState<MaterialSlot>({ extruder: 1, material: "PLA", color: "#ffffff" });
+
 
   const [filename, setFilename] = useState("placa-pix");
   const [busy, setBusy] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvas2Ref = useRef<HTMLCanvasElement>(null);
 
   const payload = useMemo(() => {
     if (source === "livre") return freeText.trim();
@@ -108,6 +118,27 @@ function PixPlatePage() {
       amount: pixAmount ? num(pixAmount) : null,
     });
   }, [source, freeText, pixKey, pixName, pixCity, pixAmount]);
+
+  const secondPayload = useMemo(() => {
+    if (!useSecond) return "";
+    const v = secondValue.trim();
+    if (!v) return "";
+    if (secondType === "whatsapp") {
+      const digits = v.replace(/\D/g, "");
+      if (!digits) return "";
+      const phone = digits.length <= 11 ? `55${digits}` : digits;
+      const msg = secondWhatsMsg.trim();
+      return `https://wa.me/${phone}${msg ? `?text=${encodeURIComponent(msg)}` : ""}`;
+    }
+    if (secondType === "instagram") {
+      const handle = v.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/$/, "");
+      return `https://instagram.com/${handle}`;
+    }
+    if (secondType === "link") {
+      return /^[a-z][\w+.-]*:/i.test(v) ? v : `https://${v}`;
+    }
+    return v;
+  }, [useSecond, secondType, secondValue, secondWhatsMsg]);
 
   const artMask = useMemo(() => {
     if (artType === "texto") return textToMask(artText);
@@ -131,12 +162,24 @@ function PixPlatePage() {
     }).catch(() => undefined);
   }, [payload, level, codeSlot.color, plateSlot.color]);
 
+  useEffect(() => {
+    const canvas = canvas2Ref.current;
+    if (!canvas || !secondPayload) return;
+    QRCode.toCanvas(canvas, secondPayload, {
+      width: 160,
+      margin: 2,
+      errorCorrectionLevel: level,
+      color: { dark: code2Slot.color, light: plateSlot.color },
+    }).catch(() => undefined);
+  }, [secondPayload, level, code2Slot.color, plateSlot.color]);
+
   const options = (): PixPlateOptions => {
     if (!payload) {
       throw new Error(
         source === "pix" ? "Informe a chave Pix." : "Informe o conteúdo do QR Code.",
       );
     }
+    if (useSecond && !secondPayload) throw new Error("Informe o conteúdo do segundo QR Code.");
     const values = {
       plateWidthMm: num(plateWidthMm),
       plateHeightMm: num(plateHeightMm),
@@ -145,6 +188,7 @@ function PixPlatePage() {
       qrSizeMm: num(qrSizeMm),
       marginMm: num(marginMm),
       codeMm: num(codeMm),
+      secondQrSizeMm: num(secondQrSizeMm),
       artHeightMm: num(artHeightMm),
       artPocketDepthMm: num(artPocketDepthMm),
       baseDepthMm: num(baseDepthMm),
@@ -161,12 +205,24 @@ function PixPlatePage() {
     if (values.qrSizeMm + 2 * values.marginMm > values.plateWidthMm) {
       throw new Error("O QR é maior que a largura útil da placa.");
     }
+    const gap = Math.min(values.marginMm, 6);
+    if (
+      useSecond &&
+      values.qrSizeMm + values.secondQrSizeMm + gap + 2 * values.marginMm >
+        values.plateHeightMm
+    ) {
+      throw new Error("Os dois QR Codes não cabem na altura da placa — reduza um deles.");
+    }
+    if (useSecond && values.secondQrSizeMm < 18) {
+      throw new Error("O segundo QR precisa ter pelo menos 18 mm para ser lido.");
+    }
     if (includeBase && values.slotDepthMm + 3 > values.baseHeightMm) {
       throw new Error("O encaixe é fundo demais para a altura da base.");
     }
     return {
       text: payload,
       ...values,
+      secondText: useSecond ? secondPayload : null,
       qrPosition,
       errorCorrectionLevel: level,
       recessed: mode === "recess",
@@ -182,6 +238,7 @@ function PixPlatePage() {
       return {
         plate: `${geo.plateWidthMm.toFixed(0)} × ${geo.plateHeightMm.toFixed(0)} × ${(geo.plateTopZ + num(codeMm)).toFixed(2)} mm`,
         qr: geo.qrSideMm,
+        qr2: geo.qr2SideMm,
         maxQr: geo.maxQrSizeMm,
         area: `${geo.artAreaWMm.toFixed(0)} × ${geo.artAreaHMm.toFixed(0)} mm`,
         changeZ: geo.plateTopZ,
@@ -191,10 +248,12 @@ function PixPlatePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    payload, level, plateWidthMm, plateHeightMm, plateThickMm, radiusMm, qrSizeMm, marginMm,
+    payload, secondPayload, useSecond, secondQrSizeMm, level, plateWidthMm, plateHeightMm,
+    plateThickMm, radiusMm, qrSizeMm, marginMm,
     codeMm, qrPosition, mode, artMask, artHeightMm, artPocket, artPocketDepthMm, includeBase,
     baseDepthMm, baseHeightMm, baseWidthMm, slotAngleDeg, slotDepthMm, slotClearanceMm,
   ]);
+
 
   const onImage = async (file?: File) => {
     if (!file) return;
@@ -215,7 +274,7 @@ function PixPlatePage() {
       const opts = options();
       const blob =
         format === "3mf"
-          ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, artSlot, baseSlot })
+          ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
           : buildPixPlateStl(opts);
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -349,6 +408,75 @@ function PixPlatePage() {
 
           <div className="space-y-4 rounded-md border border-border p-4">
             <div className="flex items-center justify-between">
+              <Label htmlFor="segundo-qr">Segundo QR Code (cardápio, redes sociais, WhatsApp)</Label>
+              <div className="flex items-center gap-2">
+                <Switch id="segundo-qr" checked={useSecond} onCheckedChange={setUseSecond} />
+                <span className="text-xs text-muted-foreground">
+                  {useSecond ? "Pix + 2º QR" : "Somente Pix"}
+                </span>
+              </div>
+            </div>
+
+            {useSecond && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Tipo do conteúdo</Label>
+                    <Select value={secondType} onValueChange={(v) => setSecondType(v as typeof secondType)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="link">Link (cardápio, site, catálogo)</SelectItem>
+                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                        <SelectItem value="instagram">Instagram</SelectItem>
+                        <SelectItem value="texto">Texto livre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="q2s">Tamanho do 2º QR (mm)</Label>
+                    <Input id="q2s" inputMode="decimal" value={secondQrSizeMm} onChange={(e) => setSecondQrSizeMm(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="q2v">
+                      {secondType === "whatsapp"
+                        ? "Número com DDD"
+                        : secondType === "instagram"
+                          ? "Usuário do Instagram"
+                          : secondType === "link"
+                            ? "Endereço do link"
+                            : "Texto"}
+                    </Label>
+                    <Input
+                      id="q2v"
+                      value={secondValue}
+                      onChange={(e) => setSecondValue(e.target.value)}
+                      placeholder={
+                        secondType === "whatsapp"
+                          ? "(11) 99999-9999"
+                          : secondType === "instagram"
+                            ? "@minhaloja"
+                            : "https://www.3dqr.com.br/cardapio"
+                      }
+                    />
+                  </div>
+                  {secondType === "whatsapp" && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="q2m">Mensagem inicial (opcional)</Label>
+                      <Input id="q2m" value={secondWhatsMsg} onChange={(e) => setSecondWhatsMsg(e.target.value)} placeholder="Olá! Vim pelo QR do balcão." />
+                    </div>
+                  )}
+                </div>
+                {secondPayload && (
+                  <p className="break-all text-xs text-muted-foreground">{secondPayload}</p>
+                )}
+              </>
+            )}
+          </div>
+
+
+
+          <div className="space-y-4 rounded-md border border-border p-4">
+            <div className="flex items-center justify-between">
               <Label>Área livre — logotipo, imagem ou texto</Label>
               <Select value={artType} onValueChange={(v) => setArtType(v as typeof artType)}>
                 <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
@@ -451,7 +579,11 @@ function PixPlatePage() {
             <SlotCountField value={printerSlots} onChange={setPrinterSlots} />
             <MaterialSlotFields label="Placa" idPrefix="placa" slots={printerSlots} value={plateSlot} onChange={setPlateSlot} />
             <MaterialSlotFields label="Código" idPrefix="codigo" slots={printerSlots} value={codeSlot} onChange={setCodeSlot} />
+            {useSecond && (
+              <MaterialSlotFields label="2º QR" idPrefix="codigo2" slots={printerSlots} value={code2Slot} onChange={setCode2Slot} />
+            )}
             <MaterialSlotFields label="Arte" idPrefix="arte" slots={printerSlots} value={artSlot} onChange={setArtSlot} />
+
             <MaterialSlotFields label="Base" idPrefix="base-slot" slots={printerSlots} value={baseSlot} onChange={setBaseSlot} />
             <div className="space-y-1.5">
               <Label htmlFor="arquivo">Nome do arquivo</Label>
@@ -473,11 +605,21 @@ function PixPlatePage() {
           <div className="rounded-lg border border-border bg-card p-5 space-y-3">
             <h2 className="text-sm font-medium">Prévia do QR</h2>
             <canvas ref={canvasRef} className="w-full rounded-md border border-border bg-white" />
+            {useSecond && secondPayload && (
+              <>
+                <p className="text-xs text-muted-foreground">Segundo QR</p>
+                <canvas ref={canvas2Ref} className="w-full rounded-md border border-border bg-white" />
+              </>
+            )}
             {summary ? (
               <dl className="space-y-1 text-xs text-muted-foreground">
                 <div className="flex justify-between"><dt>Placa</dt><dd>{summary.plate}</dd></div>
                 <div className="flex justify-between"><dt>QR</dt><dd>{summary.qr.toFixed(1)} mm</dd></div>
+                {summary.qr2 > 0 && (
+                  <div className="flex justify-between"><dt>2º QR</dt><dd>{summary.qr2.toFixed(1)} mm</dd></div>
+                )}
                 <div className="flex justify-between"><dt>QR máximo</dt><dd>{summary.maxQr.toFixed(1)} mm</dd></div>
+
                 <div className="flex justify-between"><dt>Área livre</dt><dd>{summary.area}</dd></div>
                 <div className="flex justify-between"><dt>Troca de cor em Z</dt><dd>{summary.changeZ.toFixed(2)} mm</dd></div>
               </dl>
