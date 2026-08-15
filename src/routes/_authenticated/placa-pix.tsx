@@ -605,11 +605,21 @@ function PixPlatePage() {
           <div className="rounded-lg border border-border bg-card p-5 space-y-3">
             <h2 className="text-sm font-medium">Prévia do QR</h2>
             <canvas ref={canvasRef} className="w-full rounded-md border border-border bg-white" />
+            {useSecond && secondPayload && (
+              <>
+                <p className="text-xs text-muted-foreground">Segundo QR</p>
+                <canvas ref={canvas2Ref} className="w-full rounded-md border border-border bg-white" />
+              </>
+            )}
             {summary ? (
               <dl className="space-y-1 text-xs text-muted-foreground">
                 <div className="flex justify-between"><dt>Placa</dt><dd>{summary.plate}</dd></div>
                 <div className="flex justify-between"><dt>QR</dt><dd>{summary.qr.toFixed(1)} mm</dd></div>
+                {summary.qr2 > 0 && (
+                  <div className="flex justify-between"><dt>2º QR</dt><dd>{summary.qr2.toFixed(1)} mm</dd></div>
+                )}
                 <div className="flex justify-between"><dt>QR máximo</dt><dd>{summary.maxQr.toFixed(1)} mm</dd></div>
+
                 <div className="flex justify-between"><dt>Área livre</dt><dd>{summary.area}</dd></div>
                 <div className="flex justify-between"><dt>Troca de cor em Z</dt><dd>{summary.changeZ.toFixed(2)} mm</dd></div>
               </dl>
