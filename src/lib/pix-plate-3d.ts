@@ -30,6 +30,9 @@ export type PixPlateOptions = {
   recessed?: boolean;
   /** "bottom" keeps the free area at the top of the plate, "top" inverts it. */
   qrPosition?: "bottom" | "top";
+  /** Optional second QR (menu, social, WhatsApp...) printed next to the Pix one. */
+  secondText?: string | null;
+  secondQrSizeMm?: number;
   /** Raster of the logo / image / text to emboss on the free area. */
   artMask?: ReliefMask | null;
   artHeightMm?: number;
@@ -49,15 +52,18 @@ export type PixPlateGeometry = {
   base: Tri[];
   plate: Tri[];
   code: Tri[];
+  code2: Tri[];
   art: Tri[];
   plateWidthMm: number;
   plateHeightMm: number;
   plateTopZ: number;
   qrSideMm: number;
+  qr2SideMm: number;
   maxQrSizeMm: number;
   artAreaWMm: number;
   artAreaHMm: number;
 };
+
 
 const OVERLAP = 0.2;
 type Pt = [number, number];
