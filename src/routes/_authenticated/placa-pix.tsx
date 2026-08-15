@@ -69,6 +69,13 @@ function PixPlatePage() {
   const [qrPosition, setQrPosition] = useState<"bottom" | "top">("bottom");
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");
 
+  // Segundo QR (cardápio, redes sociais, WhatsApp...)
+  const [useSecond, setUseSecond] = useState(false);
+  const [secondType, setSecondType] = useState<"link" | "whatsapp" | "instagram" | "texto">("link");
+  const [secondValue, setSecondValue] = useState("https://www.3dqr.com.br");
+  const [secondWhatsMsg, setSecondWhatsMsg] = useState("");
+  const [secondQrSizeMm, setSecondQrSizeMm] = useState("34");
+
   // Área livre (logo / imagem / texto)
   const [artType, setArtType] = useState<"nenhum" | "texto" | "imagem">("texto");
   const [artText, setArtText] = useState("PAGUE COM PIX");
@@ -92,8 +99,10 @@ function PixPlatePage() {
   const [printerSlots, setPrinterSlots] = useState(4);
   const [plateSlot, setPlateSlot] = useState<MaterialSlot>({ extruder: 1, material: "PLA", color: "#ffffff" });
   const [codeSlot, setCodeSlot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#111111" });
+  const [code2Slot, setCode2Slot] = useState<MaterialSlot>({ extruder: 2, material: "PLA", color: "#111111" });
   const [artSlot, setArtSlot] = useState<MaterialSlot>({ extruder: 3, material: "PLA", color: "#32bcad" });
   const [baseSlot, setBaseSlot] = useState<MaterialSlot>({ extruder: 1, material: "PLA", color: "#ffffff" });
+
 
   const [filename, setFilename] = useState("placa-pix");
   const [busy, setBusy] = useState(false);
