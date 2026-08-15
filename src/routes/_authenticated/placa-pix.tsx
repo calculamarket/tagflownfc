@@ -103,6 +103,8 @@ function PixPlatePage() {
 
   // Base
   const [includeBase, setIncludeBase] = useState(true);
+  /** Peças a exportar: conjunto, só a placa ou só a base (impressoras separadas). */
+  const [exportPart, setExportPart] = useState<"both" | "plate" | "base">("both");
   const [baseDepthMm, setBaseDepthMm] = useState("76");
   const [baseHeightMm, setBaseHeightMm] = useState("24");
   const [baseWidthMm, setBaseWidthMm] = useState("80");
