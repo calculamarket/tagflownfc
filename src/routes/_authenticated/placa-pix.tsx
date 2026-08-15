@@ -48,6 +48,10 @@ export const Route = createFileRoute("/_authenticated/placa-pix")({
 const num = (v: string) => parseFloat(v.replace(",", "."));
 type Level = "L" | "M" | "Q" | "H";
 
+/** Public link of a system tag — scanning it opens the activation flow. */
+const tagUrl = (id: string) =>
+  `${typeof window === "undefined" ? "https://www.3dqr.com.br" : window.location.origin}/t/${id}`;
+
 function PixPlatePage() {
   // Conteúdo do QR
   const [source, setSource] = useState<"pix" | "livre">("pix");
