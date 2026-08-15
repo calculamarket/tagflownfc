@@ -12,6 +12,9 @@ import {
 } from "@/lib/pix-plate-3d";
 import { imageToMask, maskToDataUrl, textToMask } from "@/lib/relief-raster";
 import { buildPixPayload } from "@/lib/qr-payloads";
+import { useServerFn } from "@tanstack/react-start";
+import { createStockTags } from "@/lib/stock.functions";
+import { buildBatchZip } from "@/lib/batch-qr";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
