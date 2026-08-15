@@ -706,6 +706,52 @@ function PixPlatePage() {
             </div>
           </div>
 
+          <div className="space-y-4 rounded-md border border-border p-4">
+            <Label className="flex items-center gap-2">
+              <Layers className="size-4 text-primary" /> Produção em série
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Gere várias placas de uma vez em um ZIP, com a lista de códigos em CSV para o
+              controle da produção.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="lote-qtd">Quantidade de placas</Label>
+                <Input id="lote-qtd" inputMode="numeric" value={batchQty} onChange={(e) => setBatchQty(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>QR Codes do lote</Label>
+                <Select value={batchMode} onValueChange={(v) => setBatchMode(v as typeof batchMode)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="same">Mesmo QR em todas as placas</SelectItem>
+                    <SelectItem value="unique">Um QR de ativação diferente por placa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {batchMode === "unique" && (
+              <p className="text-xs text-muted-foreground">
+                Cada placa recebe um código próprio do sistema: o comprador escaneia, ativa e
+                define o destino. Requer o 2º QR no modo “Ativação pelo cliente”.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary" disabled={busy} onClick={() => downloadBatch("3mf")}>
+                <Download className="size-4" /> Lote em 3MF (ZIP)
+              </Button>
+              <Button variant="outline" disabled={busy} onClick={() => downloadBatch("stl")}>
+                <Download className="size-4" /> Lote em STL (ZIP)
+              </Button>
+              {batchProgress && (
+                <span className="self-center text-xs text-muted-foreground">
+                  Gerando {batchProgress.done}/{batchProgress.total}…
+                </span>
+              )}
+            </div>
+          </div>
+
+
           <div className="grid gap-4 sm:grid-cols-3">
             <SlotCountField value={printerSlots} onChange={setPrinterSlots} />
             <MaterialSlotFields label="Placa" idPrefix="placa" slots={printerSlots} value={plateSlot} onChange={setPlateSlot} />
