@@ -579,7 +579,11 @@ function PixPlatePage() {
             <SlotCountField value={printerSlots} onChange={setPrinterSlots} />
             <MaterialSlotFields label="Placa" idPrefix="placa" slots={printerSlots} value={plateSlot} onChange={setPlateSlot} />
             <MaterialSlotFields label="Código" idPrefix="codigo" slots={printerSlots} value={codeSlot} onChange={setCodeSlot} />
+            {useSecond && (
+              <MaterialSlotFields label="2º QR" idPrefix="codigo2" slots={printerSlots} value={code2Slot} onChange={setCode2Slot} />
+            )}
             <MaterialSlotFields label="Arte" idPrefix="arte" slots={printerSlots} value={artSlot} onChange={setArtSlot} />
+
             <MaterialSlotFields label="Base" idPrefix="base-slot" slots={printerSlots} value={baseSlot} onChange={setBaseSlot} />
             <div className="space-y-1.5">
               <Label htmlFor="arquivo">Nome do arquivo</Label>
