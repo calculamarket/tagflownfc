@@ -14,6 +14,8 @@ import {
   type PlateTexture,
 } from "@/lib/hook-3d";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
+import { HookMountGenerator } from "@/components/hook-mount-generator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -256,6 +258,15 @@ function HookPage() {
         </p>
       </header>
 
+      <Tabs defaultValue="placa">
+        <TabsList>
+          <TabsTrigger value="placa">Gancho de placa</TabsTrigger>
+          <TabsTrigger value="encaixe">Base parafusada + encaixe</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="placa" className="mt-6">
+
+
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -446,6 +457,12 @@ function HookPage() {
           </div>
         </aside>
       </div>
+      </TabsContent>
+
+      <TabsContent value="encaixe">
+        <HookMountGenerator />
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }
