@@ -54,6 +54,7 @@ function PetTagPage() {
   const [plateMm, setPlateMm] = useState("3");
   const [legWidthMm, setLegWidthMm] = useState("10");
   const [legHeightMm, setLegHeightMm] = useState("7");
+  const [floorMm, setFloorMm] = useState("1.2");
   const [qrSizeMm, setQrSizeMm] = useState("24");
   const [quietMm, setQuietMm] = useState("2");
   const [codeMm, setCodeMm] = useState("0.8");
@@ -85,6 +86,7 @@ function PetTagPage() {
       plateMm: num(plateMm),
       legWidthMm: num(legWidthMm),
       legHeightMm: num(legHeightMm),
+      floorMm: num(floorMm),
       qrSizeMm: num(qrSizeMm),
       quietZoneMm: num(quietMm),
       codeMm: num(codeMm),
@@ -118,7 +120,7 @@ function PetTagPage() {
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, level, widthMm, depthMm, plateMm, legWidthMm, legHeightMm, qrSizeMm, quietMm, codeMm, mode]);
+  }, [text, level, widthMm, depthMm, plateMm, legWidthMm, legHeightMm, floorMm, qrSizeMm, quietMm, codeMm, mode]);
 
   const download = async (format: "3mf" | "stl") => {
     setBusy(true);
@@ -200,6 +202,10 @@ function PetTagPage() {
             <div className="space-y-1.5">
               <Label htmlFor="lh">Altura do vão da fita (mm)</Label>
               <Input id="lh" inputMode="decimal" value={legHeightMm} onChange={(e) => setLegHeightMm(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fl">Base sob o vão (mm)</Label>
+              <Input id="fl" inputMode="decimal" value={floorMm} onChange={(e) => setFloorMm(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="q">Tamanho do QR (mm)</Label>
