@@ -408,6 +408,75 @@ function PixPlatePage() {
 
           <div className="space-y-4 rounded-md border border-border p-4">
             <div className="flex items-center justify-between">
+              <Label htmlFor="segundo-qr">Segundo QR Code (cardápio, redes sociais, WhatsApp)</Label>
+              <div className="flex items-center gap-2">
+                <Switch id="segundo-qr" checked={useSecond} onCheckedChange={setUseSecond} />
+                <span className="text-xs text-muted-foreground">
+                  {useSecond ? "Pix + 2º QR" : "Somente Pix"}
+                </span>
+              </div>
+            </div>
+
+            {useSecond && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Tipo do conteúdo</Label>
+                    <Select value={secondType} onValueChange={(v) => setSecondType(v as typeof secondType)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="link">Link (cardápio, site, catálogo)</SelectItem>
+                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                        <SelectItem value="instagram">Instagram</SelectItem>
+                        <SelectItem value="texto">Texto livre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="q2s">Tamanho do 2º QR (mm)</Label>
+                    <Input id="q2s" inputMode="decimal" value={secondQrSizeMm} onChange={(e) => setSecondQrSizeMm(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="q2v">
+                      {secondType === "whatsapp"
+                        ? "Número com DDD"
+                        : secondType === "instagram"
+                          ? "Usuário do Instagram"
+                          : secondType === "link"
+                            ? "Endereço do link"
+                            : "Texto"}
+                    </Label>
+                    <Input
+                      id="q2v"
+                      value={secondValue}
+                      onChange={(e) => setSecondValue(e.target.value)}
+                      placeholder={
+                        secondType === "whatsapp"
+                          ? "(11) 99999-9999"
+                          : secondType === "instagram"
+                            ? "@minhaloja"
+                            : "https://www.3dqr.com.br/cardapio"
+                      }
+                    />
+                  </div>
+                  {secondType === "whatsapp" && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="q2m">Mensagem inicial (opcional)</Label>
+                      <Input id="q2m" value={secondWhatsMsg} onChange={(e) => setSecondWhatsMsg(e.target.value)} placeholder="Olá! Vim pelo QR do balcão." />
+                    </div>
+                  )}
+                </div>
+                {secondPayload && (
+                  <p className="break-all text-xs text-muted-foreground">{secondPayload}</p>
+                )}
+              </>
+            )}
+          </div>
+
+
+
+          <div className="space-y-4 rounded-md border border-border p-4">
+            <div className="flex items-center justify-between">
               <Label>Área livre — logotipo, imagem ou texto</Label>
               <Select value={artType} onValueChange={(v) => setArtType(v as typeof artType)}>
                 <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
