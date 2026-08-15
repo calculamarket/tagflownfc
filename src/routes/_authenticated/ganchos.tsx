@@ -14,6 +14,8 @@ import {
   type PlateTexture,
 } from "@/lib/hook-3d";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
+import { HookMountGenerator } from "@/components/hook-mount-generator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
