@@ -89,3 +89,31 @@ upload. O caminho suportado é `send_to_printer` com `target: "drop"`: o G-code 
 gravado no cartão SD / pendrive montado em `printerDropDir`, e você inicia a
 impressão pelo painel. Se em algum momento você migrar para Klipper, basta
 preencher `moonrakerUrl` e usar `target: "moonraker"` com `startPrint: true`.
+
+## Validar a conexão (fatia de teste)
+
+Depois de instalar as dependências, rode o teste de fumaça — ele sobe o servidor,
+faz o handshake MCP, lista as ferramentas e executa uma fatia completa:
+
+```bash
+# sem precisar do Orca instalado (usa um fatiador simulado)
+npm run smoke
+
+# com a sua config real (~/.3dqr-mcp.json) e o Orca de verdade
+node smoke-test.mjs --real --printer kobra-x
+```
+
+Saída esperada no final:
+
+```
+Tudo certo: o cliente MCP conversa com o servidor e a fatia de teste chegou até a mídia da impressora.
+```
+
+Se o passo 5 falhar com "Fatiador não encontrado", revise `slicerPath`. Se falhar
+com "nenhum G-code apareceu", os perfis de máquina/processo não batem com o
+modelo — reexporte-os pelo fatiador e confira os nomes com `list_profiles`.
+
+No seu cliente MCP (Claude Desktop, Cursor…), depois de adicionar o servidor,
+o teste equivalente é pedir no chat:
+
+> "Rode `get_config` e depois `print_qr_tag` com tagId `teste123`, printer `kobra-x` e send `drop`."
