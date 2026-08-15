@@ -222,9 +222,21 @@ function EstudioBonecosPage() {
           {result ? (
             <>
               <img src={result} alt="Boneco gerado" className="w-full rounded-md border border-border" />
-              <Button variant="outline" size="sm" onClick={download}>
-                <Download className="size-4" /> Baixar PNG
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={download}>
+                  <Download className="size-4" /> Baixar PNG
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    sessionStorage.setItem("tagflow:mold-reference", result);
+                    navigate({ to: "/molde-silicone" });
+                  }}
+                >
+                  <Box className="size-4" /> Usar no molde
+                </Button>
+              </div>
             </>
           ) : (
             <p className="text-xs text-muted-foreground">
