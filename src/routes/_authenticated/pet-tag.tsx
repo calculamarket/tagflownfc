@@ -234,6 +234,27 @@ function PetTagPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <Label>Posição do QR</Label>
+              <Select value={qrAlign} onValueChange={(v) => setQrAlign(v as "left" | "center" | "right")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="center">Centralizado</SelectItem>
+                  <SelectItem value="left">À esquerda (espaço à direita)</SelectItem>
+                  <SelectItem value="right">À direita (espaço à esquerda)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="qm">Margem da borda (mm)</Label>
+              <Input
+                id="qm"
+                inputMode="decimal"
+                value={qrMarginMm}
+                onChange={(e) => setQrMarginMm(e.target.value)}
+                disabled={qrAlign === "center"}
+              />
+            </div>
             <SlotCountField value={slots} onChange={setSlots} />
             <MaterialSlotFields
               label="Corpo"
