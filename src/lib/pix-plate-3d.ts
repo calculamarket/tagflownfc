@@ -429,13 +429,32 @@ function trisToStl(tris: Tri[], header: string): ArrayBuffer {
   return buffer;
 }
 
-export function buildPixPlateStl(options: PixPlateOptions): Blob {
-  const { base, plate, code, code2, art } = buildPixPlateGeometry(options);
-  return new Blob(
-    [trisToStl([...plate, ...code, ...code2, ...art, ...base], "Placa Pix QR - 3D QR")],
-    { type: "model/stl" },
-  );
+/** Which piece(s) to export: whole set, only the plate, or only the base. */
+export type PixPlatePart = "both" | "plate" | "base";
+
+/** Move tris so the piece starts at X=0 (the base is modelled beside the plate). */
+function shiftToOriginX(tris: Tri[]): Tri[] {
+  let minX = Infinity;
+  for (const t of tris) for (const p of t) if (p[0] < minX) minX = p[0];
+  if (!Number.isFinite(minX) || Math.abs(minX) < 1e-9) return tris;
+  return tris.map((t) => t.map((p) => [p[0] - minX, p[1], p[2]]) as Tri);
 }
+
+export function buildPixPlateStl(options: PixPlateOptions & { part?: PixPlatePart }): Blob {
+  const part = options.part ?? "both";
+  const { base, plate, code, code2, art } = buildPixPlateGeometry({
+    ...options,
+    includeBase: part === "plate" ? false : options.includeBase,
+  });
+  const tris =
+    part === "base"
+      ? shiftToOriginX(base)
+      : part === "plate"
+        ? [...plate, ...code, ...code2, ...art]
+        : [...plate, ...code, ...code2, ...art, ...base];
+  return new Blob([trisToStl(tris, "Placa Pix QR - 3D QR")], { type: "model/stl" });
+}
+
 
 
 const fmt = (n: number) => (Math.round(n * 1000) / 1000).toString();
