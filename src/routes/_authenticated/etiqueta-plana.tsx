@@ -342,6 +342,8 @@ function FlatTagPage() {
             <div className="flex justify-between"><dt>QR máximo</dt><dd>{summary ? `${summary.maxQr.toFixed(1)} mm` : "—"}</dd></div>
             <div className="flex justify-between"><dt>Troca de cor em</dt><dd>{summary ? `${summary.changeZ.toFixed(2)} mm` : "—"}</dd></div>
             <div className="flex justify-between"><dt>Furo</dt><dd>{hole ? `${holeDiameterMm} mm` : "sem furo"}</dd></div>
+            <div className="flex justify-between"><dt>Passadores</dt><dd>{slots ? `2 × ${slotWidthMm} × ${slotHeightMm} mm` : "sem recortes"}</dd></div>
+
           </dl>
           <p className="text-xs text-muted-foreground">
             No 3MF, corpo e código saem como dois objetos — atribua o filamento de cada um no
