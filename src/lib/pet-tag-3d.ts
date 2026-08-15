@@ -62,6 +62,8 @@ export type PetTagGeometry = {
   codeStartZ: number;
   /** Largest QR side that still fits with the current quiet zone. */
   maxQrSizeMm: number;
+  /** Free plate area left beside the QR (for logo/text), in mm. */
+  freeWidthMm: number;
 };
 
 const OVERLAP = 0.2;
