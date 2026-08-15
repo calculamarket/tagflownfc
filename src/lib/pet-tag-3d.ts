@@ -164,26 +164,28 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     recessed = false,
   } = options;
 
-  // Print orientation: the plate lies flat on the bed and the collar legs grow
-  // upwards, so nothing overhangs and the QR code always faces +Z (up).
-  const plateZ0 = 0;
-  const plateZ1 = plateMm;
+  // Print orientation: the two collar legs sit on the bed and the QR plate
+  // bridges over them, so the strap channel is a real opening and the QR still
+  // faces +Z (up) — no supports needed, the plate just bridges the gap.
+  const legZ0 = 0;
+  const legZ1 = legHeightMm;
+  const plateZ0 = legZ1;
+  const plateZ1 = plateZ0 + plateMm;
   const topZ = plateZ1 + codeMm;
 
-  // Legs: two rounded blocks rising from the plate, strap channel in between.
   const legR = Math.min(1.5, legWidthMm / 3);
   const body: Tri[] = [
-    ...extrude(roundedRect(0, 0, widthMm, depthMm, radiusMm), plateZ0, plateZ1),
     ...extrude(
       roundedRect(0, 0, legWidthMm, depthMm, legR),
-      plateZ1 - OVERLAP,
-      plateZ1 + legHeightMm,
+      legZ0,
+      legZ1 + OVERLAP,
     ),
     ...extrude(
       roundedRect(widthMm - legWidthMm, 0, legWidthMm, depthMm, legR),
-      plateZ1 - OVERLAP,
-      plateZ1 + legHeightMm,
+      legZ0,
+      legZ1 + OVERLAP,
     ),
+    ...extrude(roundedRect(0, 0, widthMm, depthMm, radiusMm), plateZ0, plateZ1),
   ];
 
   // QR code, centred on the plate top face.
@@ -193,13 +195,14 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
 
   const maxQrSizeMm = Math.max(
     0,
-    Math.min(widthMm - 2 * legWidthMm, depthMm) - 2 * quietZoneMm - 2,
+    Math.min(widthMm, depthMm) - 2 * quietZoneMm - 2,
   );
   const side = Math.min(qrSizeMm, maxQrSizeMm > 0 ? maxQrSizeMm : qrSizeMm);
   const moduleMm = side / count;
   const originX = (widthMm - side) / 2;
   const originY = (depthMm - side) / 2;
   const z0 = plateZ1 - OVERLAP;
+
 
   const code: Tri[] = [];
   for (let row = 0; row < count; row++) {
@@ -233,7 +236,7 @@ export function buildPetTagGeometry(options: PetTagOptions): PetTagGeometry {
     code,
     totalWidthMm: widthMm,
     totalDepthMm: depthMm,
-    totalHeightMm: Math.max(topZ, plateZ1 + legHeightMm),
+    totalHeightMm: topZ,
     codeStartZ: plateZ1,
     maxQrSizeMm,
   };
