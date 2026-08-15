@@ -27,6 +27,8 @@ export type PetTagOptions = {
   legWidthMm?: number;
   /** Height of the strap slot (leg height) in mm. */
   legHeightMm?: number;
+  /** Thickness of the floor below the strap slot in mm. */
+  floorMm?: number;
   /** Side of the QR code itself in mm (quiet zone is added around it). */
   qrSizeMm?: number;
   /** Quiet zone around the code in mm. */
