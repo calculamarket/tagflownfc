@@ -21,11 +21,13 @@ import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/t
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
 import { Route as AuthenticatedPetTagRouteImport } from './routes/_authenticated/pet-tag'
+import { Route as AuthenticatedMoldeSiliconeRouteImport } from './routes/_authenticated/molde-silicone'
 import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedGerador3dRouteImport } from './routes/_authenticated/gerador-3d'
 import { Route as AuthenticatedEtiquetaPlanaRouteImport } from './routes/_authenticated/etiqueta-plana'
+import { Route as AuthenticatedEstudioBonecosRouteImport } from './routes/_authenticated/estudio-bonecos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCalculadoraCustosRouteImport } from './routes/_authenticated/calculadora-custos'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
@@ -99,6 +101,12 @@ const AuthenticatedPetTagRoute = AuthenticatedPetTagRouteImport.update({
   path: '/pet-tag',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMoldeSiliconeRoute =
+  AuthenticatedMoldeSiliconeRouteImport.update({
+    id: '/molde-silicone',
+    path: '/molde-silicone',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLinksRoute = AuthenticatedLinksRouteImport.update({
   id: '/links',
   path: '/links',
@@ -124,6 +132,12 @@ const AuthenticatedEtiquetaPlanaRoute =
   AuthenticatedEtiquetaPlanaRouteImport.update({
     id: '/etiqueta-plana',
     path: '/etiqueta-plana',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEstudioBonecosRoute =
+  AuthenticatedEstudioBonecosRouteImport.update({
+    id: '/estudio-bonecos',
+    path: '/estudio-bonecos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -206,11 +220,13 @@ export interface FileRoutesByFullPath {
   '/automations': typeof AuthenticatedAutomationsRoute
   '/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
   '/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/links': typeof AuthenticatedLinksRoute
+  '/molde-silicone': typeof AuthenticatedMoldeSiliconeRoute
   '/pet-tag': typeof AuthenticatedPetTagRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -237,11 +253,13 @@ export interface FileRoutesByTo {
   '/automations': typeof AuthenticatedAutomationsRoute
   '/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
   '/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/links': typeof AuthenticatedLinksRoute
+  '/molde-silicone': typeof AuthenticatedMoldeSiliconeRoute
   '/pet-tag': typeof AuthenticatedPetTagRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -269,11 +287,13 @@ export interface FileRoutesById {
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/_authenticated/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
   '/_authenticated/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/links': typeof AuthenticatedLinksRoute
+  '/_authenticated/molde-silicone': typeof AuthenticatedMoldeSiliconeRoute
   '/_authenticated/pet-tag': typeof AuthenticatedPetTagRoute
   '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -302,11 +322,13 @@ export interface FileRouteTypes {
     | '/automations'
     | '/calculadora-custos'
     | '/dashboard'
+    | '/estudio-bonecos'
     | '/etiqueta-plana'
     | '/gerador-3d'
     | '/integrations'
     | '/leads'
     | '/links'
+    | '/molde-silicone'
     | '/pet-tag'
     | '/qr-codes'
     | '/settings'
@@ -333,11 +355,13 @@ export interface FileRouteTypes {
     | '/automations'
     | '/calculadora-custos'
     | '/dashboard'
+    | '/estudio-bonecos'
     | '/etiqueta-plana'
     | '/gerador-3d'
     | '/integrations'
     | '/leads'
     | '/links'
+    | '/molde-silicone'
     | '/pet-tag'
     | '/qr-codes'
     | '/settings'
@@ -364,11 +388,13 @@ export interface FileRouteTypes {
     | '/_authenticated/automations'
     | '/_authenticated/calculadora-custos'
     | '/_authenticated/dashboard'
+    | '/_authenticated/estudio-bonecos'
     | '/_authenticated/etiqueta-plana'
     | '/_authenticated/gerador-3d'
     | '/_authenticated/integrations'
     | '/_authenticated/leads'
     | '/_authenticated/links'
+    | '/_authenticated/molde-silicone'
     | '/_authenticated/pet-tag'
     | '/_authenticated/qr-codes'
     | '/_authenticated/settings'
@@ -482,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPetTagRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/molde-silicone': {
+      id: '/_authenticated/molde-silicone'
+      path: '/molde-silicone'
+      fullPath: '/molde-silicone'
+      preLoaderRoute: typeof AuthenticatedMoldeSiliconeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/links': {
       id: '/_authenticated/links'
       path: '/links'
@@ -515,6 +548,13 @@ declare module '@tanstack/react-router' {
       path: '/etiqueta-plana'
       fullPath: '/etiqueta-plana'
       preLoaderRoute: typeof AuthenticatedEtiquetaPlanaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/estudio-bonecos': {
+      id: '/_authenticated/estudio-bonecos'
+      path: '/estudio-bonecos'
+      fullPath: '/estudio-bonecos'
+      preLoaderRoute: typeof AuthenticatedEstudioBonecosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -633,11 +673,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedCalculadoraCustosRoute: typeof AuthenticatedCalculadoraCustosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEstudioBonecosRoute: typeof AuthenticatedEstudioBonecosRoute
   AuthenticatedEtiquetaPlanaRoute: typeof AuthenticatedEtiquetaPlanaRoute
   AuthenticatedGerador3dRoute: typeof AuthenticatedGerador3dRoute
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLinksRoute: typeof AuthenticatedLinksRoute
+  AuthenticatedMoldeSiliconeRoute: typeof AuthenticatedMoldeSiliconeRoute
   AuthenticatedPetTagRoute: typeof AuthenticatedPetTagRoute
   AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -655,11 +697,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
   AuthenticatedCalculadoraCustosRoute: AuthenticatedCalculadoraCustosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEstudioBonecosRoute: AuthenticatedEstudioBonecosRoute,
   AuthenticatedEtiquetaPlanaRoute: AuthenticatedEtiquetaPlanaRoute,
   AuthenticatedGerador3dRoute: AuthenticatedGerador3dRoute,
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLinksRoute: AuthenticatedLinksRoute,
+  AuthenticatedMoldeSiliconeRoute: AuthenticatedMoldeSiliconeRoute,
   AuthenticatedPetTagRoute: AuthenticatedPetTagRoute,
   AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
