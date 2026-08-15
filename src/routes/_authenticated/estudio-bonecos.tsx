@@ -75,6 +75,7 @@ function toDataUrl(file: File): Promise<string> {
 
 function EstudioBonecosPage() {
   const generate = useServerFn(generateFigurine);
+  const navigate = useNavigate();
   const [photos, setPhotos] = useState<string[]>([]);
   const [style, setStyle] = useState<(typeof STYLES)[number]["value"]>("funko");
   const [view, setView] = useState<(typeof VIEWS)[number]["value"]>("turnaround");
