@@ -1,0 +1,21 @@
+{
+  "slicerPath": "C:\\Program Files\\OrcaSlicer\\orca-slicer.exe",
+  "profilesDir": "C:\\Users\\SEU_USUARIO\\Documents\\3dqr-perfis",
+  "outputDir": "C:\\Users\\SEU_USUARIO\\3dqr-output",
+  "printerDropDir": "E:\\",
+  "moonrakerUrl": "",
+  "moonrakerApiKey": "",
+  "tagBaseUrl": "https://www.3dqr.com.br/t/",
+  "printers": {
+    "kobra-x": {
+      "machine": "kobra-x-machine.json",
+      "process": "kobra-x-0.20mm.json",
+      "filaments": ["pla-branco.json", "pla-preto.json"]
+    },
+    "kobra-4": {
+      "machine": "kobra-4-machine.json",
+      "process": "kobra-4-0.20mm.json",
+      "filaments": ["pla-branco.json"]
+    }
+  }
+}
