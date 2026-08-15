@@ -377,8 +377,8 @@ export function HookMountGenerator() {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <SlotCountField value={printerSlots} onChange={setPrinterSlots} />
-          <MaterialSlotFields label="Cor do gancho" value={hookSlot} onChange={setHookSlot} slots={printerSlots} />
-          <MaterialSlotFields label="Cor da base" value={mountSlot} onChange={setMountSlot} slots={printerSlots} />
+          <MaterialSlotFields idPrefix="hm-hook" label="Cor do gancho" value={hookSlot} onChange={setHookSlot} slots={printerSlots} />
+          <MaterialSlotFields idPrefix="hm-mount" label="Cor da base" value={mountSlot} onChange={setMountSlot} slots={printerSlots} />
         </div>
       </div>
 
