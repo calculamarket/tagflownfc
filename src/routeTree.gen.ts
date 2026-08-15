@@ -23,6 +23,7 @@ import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
+import { Route as AuthenticatedGerador3dRouteImport } from './routes/_authenticated/gerador-3d'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCalculadoraCustosRouteImport } from './routes/_authenticated/calculadora-custos'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
@@ -107,6 +108,11 @@ const AuthenticatedIntegrationsRoute =
     path: '/integrations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedGerador3dRoute = AuthenticatedGerador3dRouteImport.update({
+  id: '/gerador-3d',
+  path: '/gerador-3d',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/automations': typeof AuthenticatedAutomationsRoute
   '/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/links': typeof AuthenticatedLinksRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/automations': typeof AuthenticatedAutomationsRoute
   '/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/links': typeof AuthenticatedLinksRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/links': typeof AuthenticatedLinksRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/automations'
     | '/calculadora-custos'
     | '/dashboard'
+    | '/gerador-3d'
     | '/integrations'
     | '/leads'
     | '/links'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/automations'
     | '/calculadora-custos'
     | '/dashboard'
+    | '/gerador-3d'
     | '/integrations'
     | '/leads'
     | '/links'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/automations'
     | '/_authenticated/calculadora-custos'
     | '/_authenticated/dashboard'
+    | '/_authenticated/gerador-3d'
     | '/_authenticated/integrations'
     | '/_authenticated/leads'
     | '/_authenticated/links'
@@ -459,6 +471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIntegrationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/gerador-3d': {
+      id: '/_authenticated/gerador-3d'
+      path: '/gerador-3d'
+      fullPath: '/gerador-3d'
+      preLoaderRoute: typeof AuthenticatedGerador3dRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -575,6 +594,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedCalculadoraCustosRoute: typeof AuthenticatedCalculadoraCustosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedGerador3dRoute: typeof AuthenticatedGerador3dRoute
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLinksRoute: typeof AuthenticatedLinksRoute
@@ -594,6 +614,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
   AuthenticatedCalculadoraCustosRoute: AuthenticatedCalculadoraCustosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedGerador3dRoute: AuthenticatedGerador3dRoute,
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLinksRoute: AuthenticatedLinksRoute,

@@ -21,9 +21,18 @@ export type QrStlOptions = {
   moduleHeightMm?: number;
   /** Quiet zone in modules. The QR spec asks for 4; below 2 scanning suffers. */
   marginModules?: number;
+  /**
+   * Quiet zone in millimetres. When set, it wins over `marginModules`: the code
+   * itself measures `sizeMm` and the plate grows to `sizeMm + 2 * quietZoneMm`,
+   * which is how the OpenSCAD generator states its dimensions.
+   */
+  quietZoneMm?: number;
+  /** Error correction level: L ~7%, M ~15%, Q ~25%, H ~30%. */
+  errorCorrectionLevel?: "L" | "M" | "Q" | "H";
   /** Engrave the dark modules instead of embossing them. */
   recessed?: boolean;
 };
+
 
 export type Box = [number, number, number, number, number, number]; // x0,y0,z0,x1,y1,z1
 
@@ -44,34 +53,37 @@ export function buildQrGeometry(text: string, options: QrStlOptions = {}): QrGeo
     baseHeightMm = 2,
     moduleHeightMm = 1.6,
     marginModules = 4,
+    quietZoneMm,
+    errorCorrectionLevel = "M",
     recessed = false,
   } = options;
 
-  const qr = QRCode.create(text, { errorCorrectionLevel: "M" });
+  const qr = QRCode.create(text, { errorCorrectionLevel });
   const qrSize = qr.modules.size;
   const data = qr.modules.data;
 
-  const grid = qrSize + marginModules * 2;
-  const moduleMm = sizeMm / grid;
+  // Two ways to state the quiet zone: in modules (legacy) or in millimetres
+  // (matches the OpenSCAD generator, where SIZE is the code and the plate grows).
+  const useMmQuiet = typeof quietZoneMm === "number";
+  const moduleMm = useMmQuiet ? sizeMm / qrSize : sizeMm / (qrSize + marginModules * 2);
+  const quietMm = useMmQuiet ? quietZoneMm! : marginModules * moduleMm;
+  const plateMm = qrSize * moduleMm + quietMm * 2;
   const topZ = baseHeightMm + moduleHeightMm;
 
-  const base: Box[] = [[0, 0, 0, sizeMm, sizeMm, baseHeightMm]];
+  const base: Box[] = [[0, 0, 0, plateMm, plateMm, baseHeightMm]];
   const modules: Box[] = [];
 
-  for (let row = 0; row < grid; row++) {
-    for (let col = 0; col < grid; col++) {
-      const qrRow = row - marginModules;
-      const qrCol = col - marginModules;
-      const inside = qrRow >= 0 && qrRow < qrSize && qrCol >= 0 && qrCol < qrSize;
-      const isDark = inside ? data[qrRow * qrSize + qrCol] === 1 : false;
+  for (let row = 0; row < qrSize; row++) {
+    for (let col = 0; col < qrSize; col++) {
+      const isDark = data[row * qrSize + col] === 1;
 
       // Emboss raises the dark modules; recess raises everything else so the
       // dark modules become channels.
       if (recessed ? isDark : !isDark) continue;
 
-      const x0 = col * moduleMm;
+      const x0 = quietMm + col * moduleMm;
       // Flip Y so the code reads correctly when viewed from +Z.
-      const y0 = sizeMm - (row + 1) * moduleMm;
+      const y0 = quietMm + (qrSize - 1 - row) * moduleMm;
       modules.push([
         x0,
         y0,
@@ -83,8 +95,23 @@ export function buildQrGeometry(text: string, options: QrStlOptions = {}): QrGeo
     }
   }
 
+  // In recess mode the quiet zone must be raised too, otherwise the plate edge
+  // sits lower than the light modules and the contrast inverts.
+  if (recessed && quietMm > 0) {
+    const z0 = baseHeightMm - OVERLAP_MM;
+    const inner0 = quietMm;
+    const inner1 = quietMm + qrSize * moduleMm;
+    modules.push(
+      [0, 0, z0, plateMm, inner0, topZ],
+      [0, inner1, z0, plateMm, plateMm, topZ],
+      [0, inner0, z0, inner0, inner1, topZ],
+      [inner1, inner0, z0, plateMm, inner1, topZ],
+    );
+  }
+
   return { base, modules, baseHeightMm };
 }
+
 
 const FACES: { n: [number, number, number]; idx: [number, number, number][] }[] = [
   // Vertex order: 0=a 1=b 2=c 3=d (bottom), 4=e 5=f 6=g 7=h (top)
