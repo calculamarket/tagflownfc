@@ -15,7 +15,6 @@ import { buildPixPayload } from "@/lib/qr-payloads";
 import { useServerFn } from "@tanstack/react-start";
 import { createStockTags } from "@/lib/stock.functions";
 import { buildBatchZip } from "@/lib/batch-qr";
-import { formatClaimCode } from "@/lib/claim-code";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
@@ -86,7 +85,6 @@ function PixPlatePage() {
   const [secondQrSizeMm, setSecondQrSizeMm] = useState("34");
   // Código do sistema reservado para o QR de ativação (placa avulsa).
   const [activationId, setActivationId] = useState("");
-  const [activationCode, setActivationCode] = useState("");
 
   // Produção em série
   const [batchQty, setBatchQty] = useState("10");
@@ -295,15 +293,13 @@ function PixPlatePage() {
 
   const makeStock = useServerFn(createStockTags);
 
-  /** Reserve one system code for a single plate. */
+  /** Reserve one system code for a single plate (no activation code needed). */
   const generateActivation = async () => {
     setBusy(true);
     try {
       const res = await makeStock({ data: { name: filename || "Placa Pix", quantity: 1, model: "Placa Pix" } });
-      const tag = res.tags[0];
-      setActivationId(tag.id);
-      setActivationCode(tag.code);
-      toast.success("QR de ativação criado. O cliente ativa ao escanear.");
+      setActivationId(res.tags[0].id);
+      toast.success("QR criado. Quem escanear cria a conta e assume a placa.");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -580,17 +576,18 @@ function PixPlatePage() {
                 {secondType === "ativacao" && (
                   <div className="space-y-2 rounded-md bg-muted/40 p-3">
                     <p className="text-xs text-muted-foreground">
-                      Reserva um código no sistema e imprime o link dele na placa. Ao escanear pela
-                      primeira vez, o cliente entra, ativa a placa e escolhe o destino (cardápio,
-                      WhatsApp, redes sociais…) — igual ao fluxo de ativação das etiquetas.
+                      Gera um QR do sistema e imprime o link dele na placa. Sem chave de ativação:
+                      quem escanear pela primeira vez apenas cria a conta (ou entra) e a placa fica
+                      dele, podendo definir e alterar o destino quando quiser — cardápio, WhatsApp,
+                      redes sociais…
                     </p>
                     <div className="flex flex-wrap items-center gap-3">
                       <Button size="sm" variant="secondary" disabled={busy} onClick={generateActivation}>
-                        {activationId ? "Gerar outro código" : "Gerar QR de ativação"}
+                        {activationId ? "Gerar outro QR" : "Gerar QR do sistema"}
                       </Button>
                       {activationId && (
                         <span className="text-xs text-muted-foreground">
-                          Código de ativação: <strong>{formatClaimCode(activationCode)}</strong>
+                          Código da placa: <strong>{activationId}</strong>
                         </span>
                       )}
                     </div>
