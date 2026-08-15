@@ -328,19 +328,12 @@ export function buildHookMountGeometry(options: HookMountOptions = {}): HookMoun
   const lip = Math.max(0, armLipMm);
   const y0 = Tb - 0.5;
 
-  const path: Pt[] = [[y0 - at / 2, Math.max(1.5, Hh * 0.25)]];
   const baseZ = Math.max(2, Hh * 0.22);
-  path.push([y0, baseZ]);
-  const segs = 14;
-  const startY = y0;
-  path.push([startY + Math.max(0, rise - reach) * 0, baseZ]);
-  const curveStart: Pt = [startY, baseZ];
-  for (let i = 1; i <= segs; i++) {
+  const path: Pt[] = [[y0 - at, baseZ]];
+  const segs = 16;
+  for (let i = 0; i <= segs; i++) {
     const a = (Math.PI / 2) * (i / segs);
-    path.push([
-      curveStart[0] + reach * Math.sin(a),
-      curveStart[1] + rise * (1 - Math.cos(a)),
-    ]);
+    path.push([y0 + reach * Math.sin(a), baseZ + rise * (1 - Math.cos(a))]);
   }
   if (lip > 0) {
     const tip = path[path.length - 1];
