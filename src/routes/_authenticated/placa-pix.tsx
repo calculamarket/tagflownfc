@@ -531,6 +531,7 @@ function PixPlatePage() {
                     <Select value={secondType} onValueChange={(v) => setSecondType(v as typeof secondType)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="ativacao">Ativação pelo cliente (QR do sistema)</SelectItem>
                         <SelectItem value="link">Link (cardápio, site, catálogo)</SelectItem>
                         <SelectItem value="whatsapp">WhatsApp</SelectItem>
                         <SelectItem value="instagram">Instagram</SelectItem>
@@ -542,29 +543,31 @@ function PixPlatePage() {
                     <Label htmlFor="q2s">Tamanho do 2º QR (mm)</Label>
                     <Input id="q2s" inputMode="decimal" value={secondQrSizeMm} onChange={(e) => setSecondQrSizeMm(e.target.value)} />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="q2v">
-                      {secondType === "whatsapp"
-                        ? "Número com DDD"
-                        : secondType === "instagram"
-                          ? "Usuário do Instagram"
-                          : secondType === "link"
-                            ? "Endereço do link"
-                            : "Texto"}
-                    </Label>
-                    <Input
-                      id="q2v"
-                      value={secondValue}
-                      onChange={(e) => setSecondValue(e.target.value)}
-                      placeholder={
-                        secondType === "whatsapp"
-                          ? "(11) 99999-9999"
+                  {secondType !== "ativacao" && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="q2v">
+                        {secondType === "whatsapp"
+                          ? "Número com DDD"
                           : secondType === "instagram"
-                            ? "@minhaloja"
-                            : "https://www.3dqr.com.br/cardapio"
-                      }
-                    />
-                  </div>
+                            ? "Usuário do Instagram"
+                            : secondType === "link"
+                              ? "Endereço do link"
+                              : "Texto"}
+                      </Label>
+                      <Input
+                        id="q2v"
+                        value={secondValue}
+                        onChange={(e) => setSecondValue(e.target.value)}
+                        placeholder={
+                          secondType === "whatsapp"
+                            ? "(11) 99999-9999"
+                            : secondType === "instagram"
+                              ? "@minhaloja"
+                              : "https://www.3dqr.com.br/cardapio"
+                        }
+                      />
+                    </div>
+                  )}
                   {secondType === "whatsapp" && (
                     <div className="space-y-1.5">
                       <Label htmlFor="q2m">Mensagem inicial (opcional)</Label>
@@ -572,6 +575,27 @@ function PixPlatePage() {
                     </div>
                   )}
                 </div>
+
+                {secondType === "ativacao" && (
+                  <div className="space-y-2 rounded-md bg-muted/40 p-3">
+                    <p className="text-xs text-muted-foreground">
+                      Reserva um código no sistema e imprime o link dele na placa. Ao escanear pela
+                      primeira vez, o cliente entra, ativa a placa e escolhe o destino (cardápio,
+                      WhatsApp, redes sociais…) — igual ao fluxo de ativação das etiquetas.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button size="sm" variant="secondary" disabled={busy} onClick={generateActivation}>
+                        {activationId ? "Gerar outro código" : "Gerar QR de ativação"}
+                      </Button>
+                      {activationId && (
+                        <span className="text-xs text-muted-foreground">
+                          Código de ativação: <strong>{formatClaimCode(activationCode)}</strong>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {secondPayload && (
                   <p className="break-all text-xs text-muted-foreground">{secondPayload}</p>
                 )}
