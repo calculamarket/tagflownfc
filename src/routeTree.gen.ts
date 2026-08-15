@@ -27,6 +27,7 @@ import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedGerador3dRouteImport } from './routes/_authenticated/gerador-3d'
+import { Route as AuthenticatedGanchosRouteImport } from './routes/_authenticated/ganchos'
 import { Route as AuthenticatedEtiquetaPlanaRouteImport } from './routes/_authenticated/etiqueta-plana'
 import { Route as AuthenticatedEstudioBonecosRouteImport } from './routes/_authenticated/estudio-bonecos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -134,6 +135,11 @@ const AuthenticatedGerador3dRoute = AuthenticatedGerador3dRouteImport.update({
   path: '/gerador-3d',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGanchosRoute = AuthenticatedGanchosRouteImport.update({
+  id: '/ganchos',
+  path: '/ganchos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEtiquetaPlanaRoute =
   AuthenticatedEtiquetaPlanaRouteImport.update({
     id: '/etiqueta-plana',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
+  '/ganchos': typeof AuthenticatedGanchosRoute
   '/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
+  '/ganchos': typeof AuthenticatedGanchosRoute
   '/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -297,6 +305,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/_authenticated/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
+  '/_authenticated/ganchos': typeof AuthenticatedGanchosRoute
   '/_authenticated/gerador-3d': typeof AuthenticatedGerador3dRoute
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
@@ -333,6 +342,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/estudio-bonecos'
     | '/etiqueta-plana'
+    | '/ganchos'
     | '/gerador-3d'
     | '/integrations'
     | '/leads'
@@ -367,6 +377,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/estudio-bonecos'
     | '/etiqueta-plana'
+    | '/ganchos'
     | '/gerador-3d'
     | '/integrations'
     | '/leads'
@@ -401,6 +412,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/estudio-bonecos'
     | '/_authenticated/etiqueta-plana'
+    | '/_authenticated/ganchos'
     | '/_authenticated/gerador-3d'
     | '/_authenticated/integrations'
     | '/_authenticated/leads'
@@ -562,6 +574,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGerador3dRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ganchos': {
+      id: '/_authenticated/ganchos'
+      path: '/ganchos'
+      fullPath: '/ganchos'
+      preLoaderRoute: typeof AuthenticatedGanchosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/etiqueta-plana': {
       id: '/_authenticated/etiqueta-plana'
       path: '/etiqueta-plana'
@@ -694,6 +713,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEstudioBonecosRoute: typeof AuthenticatedEstudioBonecosRoute
   AuthenticatedEtiquetaPlanaRoute: typeof AuthenticatedEtiquetaPlanaRoute
+  AuthenticatedGanchosRoute: typeof AuthenticatedGanchosRoute
   AuthenticatedGerador3dRoute: typeof AuthenticatedGerador3dRoute
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
@@ -719,6 +739,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEstudioBonecosRoute: AuthenticatedEstudioBonecosRoute,
   AuthenticatedEtiquetaPlanaRoute: AuthenticatedEtiquetaPlanaRoute,
+  AuthenticatedGanchosRoute: AuthenticatedGanchosRoute,
   AuthenticatedGerador3dRoute: AuthenticatedGerador3dRoute,
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
