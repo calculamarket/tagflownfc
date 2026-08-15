@@ -59,6 +59,8 @@ function PetTagPage() {
   const [quietMm, setQuietMm] = useState("2");
   const [codeMm, setCodeMm] = useState("0.8");
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");
+  const [qrAlign, setQrAlign] = useState<"left" | "center" | "right">("center");
+  const [qrMarginMm, setQrMarginMm] = useState("3");
   const [bodyColor, setBodyColor] = useState("#ffffff");
   const [codeColor, setCodeColor] = useState("#000000");
   const [slots, setSlots] = useState(4);
