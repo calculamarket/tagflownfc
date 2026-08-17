@@ -9,49 +9,49 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AtivarRouteImport } from './routes/ativar'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TIdRouteImport } from './routes/t.$id'
-import { Route as AtivarIdRouteImport } from './routes/ativar_.$id'
-import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
-import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
-import { Route as AuthenticatedPlacaPixRouteImport } from './routes/_authenticated/placa-pix'
-import { Route as AuthenticatedPetTagRouteImport } from './routes/_authenticated/pet-tag'
-import { Route as AuthenticatedMoldeSiliconeRouteImport } from './routes/_authenticated/molde-silicone'
-import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
-import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
-import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
-import { Route as AuthenticatedGerador3dRouteImport } from './routes/_authenticated/gerador-3d'
-import { Route as AuthenticatedGanchosRouteImport } from './routes/_authenticated/ganchos'
-import { Route as AuthenticatedEtiquetaPlanaRouteImport } from './routes/_authenticated/etiqueta-plana'
-import { Route as AuthenticatedEstudioBonecosRouteImport } from './routes/_authenticated/estudio-bonecos'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCalculadoraCustosRouteImport } from './routes/_authenticated/calculadora-custos'
-import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AtivarRouteImport } from './routes/ativar'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
-import { Route as AuthenticatedTagsIndexRouteImport } from './routes/_authenticated/tags.index'
-import { Route as AuthenticatedPecasIndexRouteImport } from './routes/_authenticated/pecas.index'
-import { Route as TIdViewRouteImport } from './routes/t.$id_.view'
-import { Route as AuthenticatedTagsNewRouteImport } from './routes/_authenticated/tags.new'
-import { Route as AuthenticatedTagsIdRouteImport } from './routes/_authenticated/tags.$id'
-import { Route as AuthenticatedPecasIdRouteImport } from './routes/_authenticated/pecas.$id'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
+import { Route as AuthenticatedCalculadoraCustosRouteImport } from './routes/_authenticated/calculadora-custos'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEstudioBonecosRouteImport } from './routes/_authenticated/estudio-bonecos'
+import { Route as AuthenticatedEtiquetaPlanaRouteImport } from './routes/_authenticated/etiqueta-plana'
+import { Route as AuthenticatedGanchosRouteImport } from './routes/_authenticated/ganchos'
+import { Route as AuthenticatedGerador3dRouteImport } from './routes/_authenticated/gerador-3d'
+import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
+import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
+import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
+import { Route as AuthenticatedMoldeSiliconeRouteImport } from './routes/_authenticated/molde-silicone'
+import { Route as AuthenticatedPetTagRouteImport } from './routes/_authenticated/pet-tag'
+import { Route as AuthenticatedPlacaPixRouteImport } from './routes/_authenticated/placa-pix'
+import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
+import { Route as AuthenticatedQrKidsRouteImport } from './routes/_authenticated/qr-kids'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
+import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AtivarIdRouteImport } from './routes/ativar_.$id'
+import { Route as TIdRouteImport } from './routes/t.$id'
 import { Route as AuthenticatedLandingTagIdRouteImport } from './routes/_authenticated/landing.$tagId'
+import { Route as AuthenticatedPecasIndexRouteImport } from './routes/_authenticated/pecas.index'
+import { Route as AuthenticatedPecasIdRouteImport } from './routes/_authenticated/pecas.$id'
+import { Route as AuthenticatedTagsIndexRouteImport } from './routes/_authenticated/tags.index'
+import { Route as AuthenticatedTagsIdRouteImport } from './routes/_authenticated/tags.$id'
+import { Route as AuthenticatedTagsNewRouteImport } from './routes/_authenticated/tags.new'
+import { Route as TIdViewRouteImport } from './routes/t.$id_.view'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtivarRoute = AtivarRouteImport.update({
@@ -59,69 +59,68 @@ const AtivarRoute = AtivarRouteImport.update({
   path: '/ativar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TIdRoute = TIdRouteImport.update({
-  id: '/t/$id',
-  path: '/t/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AtivarIdRoute = AtivarIdRouteImport.update({
-  id: '/ativar_/$id',
-  path: '/ativar/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
-  id: '/team',
-  path: '/team',
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedTagsRoute = AuthenticatedTagsRouteImport.update({
-  id: '/tags',
-  path: '/tags',
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedQrCodesRoute = AuthenticatedQrCodesRouteImport.update({
-  id: '/qr-codes',
-  path: '/qr-codes',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPlacaPixRoute = AuthenticatedPlacaPixRouteImport.update({
-  id: '/placa-pix',
-  path: '/placa-pix',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPetTagRoute = AuthenticatedPetTagRouteImport.update({
-  id: '/pet-tag',
-  path: '/pet-tag',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMoldeSiliconeRoute =
-  AuthenticatedMoldeSiliconeRouteImport.update({
-    id: '/molde-silicone',
-    path: '/molde-silicone',
+const AuthenticatedAutomationsRoute =
+  AuthenticatedAutomationsRouteImport.update({
+    id: '/automations',
+    path: '/automations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedLinksRoute = AuthenticatedLinksRouteImport.update({
-  id: '/links',
-  path: '/links',
+const AuthenticatedCalculadoraCustosRoute =
+  AuthenticatedCalculadoraCustosRouteImport.update({
+    id: '/calculadora-custos',
+    path: '/calculadora-custos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
+const AuthenticatedEstudioBonecosRoute =
+  AuthenticatedEstudioBonecosRouteImport.update({
+    id: '/estudio-bonecos',
+    path: '/estudio-bonecos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEtiquetaPlanaRoute =
+  AuthenticatedEtiquetaPlanaRouteImport.update({
+    id: '/etiqueta-plana',
+    path: '/etiqueta-plana',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGanchosRoute = AuthenticatedGanchosRouteImport.update({
+  id: '/ganchos',
+  path: '/ganchos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGerador3dRoute = AuthenticatedGerador3dRouteImport.update({
+  id: '/gerador-3d',
+  path: '/gerador-3d',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedIntegrationsRoute =
@@ -130,89 +129,66 @@ const AuthenticatedIntegrationsRoute =
     path: '/integrations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedGerador3dRoute = AuthenticatedGerador3dRouteImport.update({
-  id: '/gerador-3d',
-  path: '/gerador-3d',
+const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedGanchosRoute = AuthenticatedGanchosRouteImport.update({
-  id: '/ganchos',
-  path: '/ganchos',
+const AuthenticatedLinksRoute = AuthenticatedLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedEtiquetaPlanaRoute =
-  AuthenticatedEtiquetaPlanaRouteImport.update({
-    id: '/etiqueta-plana',
-    path: '/etiqueta-plana',
+const AuthenticatedMoldeSiliconeRoute =
+  AuthenticatedMoldeSiliconeRouteImport.update({
+    id: '/molde-silicone',
+    path: '/molde-silicone',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedEstudioBonecosRoute =
-  AuthenticatedEstudioBonecosRouteImport.update({
-    id: '/estudio-bonecos',
-    path: '/estudio-bonecos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedPetTagRoute = AuthenticatedPetTagRouteImport.update({
+  id: '/pet-tag',
+  path: '/pet-tag',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCalculadoraCustosRoute =
-  AuthenticatedCalculadoraCustosRouteImport.update({
-    id: '/calculadora-custos',
-    path: '/calculadora-custos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAutomationsRoute =
-  AuthenticatedAutomationsRouteImport.update({
-    id: '/automations',
-    path: '/automations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
+const AuthenticatedPlacaPixRoute = AuthenticatedPlacaPixRouteImport.update({
+  id: '/placa-pix',
+  path: '/placa-pix',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedQrCodesRoute = AuthenticatedQrCodesRouteImport.update({
+  id: '/qr-codes',
+  path: '/qr-codes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
+const AuthenticatedQrKidsRoute = AuthenticatedQrKidsRouteImport.update({
+  id: '/qr-kids',
+  path: '/qr-kids',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedTagsIndexRoute = AuthenticatedTagsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedTagsRoute,
-} as any)
-const AuthenticatedPecasIndexRoute = AuthenticatedPecasIndexRouteImport.update({
-  id: '/pecas/',
-  path: '/pecas/',
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const TIdViewRoute = TIdViewRouteImport.update({
-  id: '/t/$id_/view',
-  path: '/t/$id/view',
+const AuthenticatedTagsRoute = AuthenticatedTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AtivarIdRoute = AtivarIdRouteImport.update({
+  id: '/ativar_/$id',
+  path: '/ativar/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTagsNewRoute = AuthenticatedTagsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AuthenticatedTagsRoute,
-} as any)
-const AuthenticatedTagsIdRoute = AuthenticatedTagsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedTagsRoute,
-} as any)
-const AuthenticatedPecasIdRoute = AuthenticatedPecasIdRouteImport.update({
-  id: '/pecas/$id',
-  path: '/pecas/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const TIdRoute = TIdRouteImport.update({
+  id: '/t/$id',
+  path: '/t/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedLandingTagIdRoute =
   AuthenticatedLandingTagIdRouteImport.update({
@@ -220,6 +196,36 @@ const AuthenticatedLandingTagIdRoute =
     path: '/landing/$tagId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPecasIndexRoute = AuthenticatedPecasIndexRouteImport.update({
+  id: '/pecas/',
+  path: '/pecas/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPecasIdRoute = AuthenticatedPecasIdRouteImport.update({
+  id: '/pecas/$id',
+  path: '/pecas/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTagsIndexRoute = AuthenticatedTagsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedTagsRoute,
+} as any)
+const AuthenticatedTagsIdRoute = AuthenticatedTagsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedTagsRoute,
+} as any)
+const AuthenticatedTagsNewRoute = AuthenticatedTagsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedTagsRoute,
+} as any)
+const TIdViewRoute = TIdViewRouteImport.update({
+  id: '/t/$id_/view',
+  path: '/t/$id/view',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/pet-tag': typeof AuthenticatedPetTagRoute
   '/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/qr-kids': typeof AuthenticatedQrKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tags': typeof AuthenticatedTagsRouteWithChildren
   '/team': typeof AuthenticatedTeamRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/pet-tag': typeof AuthenticatedPetTagRoute
   '/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/qr-kids': typeof AuthenticatedQrKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/ativar/$id': typeof AtivarIdRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/_authenticated/pet-tag': typeof AuthenticatedPetTagRoute
   '/_authenticated/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/_authenticated/qr-kids': typeof AuthenticatedQrKidsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tags': typeof AuthenticatedTagsRouteWithChildren
   '/_authenticated/team': typeof AuthenticatedTeamRoute
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/pet-tag'
     | '/placa-pix'
     | '/qr-codes'
+    | '/qr-kids'
     | '/settings'
     | '/tags'
     | '/team'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/pet-tag'
     | '/placa-pix'
     | '/qr-codes'
+    | '/qr-kids'
     | '/settings'
     | '/team'
     | '/ativar/$id'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pet-tag'
     | '/_authenticated/placa-pix'
     | '/_authenticated/qr-codes'
+    | '/_authenticated/qr-kids'
     | '/_authenticated/settings'
     | '/_authenticated/tags'
     | '/_authenticated/team'
@@ -448,25 +460,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ativar': {
-      id: '/ativar'
-      path: '/ativar'
-      fullPath: '/ativar'
-      preLoaderRoute: typeof AtivarRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -476,151 +474,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/ativar': {
+      id: '/ativar'
+      path: '/ativar'
+      fullPath: '/ativar'
+      preLoaderRoute: typeof AtivarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/t/$id': {
-      id: '/t/$id'
-      path: '/t/$id'
-      fullPath: '/t/$id'
-      preLoaderRoute: typeof TIdRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ativar_/$id': {
-      id: '/ativar_/$id'
-      path: '/ativar/$id'
-      fullPath: '/ativar/$id'
-      preLoaderRoute: typeof AtivarIdRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/team': {
-      id: '/_authenticated/team'
-      path: '/team'
-      fullPath: '/team'
-      preLoaderRoute: typeof AuthenticatedTeamRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tags': {
-      id: '/_authenticated/tags'
-      path: '/tags'
-      fullPath: '/tags'
-      preLoaderRoute: typeof AuthenticatedTagsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/qr-codes': {
-      id: '/_authenticated/qr-codes'
-      path: '/qr-codes'
-      fullPath: '/qr-codes'
-      preLoaderRoute: typeof AuthenticatedQrCodesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/placa-pix': {
-      id: '/_authenticated/placa-pix'
-      path: '/placa-pix'
-      fullPath: '/placa-pix'
-      preLoaderRoute: typeof AuthenticatedPlacaPixRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/pet-tag': {
-      id: '/_authenticated/pet-tag'
-      path: '/pet-tag'
-      fullPath: '/pet-tag'
-      preLoaderRoute: typeof AuthenticatedPetTagRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/molde-silicone': {
-      id: '/_authenticated/molde-silicone'
-      path: '/molde-silicone'
-      fullPath: '/molde-silicone'
-      preLoaderRoute: typeof AuthenticatedMoldeSiliconeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/links': {
-      id: '/_authenticated/links'
-      path: '/links'
-      fullPath: '/links'
-      preLoaderRoute: typeof AuthenticatedLinksRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/leads': {
-      id: '/_authenticated/leads'
-      path: '/leads'
-      fullPath: '/leads'
-      preLoaderRoute: typeof AuthenticatedLeadsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/integrations': {
-      id: '/_authenticated/integrations'
-      path: '/integrations'
-      fullPath: '/integrations'
-      preLoaderRoute: typeof AuthenticatedIntegrationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/gerador-3d': {
-      id: '/_authenticated/gerador-3d'
-      path: '/gerador-3d'
-      fullPath: '/gerador-3d'
-      preLoaderRoute: typeof AuthenticatedGerador3dRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ganchos': {
-      id: '/_authenticated/ganchos'
-      path: '/ganchos'
-      fullPath: '/ganchos'
-      preLoaderRoute: typeof AuthenticatedGanchosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/etiqueta-plana': {
-      id: '/_authenticated/etiqueta-plana'
-      path: '/etiqueta-plana'
-      fullPath: '/etiqueta-plana'
-      preLoaderRoute: typeof AuthenticatedEtiquetaPlanaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/estudio-bonecos': {
-      id: '/_authenticated/estudio-bonecos'
-      path: '/estudio-bonecos'
-      fullPath: '/estudio-bonecos'
-      preLoaderRoute: typeof AuthenticatedEstudioBonecosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/calculadora-custos': {
-      id: '/_authenticated/calculadora-custos'
-      path: '/calculadora-custos'
-      fullPath: '/calculadora-custos'
-      preLoaderRoute: typeof AuthenticatedCalculadoraCustosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/automations': {
-      id: '/_authenticated/automations'
-      path: '/automations'
-      fullPath: '/automations'
-      preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/analytics': {
-      id: '/_authenticated/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -630,11 +509,172 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/account': {
-      id: '/_authenticated/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/automations': {
+      id: '/_authenticated/automations'
+      path: '/automations'
+      fullPath: '/automations'
+      preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/calculadora-custos': {
+      id: '/_authenticated/calculadora-custos'
+      path: '/calculadora-custos'
+      fullPath: '/calculadora-custos'
+      preLoaderRoute: typeof AuthenticatedCalculadoraCustosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/estudio-bonecos': {
+      id: '/_authenticated/estudio-bonecos'
+      path: '/estudio-bonecos'
+      fullPath: '/estudio-bonecos'
+      preLoaderRoute: typeof AuthenticatedEstudioBonecosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/etiqueta-plana': {
+      id: '/_authenticated/etiqueta-plana'
+      path: '/etiqueta-plana'
+      fullPath: '/etiqueta-plana'
+      preLoaderRoute: typeof AuthenticatedEtiquetaPlanaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ganchos': {
+      id: '/_authenticated/ganchos'
+      path: '/ganchos'
+      fullPath: '/ganchos'
+      preLoaderRoute: typeof AuthenticatedGanchosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/gerador-3d': {
+      id: '/_authenticated/gerador-3d'
+      path: '/gerador-3d'
+      fullPath: '/gerador-3d'
+      preLoaderRoute: typeof AuthenticatedGerador3dRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/integrations': {
+      id: '/_authenticated/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AuthenticatedIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leads': {
+      id: '/_authenticated/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AuthenticatedLeadsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/links': {
+      id: '/_authenticated/links'
+      path: '/links'
+      fullPath: '/links'
+      preLoaderRoute: typeof AuthenticatedLinksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/molde-silicone': {
+      id: '/_authenticated/molde-silicone'
+      path: '/molde-silicone'
+      fullPath: '/molde-silicone'
+      preLoaderRoute: typeof AuthenticatedMoldeSiliconeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pet-tag': {
+      id: '/_authenticated/pet-tag'
+      path: '/pet-tag'
+      fullPath: '/pet-tag'
+      preLoaderRoute: typeof AuthenticatedPetTagRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/placa-pix': {
+      id: '/_authenticated/placa-pix'
+      path: '/placa-pix'
+      fullPath: '/placa-pix'
+      preLoaderRoute: typeof AuthenticatedPlacaPixRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qr-codes': {
+      id: '/_authenticated/qr-codes'
+      path: '/qr-codes'
+      fullPath: '/qr-codes'
+      preLoaderRoute: typeof AuthenticatedQrCodesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qr-kids': {
+      id: '/_authenticated/qr-kids'
+      path: '/qr-kids'
+      fullPath: '/qr-kids'
+      preLoaderRoute: typeof AuthenticatedQrKidsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tags': {
+      id: '/_authenticated/tags'
+      path: '/tags'
+      fullPath: '/tags'
+      preLoaderRoute: typeof AuthenticatedTagsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/team': {
+      id: '/_authenticated/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/ativar_/$id': {
+      id: '/ativar_/$id'
+      path: '/ativar/$id'
+      fullPath: '/ativar/$id'
+      preLoaderRoute: typeof AtivarIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/t/$id': {
+      id: '/t/$id'
+      path: '/t/$id'
+      fullPath: '/t/$id'
+      preLoaderRoute: typeof TIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/landing/$tagId': {
+      id: '/_authenticated/landing/$tagId'
+      path: '/landing/$tagId'
+      fullPath: '/landing/$tagId'
+      preLoaderRoute: typeof AuthenticatedLandingTagIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pecas/': {
+      id: '/_authenticated/pecas/'
+      path: '/pecas'
+      fullPath: '/pecas/'
+      preLoaderRoute: typeof AuthenticatedPecasIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pecas/$id': {
+      id: '/_authenticated/pecas/$id'
+      path: '/pecas/$id'
+      fullPath: '/pecas/$id'
+      preLoaderRoute: typeof AuthenticatedPecasIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tags/': {
@@ -644,19 +684,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTagsIndexRouteImport
       parentRoute: typeof AuthenticatedTagsRoute
     }
-    '/_authenticated/pecas/': {
-      id: '/_authenticated/pecas/'
-      path: '/pecas'
-      fullPath: '/pecas/'
-      preLoaderRoute: typeof AuthenticatedPecasIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/t/$id_/view': {
-      id: '/t/$id_/view'
-      path: '/t/$id/view'
-      fullPath: '/t/$id/view'
-      preLoaderRoute: typeof TIdViewRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/tags/$id': {
+      id: '/_authenticated/tags/$id'
+      path: '/$id'
+      fullPath: '/tags/$id'
+      preLoaderRoute: typeof AuthenticatedTagsIdRouteImport
+      parentRoute: typeof AuthenticatedTagsRoute
     }
     '/_authenticated/tags/new': {
       id: '/_authenticated/tags/new'
@@ -665,26 +698,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTagsNewRouteImport
       parentRoute: typeof AuthenticatedTagsRoute
     }
-    '/_authenticated/tags/$id': {
-      id: '/_authenticated/tags/$id'
-      path: '/$id'
-      fullPath: '/tags/$id'
-      preLoaderRoute: typeof AuthenticatedTagsIdRouteImport
-      parentRoute: typeof AuthenticatedTagsRoute
-    }
-    '/_authenticated/pecas/$id': {
-      id: '/_authenticated/pecas/$id'
-      path: '/pecas/$id'
-      fullPath: '/pecas/$id'
-      preLoaderRoute: typeof AuthenticatedPecasIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/landing/$tagId': {
-      id: '/_authenticated/landing/$tagId'
-      path: '/landing/$tagId'
-      fullPath: '/landing/$tagId'
-      preLoaderRoute: typeof AuthenticatedLandingTagIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/t/$id_/view': {
+      id: '/t/$id_/view'
+      path: '/t/$id/view'
+      fullPath: '/t/$id/view'
+      preLoaderRoute: typeof TIdViewRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -722,6 +741,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPetTagRoute: typeof AuthenticatedPetTagRoute
   AuthenticatedPlacaPixRoute: typeof AuthenticatedPlacaPixRoute
   AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
+  AuthenticatedQrKidsRoute: typeof AuthenticatedQrKidsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRouteWithChildren
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
@@ -748,6 +768,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPetTagRoute: AuthenticatedPetTagRoute,
   AuthenticatedPlacaPixRoute: AuthenticatedPlacaPixRoute,
   AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
+  AuthenticatedQrKidsRoute: AuthenticatedQrKidsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTagsRoute: AuthenticatedTagsRouteWithChildren,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,

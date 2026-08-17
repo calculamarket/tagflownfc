@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Tags, QrCode, Link2, BarChart3, Zap, Users,
-  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor,
+  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ const nav = [
   { to: "/ganchos", label: "Ganchos", icon: Anchor },
   { to: "/estudio-bonecos", label: "Estúdio de Bonecos", icon: Sparkles },
   { to: "/molde-silicone", label: "Molde de Silicone", icon: Boxes },
+  { to: "/qr-kids", label: "QR Kids", icon: Backpack },
 
 
   { to: "/calculadora-custos", label: "Calculadora de Custos", icon: Calculator },
