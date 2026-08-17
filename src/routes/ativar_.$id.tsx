@@ -17,6 +17,7 @@ function ActivateByScan() {
   const [checking, setChecking] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [autoTried, setAutoTried] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -42,6 +43,15 @@ function ActivateByScan() {
       setBusy(false);
     }
   };
+
+  // Já chegou logado (ex.: acabou de criar a conta)? Ativa sozinho, sem clique.
+  useEffect(() => {
+    if (!checking && signedIn && !autoTried) {
+      setAutoTried(true);
+      activate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checking, signedIn, autoTried]);
 
   const backHere = `/ativar/${id}`;
 

@@ -51,7 +51,7 @@ function AuthPage() {
         if (error) throw error;
         navigate({ to: dest, replace: true });
       } else if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -60,8 +60,14 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Conta criada! Você já pode entrar.");
-        setMode("signin");
+        // Com a confirmação de e-mail desligada, o signUp já devolve a sessão:
+        // entra direto, sem pedir para logar de novo nem verificar e-mail.
+        if (data.session) {
+          navigate({ to: dest, replace: true });
+        } else {
+          toast.success("Conta criada! Confirme o e-mail que enviamos para entrar.");
+          setMode("signin");
+        }
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
@@ -114,8 +120,8 @@ function AuthPage() {
           <form onSubmit={submit} className="mt-6 space-y-4">
             {mode === "signup" && (
               <div className="space-y-1.5">
-                <Label htmlFor="name">Nome</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+                <Label htmlFor="name">Nome <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
             )}
             <div className="space-y-1.5">
