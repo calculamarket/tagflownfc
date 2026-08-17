@@ -32,6 +32,7 @@ import { Route as AuthenticatedGanchosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedEtiquetaPlanaRouteImport } from './routes/_authenticated/etiqueta-plana'
 import { Route as AuthenticatedEstudioBonecosRouteImport } from './routes/_authenticated/estudio-bonecos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCriadorEnvelopesRouteImport } from './routes/_authenticated/criador-envelopes'
 import { Route as AuthenticatedCalculadoraCustosRouteImport } from './routes/_authenticated/calculadora-custos'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -163,6 +164,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCriadorEnvelopesRoute =
+  AuthenticatedCriadorEnvelopesRouteImport.update({
+    id: '/criador-envelopes',
+    path: '/criador-envelopes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCalculadoraCustosRoute =
   AuthenticatedCalculadoraCustosRouteImport.update({
     id: '/calculadora-custos',
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/automations': typeof AuthenticatedAutomationsRoute
   '/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
+  '/criador-envelopes': typeof AuthenticatedCriadorEnvelopesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
@@ -273,6 +281,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/automations': typeof AuthenticatedAutomationsRoute
   '/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
+  '/criador-envelopes': typeof AuthenticatedCriadorEnvelopesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
@@ -310,6 +319,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/calculadora-custos': typeof AuthenticatedCalculadoraCustosRoute
+  '/_authenticated/criador-envelopes': typeof AuthenticatedCriadorEnvelopesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/estudio-bonecos': typeof AuthenticatedEstudioBonecosRoute
   '/_authenticated/etiqueta-plana': typeof AuthenticatedEtiquetaPlanaRoute
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/automations'
     | '/calculadora-custos'
+    | '/criador-envelopes'
     | '/dashboard'
     | '/estudio-bonecos'
     | '/etiqueta-plana'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/automations'
     | '/calculadora-custos'
+    | '/criador-envelopes'
     | '/dashboard'
     | '/estudio-bonecos'
     | '/etiqueta-plana'
@@ -420,6 +432,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/automations'
     | '/_authenticated/calculadora-custos'
+    | '/_authenticated/criador-envelopes'
     | '/_authenticated/dashboard'
     | '/_authenticated/estudio-bonecos'
     | '/_authenticated/etiqueta-plana'
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/criador-envelopes': {
+      id: '/_authenticated/criador-envelopes'
+      path: '/criador-envelopes'
+      fullPath: '/criador-envelopes'
+      preLoaderRoute: typeof AuthenticatedCriadorEnvelopesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/calculadora-custos': {
       id: '/_authenticated/calculadora-custos'
       path: '/calculadora-custos'
@@ -729,6 +749,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedCalculadoraCustosRoute: typeof AuthenticatedCalculadoraCustosRoute
+  AuthenticatedCriadorEnvelopesRoute: typeof AuthenticatedCriadorEnvelopesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEstudioBonecosRoute: typeof AuthenticatedEstudioBonecosRoute
   AuthenticatedEtiquetaPlanaRoute: typeof AuthenticatedEtiquetaPlanaRoute
@@ -756,6 +777,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
   AuthenticatedCalculadoraCustosRoute: AuthenticatedCalculadoraCustosRoute,
+  AuthenticatedCriadorEnvelopesRoute: AuthenticatedCriadorEnvelopesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEstudioBonecosRoute: AuthenticatedEstudioBonecosRoute,
   AuthenticatedEtiquetaPlanaRoute: AuthenticatedEtiquetaPlanaRoute,

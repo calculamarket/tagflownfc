@@ -26,6 +26,7 @@ const nav = [
   { to: "/estudio-bonecos", label: "Estúdio de Bonecos", icon: Sparkles },
   { to: "/molde-silicone", label: "Molde de Silicone", icon: Boxes },
   { to: "/qr-kids", label: "QR Kids", icon: Backpack },
+  { to: "/criador-envelopes", label: "Criador de Envelopes", icon: Mail },
 
 
   { to: "/calculadora-custos", label: "Calculadora de Custos", icon: Calculator },
