@@ -252,6 +252,45 @@ export function TagForm({
               <ExternalLink className="size-3.5" /> Abrir link
             </a>
           </div>
+
+          {/* Passo-a-passo de gravação na etiqueta NFC (colapsável). */}
+          <details className="rounded-lg border border-border bg-muted/30 text-sm">
+            <summary className="cursor-pointer select-none px-4 py-2.5 font-medium">
+              📱 Como gravar na etiqueta NFC
+            </summary>
+            <div className="px-4 pb-4 pt-1 space-y-2 text-muted-foreground">
+              <ol className="list-decimal space-y-1.5 pl-4">
+                <li>
+                  Instale um app de gravação NFC — o <strong>“NFC Tools”</strong> (gratuito)
+                  funciona no Android e no iPhone.
+                </li>
+                <li>
+                  No <strong>Android</strong>, confira se o <strong>NFC está ligado</strong>{" "}
+                  (Configurações → Conexões). No <strong>iPhone</strong> (a partir do 7) não
+                  precisa ligar nada.
+                </li>
+                <li>
+                  Copie o endereço acima no botão <strong>Copiar</strong>.
+                </li>
+                <li>
+                  No app, toque em <strong>Escrever</strong> (Write) →{" "}
+                  <strong>Adicionar registro</strong> → <strong>URL/URI</strong> e{" "}
+                  <strong>cole o link</strong>.
+                </li>
+                <li>
+                  Toque em <strong>Gravar</strong> e <strong>encoste a etiqueta</strong> na parte
+                  de trás do celular até aparecer a confirmação.
+                </li>
+                <li>
+                  Pronto! Aproxime o celular da etiqueta para testar — deve abrir o link.
+                </li>
+              </ol>
+              <p className="text-xs">
+                Para trocar o conteúdo depois, é só gravar de novo por cima — o link antigo é
+                substituído. O destino você reconfigura aqui a qualquer momento, sem regravar.
+              </p>
+            </div>
+          </details>
         </div>
 
         {editing && (
