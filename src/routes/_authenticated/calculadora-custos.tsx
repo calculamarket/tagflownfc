@@ -32,16 +32,17 @@ export const Route = createFileRoute("/_authenticated/calculadora-custos")({
 });
 
 type FieldKey = Exclude<keyof PrintCostInputs, "sellsMarketplace">;
-type FieldDef = { key: FieldKey; label: string; suffix?: string; prefix?: string };
+type FieldDef = { key: FieldKey; label: string; suffix?: string; prefix?: string; placeholder?: string };
 
-const SECTIONS: { title: string; fields: FieldDef[] }[] = [
+const SECTIONS: { title: string; hint?: string; fields: FieldDef[] }[] = [
   {
     title: "Máquina e energia",
+    hint: "Potência = consumo médio da impressora (≈150 W). kWh = preço da sua energia (≈ R$ 0,75 por kWh, não R$ 75).",
     fields: [
-      { key: "machinePrice", label: "Preço da máquina", prefix: "R$" },
-      { key: "machineLifeHours", label: "Vida útil", suffix: "h" },
-      { key: "powerWatts", label: "Potência", suffix: "W" },
-      { key: "kwhPrice", label: "Custo do kWh", prefix: "R$" },
+      { key: "machinePrice", label: "Preço da máquina", prefix: "R$", placeholder: "2000" },
+      { key: "machineLifeHours", label: "Vida útil", suffix: "h", placeholder: "5000" },
+      { key: "powerWatts", label: "Potência", suffix: "W", placeholder: "150" },
+      { key: "kwhPrice", label: "Custo do kWh", prefix: "R$", placeholder: "0,75" },
     ],
   },
   {
@@ -112,7 +113,7 @@ function CalculatorPage() {
   });
 
   const setField = (key: FieldKey, raw: string) =>
-    setInputs((s) => ({ ...s, [key]: raw === "" ? 0 : Number(raw) }));
+    setInputs((s) => ({ ...s, [key]: parseDecimal(raw) }));
 
   const hasData = inputs.printHours > 0 || inputs.filamentGrams > 0 || inputs.machinePrice > 0;
 
@@ -157,8 +158,11 @@ function CalculatorPage() {
 
           {SECTIONS.map((section) => (
             <div key={section.title} className="rounded-lg border border-border bg-card p-5">
-              <div className="text-sm font-semibold mb-4">{section.title}</div>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="text-sm font-semibold">{section.title}</div>
+              {section.hint && (
+                <p className="mt-1 mb-3 text-xs text-muted-foreground">{section.hint}</p>
+              )}
+              <div className={cn("grid gap-4 sm:grid-cols-3", !section.hint && "mt-4")}>
                 {section.fields.map((f) => (
                   <NumberField
                     key={f.key}
@@ -299,9 +303,19 @@ function CalculatorPage() {
   );
 }
 
+/** Aceita formato brasileiro: "0,75" → 0.75. Vazio/inválido → 0; nunca negativo. */
+function parseDecimal(raw: string): number {
+  if (raw.trim() === "") return 0;
+  const n = parseFloat(raw.replace(/\s/g, "").replace(",", "."));
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
 function NumberField({
   def, value, onChange,
 }: { def: FieldDef; value: number; onChange: (v: string) => void }) {
+  // Guarda o texto digitado (não o número): assim "0," e "0,75" não são
+  // atropelados pela reconversão a número enquanto o usuário digita.
+  const [raw, setRaw] = useState(value ? String(value).replace(".", ",") : "");
   return (
     <div className="space-y-1.5">
       <Label className="text-xs">{def.label}</Label>
@@ -312,12 +326,16 @@ function NumberField({
           </span>
         )}
         <Input
-          type="number"
+          type="text"
           inputMode="decimal"
-          min={0}
-          value={value === 0 ? "" : value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="0"
+          value={raw}
+          onChange={(e) => {
+            // Mantém só dígitos, vírgula e ponto — evita letras/sinal.
+            const v = e.target.value.replace(/[^\d.,]/g, "");
+            setRaw(v);
+            onChange(v);
+          }}
+          placeholder={def.placeholder ?? "0"}
           className={cn(def.prefix && "pl-8", def.suffix && "pr-10")}
         />
         {def.suffix && (
