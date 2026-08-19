@@ -49,6 +49,7 @@ function QrKidsPage() {
   // Inserto 3MF (2 cores)
   const [baseColor, setBaseColor] = useState("#ffffff");
   const [codeColor, setCodeColor] = useState("#111111");
+  const [insertQty, setInsertQty] = useState("12");
   const [tmfBusy, setTmfBusy] = useState(false);
 
   // Produção (admin)
