@@ -6,7 +6,8 @@ import {
   qrLabelPng, qrLabelSvg, openRoundLabelSheet, openLabelSheetMulti,
   type QrLevel, type LabelShape,
 } from "@/lib/round-label";
-import { buildQr3mf } from "@/lib/qr-3mf";
+import { buildQr3mf, buildQr3mfBytes } from "@/lib/qr-3mf";
+import { createZip } from "@/lib/zip";
 import { adminCreateBatch, adminBatchTags } from "@/lib/admin.functions";
 import { createStockTags } from "@/lib/stock.functions";
 import { formatClaimCode } from "@/lib/claim-code";
