@@ -59,11 +59,23 @@ function QrKidsPage() {
 
   const sizeMm = Math.min(60, Math.max(10, num(size) || 35));
 
+  const previewUrl = mode === "manual" ? url : `${origin}/t/exemplo`;
+
   useEffect(() => {
     let alive = true;
-    qrLabelPng(url, level, shape, 600).then((d) => { if (alive) setPreview(d); }).catch(() => {});
+    qrLabelPng(previewUrl, level, shape, 600).then((d) => { if (alive) setPreview(d); }).catch(() => {});
     return () => { alive = false; };
-  }, [url, level, shape]);
+  }, [previewUrl, level, shape]);
+
+  /** Links das etiquetas: no modo automático cria tags reais (ativáveis),
+   *  uma por etiqueta, como nos demais geradores. */
+  const mintUrls = async (count: number): Promise<string[]> => {
+    if (mode === "manual") return Array.from({ length: count }, () => url);
+    const res = await createStockTags({
+      data: { name: "QR Kids", quantity: count, model: "QR Kids" },
+    });
+    return res.tags.map((t) => `${origin}/t/${t.id}`);
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
