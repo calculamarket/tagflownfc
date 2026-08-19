@@ -8,6 +8,7 @@ import {
 } from "@/lib/round-label";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { adminCreateBatch, adminBatchTags } from "@/lib/admin.functions";
+import { createStockTags } from "@/lib/stock.functions";
 import { formatClaimCode } from "@/lib/claim-code";
 import { supabase } from "@/integrations/supabase/client";
 import { pageTitle } from "@/lib/brand";
