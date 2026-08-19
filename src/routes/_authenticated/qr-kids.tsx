@@ -319,10 +319,14 @@ function QrKidsPage() {
           no fatiador — o modelo da mochila é uma peça única, sem regiões separadas.)
         </p>
         <div className="flex flex-wrap items-end gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Quantidade de insertos</Label>
+            <Input className="w-28" inputMode="numeric" value={insertQty} onChange={(e) => setInsertQty(e.target.value)} />
+          </div>
           <ColorField label="Cor do fundo" value={baseColor} onChange={setBaseColor} />
           <ColorField label="Cor do código" value={codeColor} onChange={setCodeColor} />
           <Button variant="outline" disabled={tmfBusy} onClick={download3mf}>
-            <Box className="size-4" /> {tmfBusy ? "Gerando…" : "Baixar inserto 3MF"}
+            <Box className="size-4" /> {tmfBusy ? "Gerando…" : `Baixar ${Math.max(1, Math.floor(num(insertQty)) || 1)} inserto(s) 3MF`}
           </Button>
         </div>
       </div>
