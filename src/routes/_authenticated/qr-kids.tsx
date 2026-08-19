@@ -131,18 +131,41 @@ function QrKidsPage() {
     setTmfBusy(true);
     try {
       const plate = sizeMm - 0.4; // pequena folga para encaixar no frame
-      const [link] = await mintUrls(1);
-      const blob = await buildQr3mf(link, {
-        sizeMm: Math.max(8, plate - 4),
-        quietZoneMm: 2,
-        baseHeightMm: 1.6,
-        moduleHeightMm: 1,
-        baseColor,
-        codeColor,
-      });
-      const href = URL.createObjectURL(blob);
-      triggerDownload(href, `qr-kids-inserto-${sizeMm}mm.3mf`, true);
-      toast.success("Inserto 3MF (2 cores) gerado.");
+      const count = Math.max(1, Math.min(200, Math.floor(num(insertQty)) || 1));
+      const links = await mintUrls(count);
+      const baseName = `qr-kids-inserto-${sizeMm}mm`;
+
+      if (count === 1) {
+        const blob = await buildQr3mf(links[0], {
+          sizeMm: Math.max(8, plate - 4),
+          quietZoneMm: 2,
+          baseHeightMm: 1.6,
+          moduleHeightMm: 1,
+          baseColor,
+          codeColor,
+        });
+        const href = URL.createObjectURL(blob);
+        triggerDownload(href, `${baseName}.3mf`, true);
+        toast.success("Inserto 3MF (2 cores) gerado.");
+        return;
+      }
+
+      const bytesArr = await Promise.all(
+        links.map((link, i) =>
+          buildQr3mfBytes(link, {
+            sizeMm: Math.max(8, plate - 4),
+            quietZoneMm: 2,
+            baseHeightMm: 1.6,
+            moduleHeightMm: 1,
+            baseColor,
+            codeColor,
+          }).then((data) => ({ name: `${baseName}-${String(i + 1).padStart(3, "0")}.3mf`, data }))
+        ),
+      );
+      const zip = await createZip(bytesArr);
+      const href = URL.createObjectURL(zip);
+      triggerDownload(href, `${baseName}-x${count}.zip`, true);
+      toast.success(`${count} insertos 3MF empacotados em ZIP.`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
