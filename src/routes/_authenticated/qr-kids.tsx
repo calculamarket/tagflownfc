@@ -38,6 +38,7 @@ const num = (v: string) => parseFloat(v.replace(",", "."));
 function QrKidsPage() {
   const origin = typeof window !== "undefined" ? window.location.origin : "https://www.3dqr.com.br";
 
+  const [mode, setMode] = useState<"auto" | "manual">("auto");
   const [url, setUrl] = useState(`${origin}/t/kids`);
   const [level, setLevel] = useState<QrLevel>("Q");
   const [shape, setShape] = useState<LabelShape>("square");
