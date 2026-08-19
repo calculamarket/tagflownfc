@@ -86,21 +86,42 @@ function QrKidsPage() {
   }, []);
 
   const downloadPng = async () => {
-    const data = await qrLabelPng(url, level, shape, 1200);
-    triggerDownload(data, `qr-kids-${sizeMm}mm.png`);
-    toast.success("PNG gerado.");
+    try {
+      const [link] = await mintUrls(1);
+      const data = await qrLabelPng(link, level, shape, 1200);
+      triggerDownload(data, `qr-kids-${sizeMm}mm.png`);
+      toast.success(mode === "auto" ? `PNG gerado com QR próprio (${link}).` : "PNG gerado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
-  const downloadSvg = () => {
-    const svg = qrLabelSvg(url, level, shape, sizeMm);
-    const href = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
-    triggerDownload(href, `qr-kids-${sizeMm}mm.svg`, true);
-    toast.success("SVG vetorial gerado.");
+  const downloadSvg = async () => {
+    try {
+      const [link] = await mintUrls(1);
+      const svg = qrLabelSvg(link, level, shape, sizeMm);
+      const href = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+      triggerDownload(href, `qr-kids-${sizeMm}mm.svg`, true);
+      toast.success(mode === "auto" ? `SVG gerado com QR próprio (${link}).` : "SVG vetorial gerado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   const printSheet = async () => {
-    const data = await qrLabelPng(url, level, shape, 1000);
-    openRoundLabelSheet(data, sizeMm, Math.max(1, Math.floor(num(qty)) || 1), shape);
+    try {
+      const count = Math.max(1, Math.min(200, Math.floor(num(qty)) || 1));
+      const links = await mintUrls(count);
+      const pngs = await Promise.all(links.map((l) => qrLabelPng(l, level, shape, 1000)));
+      if (mode === "manual") {
+        openRoundLabelSheet(pngs[0], sizeMm, count, shape);
+      } else {
+        openLabelSheetMulti(pngs, sizeMm, shape);
+        toast.success(`${count} etiquetas com links únicos.`);
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   // Inserto quadrado do QR em 3MF (2 cores) para encaixar no frame.
