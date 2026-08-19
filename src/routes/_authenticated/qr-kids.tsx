@@ -8,6 +8,7 @@ import {
 } from "@/lib/round-label";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { adminCreateBatch, adminBatchTags } from "@/lib/admin.functions";
+import { createStockTags } from "@/lib/stock.functions";
 import { formatClaimCode } from "@/lib/claim-code";
 import { supabase } from "@/integrations/supabase/client";
 import { pageTitle } from "@/lib/brand";
@@ -37,6 +38,7 @@ const num = (v: string) => parseFloat(v.replace(",", "."));
 function QrKidsPage() {
   const origin = typeof window !== "undefined" ? window.location.origin : "https://www.3dqr.com.br";
 
+  const [mode, setMode] = useState<"auto" | "manual">("auto");
   const [url, setUrl] = useState(`${origin}/t/kids`);
   const [level, setLevel] = useState<QrLevel>("Q");
   const [shape, setShape] = useState<LabelShape>("square");
@@ -57,11 +59,23 @@ function QrKidsPage() {
 
   const sizeMm = Math.min(60, Math.max(10, num(size) || 35));
 
+  const previewUrl = mode === "manual" ? url : `${origin}/t/exemplo`;
+
   useEffect(() => {
     let alive = true;
-    qrLabelPng(url, level, shape, 600).then((d) => { if (alive) setPreview(d); }).catch(() => {});
+    qrLabelPng(previewUrl, level, shape, 600).then((d) => { if (alive) setPreview(d); }).catch(() => {});
     return () => { alive = false; };
-  }, [url, level, shape]);
+  }, [previewUrl, level, shape]);
+
+  /** Links das etiquetas: no modo automático cria tags reais (ativáveis),
+   *  uma por etiqueta, como nos demais geradores. */
+  const mintUrls = async (count: number): Promise<string[]> => {
+    if (mode === "manual") return Array.from({ length: count }, () => url);
+    const res = await createStockTags({
+      data: { name: "QR Kids", quantity: count, model: "QR Kids" },
+    });
+    return res.tags.map((t) => `${origin}/t/${t.id}`);
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -72,21 +86,42 @@ function QrKidsPage() {
   }, []);
 
   const downloadPng = async () => {
-    const data = await qrLabelPng(url, level, shape, 1200);
-    triggerDownload(data, `qr-kids-${sizeMm}mm.png`);
-    toast.success("PNG gerado.");
+    try {
+      const [link] = await mintUrls(1);
+      const data = await qrLabelPng(link, level, shape, 1200);
+      triggerDownload(data, `qr-kids-${sizeMm}mm.png`);
+      toast.success(mode === "auto" ? `PNG gerado com QR próprio (${link}).` : "PNG gerado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
-  const downloadSvg = () => {
-    const svg = qrLabelSvg(url, level, shape, sizeMm);
-    const href = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
-    triggerDownload(href, `qr-kids-${sizeMm}mm.svg`, true);
-    toast.success("SVG vetorial gerado.");
+  const downloadSvg = async () => {
+    try {
+      const [link] = await mintUrls(1);
+      const svg = qrLabelSvg(link, level, shape, sizeMm);
+      const href = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+      triggerDownload(href, `qr-kids-${sizeMm}mm.svg`, true);
+      toast.success(mode === "auto" ? `SVG gerado com QR próprio (${link}).` : "SVG vetorial gerado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   const printSheet = async () => {
-    const data = await qrLabelPng(url, level, shape, 1000);
-    openRoundLabelSheet(data, sizeMm, Math.max(1, Math.floor(num(qty)) || 1), shape);
+    try {
+      const count = Math.max(1, Math.min(200, Math.floor(num(qty)) || 1));
+      const links = await mintUrls(count);
+      const pngs = await Promise.all(links.map((l) => qrLabelPng(l, level, shape, 1000)));
+      if (mode === "manual") {
+        openRoundLabelSheet(pngs[0], sizeMm, count, shape);
+      } else {
+        openLabelSheetMulti(pngs, sizeMm, shape);
+        toast.success(`${count} etiquetas com links únicos.`);
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   // Inserto quadrado do QR em 3MF (2 cores) para encaixar no frame.
@@ -94,7 +129,8 @@ function QrKidsPage() {
     setTmfBusy(true);
     try {
       const plate = sizeMm - 0.4; // pequena folga para encaixar no frame
-      const blob = await buildQr3mf(url, {
+      const [link] = await mintUrls(1);
+      const blob = await buildQr3mf(link, {
         sizeMm: Math.max(8, plate - 4),
         quietZoneMm: 2,
         baseHeightMm: 1.6,
@@ -165,9 +201,28 @@ function QrKidsPage() {
       {/* Configuração comum */}
       <div className="grid gap-6 sm:grid-cols-[1fr_240px] items-start">
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Endereço do QR (destino da etiqueta avulsa)</Label>
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={`${origin}/t/...`} />
+          <div className="grid gap-3 sm:grid-cols-[240px_1fr] items-end">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Endereço do QR</Label>
+              <Select value={mode} onValueChange={(v) => setMode(v as "auto" | "manual")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Criar QR novo (link único)</SelectItem>
+                  <SelectItem value="manual">Usar endereço manual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {mode === "manual" ? (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Destino</Label>
+                <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={`${origin}/t/...`} />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Cada etiqueta baixada recebe um <strong>link próprio</strong> ({origin}/t/…), ativável
+                pelo cliente ao escanear — igual aos demais geradores.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1.5">
