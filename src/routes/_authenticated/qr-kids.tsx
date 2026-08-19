@@ -129,7 +129,8 @@ function QrKidsPage() {
     setTmfBusy(true);
     try {
       const plate = sizeMm - 0.4; // pequena folga para encaixar no frame
-      const blob = await buildQr3mf(url, {
+      const [link] = await mintUrls(1);
+      const blob = await buildQr3mf(link, {
         sizeMm: Math.max(8, plate - 4),
         quietZoneMm: 2,
         baseHeightMm: 1.6,
