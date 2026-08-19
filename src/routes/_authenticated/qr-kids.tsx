@@ -6,7 +6,8 @@ import {
   qrLabelPng, qrLabelSvg, openRoundLabelSheet, openLabelSheetMulti,
   type QrLevel, type LabelShape,
 } from "@/lib/round-label";
-import { buildQr3mf } from "@/lib/qr-3mf";
+import { buildQr3mf, buildQr3mfBytes } from "@/lib/qr-3mf";
+import { createZip } from "@/lib/zip";
 import { adminCreateBatch, adminBatchTags } from "@/lib/admin.functions";
 import { createStockTags } from "@/lib/stock.functions";
 import { formatClaimCode } from "@/lib/claim-code";
@@ -49,6 +50,7 @@ function QrKidsPage() {
   // Inserto 3MF (2 cores)
   const [baseColor, setBaseColor] = useState("#ffffff");
   const [codeColor, setCodeColor] = useState("#111111");
+  const [insertQty, setInsertQty] = useState("12");
   const [tmfBusy, setTmfBusy] = useState(false);
 
   // Produção (admin)
@@ -129,18 +131,41 @@ function QrKidsPage() {
     setTmfBusy(true);
     try {
       const plate = sizeMm - 0.4; // pequena folga para encaixar no frame
-      const [link] = await mintUrls(1);
-      const blob = await buildQr3mf(link, {
-        sizeMm: Math.max(8, plate - 4),
-        quietZoneMm: 2,
-        baseHeightMm: 1.6,
-        moduleHeightMm: 1,
-        baseColor,
-        codeColor,
-      });
-      const href = URL.createObjectURL(blob);
-      triggerDownload(href, `qr-kids-inserto-${sizeMm}mm.3mf`, true);
-      toast.success("Inserto 3MF (2 cores) gerado.");
+      const count = Math.max(1, Math.min(200, Math.floor(num(insertQty)) || 1));
+      const links = await mintUrls(count);
+      const baseName = `qr-kids-inserto-${sizeMm}mm`;
+
+      if (count === 1) {
+        const blob = await buildQr3mf(links[0], {
+          sizeMm: Math.max(8, plate - 4),
+          quietZoneMm: 2,
+          baseHeightMm: 1.6,
+          moduleHeightMm: 1,
+          baseColor,
+          codeColor,
+        });
+        const href = URL.createObjectURL(blob);
+        triggerDownload(href, `${baseName}.3mf`, true);
+        toast.success("Inserto 3MF (2 cores) gerado.");
+        return;
+      }
+
+      const bytesArr = await Promise.all(
+        links.map((link, i) =>
+          buildQr3mfBytes(link, {
+            sizeMm: Math.max(8, plate - 4),
+            quietZoneMm: 2,
+            baseHeightMm: 1.6,
+            moduleHeightMm: 1,
+            baseColor,
+            codeColor,
+          }).then((data) => ({ name: `${baseName}-${String(i + 1).padStart(3, "0")}.3mf`, data }))
+        ),
+      );
+      const zip = await createZip(bytesArr);
+      const href = URL.createObjectURL(zip);
+      triggerDownload(href, `${baseName}-x${count}.zip`, true);
+      toast.success(`${count} insertos 3MF empacotados em ZIP.`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -294,10 +319,14 @@ function QrKidsPage() {
           no fatiador — o modelo da mochila é uma peça única, sem regiões separadas.)
         </p>
         <div className="flex flex-wrap items-end gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Quantidade de insertos</Label>
+            <Input className="w-28" inputMode="numeric" value={insertQty} onChange={(e) => setInsertQty(e.target.value)} />
+          </div>
           <ColorField label="Cor do fundo" value={baseColor} onChange={setBaseColor} />
           <ColorField label="Cor do código" value={codeColor} onChange={setCodeColor} />
           <Button variant="outline" disabled={tmfBusy} onClick={download3mf}>
-            <Box className="size-4" /> {tmfBusy ? "Gerando…" : "Baixar inserto 3MF"}
+            <Box className="size-4" /> {tmfBusy ? "Gerando…" : `Baixar ${Math.max(1, Math.floor(num(insertQty)) || 1)} inserto(s) 3MF`}
           </Button>
         </div>
       </div>
