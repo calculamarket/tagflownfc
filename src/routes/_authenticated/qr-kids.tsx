@@ -201,9 +201,28 @@ function QrKidsPage() {
       {/* Configuração comum */}
       <div className="grid gap-6 sm:grid-cols-[1fr_240px] items-start">
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Endereço do QR (destino da etiqueta avulsa)</Label>
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={`${origin}/t/...`} />
+          <div className="grid gap-3 sm:grid-cols-[240px_1fr] items-end">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Endereço do QR</Label>
+              <Select value={mode} onValueChange={(v) => setMode(v as "auto" | "manual")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Criar QR novo (link único)</SelectItem>
+                  <SelectItem value="manual">Usar endereço manual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {mode === "manual" ? (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Destino</Label>
+                <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={`${origin}/t/...`} />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Cada etiqueta baixada recebe um <strong>link próprio</strong> ({origin}/t/…), ativável
+                pelo cliente ao escanear — igual aos demais geradores.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1.5">
