@@ -782,6 +782,7 @@ export type Database = {
         | "ab_test"
         | "links"
         | "promo"
+        | "emergency"
       tag_status: "active" | "paused" | "archived"
       webhook_event: "tag.read" | "tag.created" | "tag.updated"
     }
@@ -933,6 +934,7 @@ export const Constants = {
         "ab_test",
         "links",
         "promo",
+        "emergency",
       ],
       tag_status: ["active", "paused", "archived"],
       webhook_event: ["tag.read", "tag.created", "tag.updated"],

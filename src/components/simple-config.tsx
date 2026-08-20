@@ -13,10 +13,22 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2 } from "lucide-react";
+import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2, Siren } from "lucide-react";
 import { toast } from "sonner";
 
-type Mode = "choose" | "pix" | "links";
+type Mode = "choose" | "pix" | "links" | "emergency";
+type EmContact = { name: string; phone: string };
+
+function parseContacts(raw: unknown): EmContact[] {
+  try {
+    const arr = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return Array.isArray(arr)
+      ? arr.map((c) => ({ name: String(c?.name ?? ""), phone: String(c?.phone ?? "") }))
+      : [];
+  } catch {
+    return [];
+  }
+}
 
 /** Campos preservados no upsert (para não perder config avançada ao salvar). */
 export type PreserveFields = {
@@ -45,7 +57,10 @@ export function SimpleTagConfig({
 }) {
   const [name, setName] = useState(initialName);
   const [mode, setMode] = useState<Mode>(
-    initialType === "pix" ? "pix" : initialType === "links" ? "links" : "choose",
+    initialType === "pix" ? "pix"
+      : initialType === "links" ? "links"
+      : initialType === "emergency" ? "emergency"
+      : "choose",
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -58,10 +73,18 @@ export function SimpleTagConfig({
     initialType === "links" ? parseLinkItems(initialDestination) : [],
   );
 
+  // Emergência
+  const [emTitle, setEmTitle] = useState(initialDestination.title ?? "");
+  const [emMessage, setEmMessage] = useState(initialDestination.message ?? "");
+  const [emInfo, setEmInfo] = useState(initialDestination.info ?? "");
+  const [contacts, setContacts] = useState<EmContact[]>(
+    initialType === "emergency" ? parseContacts(initialDestination.contacts) : [],
+  );
+
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const tagUrl = `${origin}/t/${id}`;
 
-  const save = async (destination_type: "pix" | "links", destination: Record<string, string>) => {
+  const save = async (destination_type: "pix" | "links" | "emergency", destination: Record<string, string>) => {
     setSaving(true);
     try {
       await upsertTag({
@@ -100,6 +123,18 @@ export function SimpleTagConfig({
     if (clean.length === 0) { toast.error("Adicione ao menos um link."); return; }
     save("links", { items: JSON.stringify(clean) });
   };
+  const saveEmergency = () => {
+    const clean = contacts
+      .map((c) => ({ name: c.name.trim(), phone: c.phone.trim() }))
+      .filter((c) => c.phone !== "");
+    if (clean.length === 0) { toast.error("Adicione ao menos um contato com telefone."); return; }
+    save("emergency", {
+      title: emTitle.trim(),
+      message: emMessage.trim(),
+      info: emInfo.trim(),
+      contacts: JSON.stringify(clean),
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -110,20 +145,27 @@ export function SimpleTagConfig({
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <ModeCard
           active={mode === "pix"}
           icon={<QrCode className="size-5" />}
           title="Receber PIX"
-          desc="Vira uma tela de pagamento PIX. Ideal para cobrar."
+          desc="Tela de pagamento PIX. Ideal para cobrar."
           onClick={() => { setMode("pix"); setSaved(false); }}
         />
         <ModeCard
           active={mode === "links"}
           icon={<Link2 className="size-5" />}
           title="Menu de links"
-          desc="Uma página com seus links: site, WhatsApp, Instagram…"
+          desc="Seus links: site, WhatsApp, Instagram…"
           onClick={() => { setMode("links"); setSaved(false); }}
+        />
+        <ModeCard
+          active={mode === "emergency"}
+          icon={<Siren className="size-5" />}
+          title="Emergência / Pet"
+          desc="Cartão com contatos e info. Se encontrado, avise."
+          onClick={() => { setMode("emergency"); setSaved(false); }}
         />
       </div>
 
@@ -149,6 +191,30 @@ export function SimpleTagConfig({
         <div className="rounded-lg border border-border bg-card p-5 space-y-4">
           <LinksMiniBuilder items={items} onChange={(i) => { setItems(i); setSaved(false); }} />
           <Button disabled={saving} onClick={saveLinks}>{saving ? "Salvando…" : "Salvar menu de links"}</Button>
+          {saved && <SavedLink tagUrl={tagUrl} />}
+        </div>
+      )}
+
+      {mode === "emergency" && (
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Título (ex.: nome do pet/criança)" value={emTitle} onChange={(v) => { setEmTitle(v); setSaved(false); }} placeholder={name || "Rex"} />
+            <Field label="Mensagem" value={emMessage} onChange={(v) => { setEmMessage(v); setSaved(false); }} placeholder="Se me encontrar, avise meus donos 🙏" />
+          </div>
+
+          <ContactsBuilder contacts={contacts} onChange={(c) => { setContacts(c); setSaved(false); }} />
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Informações (opcional)</Label>
+            <textarea
+              value={emInfo}
+              onChange={(e) => { setEmInfo(e.target.value); setSaved(false); }}
+              placeholder="Ex.: alergia a penicilina, tipo sanguíneo O+, medicação às 8h…"
+              className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
+
+          <Button disabled={saving} onClick={saveEmergency}>{saving ? "Salvando…" : "Salvar cartão de emergência"}</Button>
           {saved && <SavedLink tagUrl={tagUrl} />}
         </div>
       )}
@@ -233,6 +299,36 @@ function LinksMiniBuilder({ items, onChange }: { items: LinkItem[]; onChange: (i
       {items.length < 8 && (
         <Button type="button" variant="outline" size="sm" onClick={add}>
           <Plus className="size-4" /> Adicionar link
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function ContactsBuilder({ contacts, onChange }: { contacts: EmContact[]; onChange: (c: EmContact[]) => void }) {
+  const add = () => onChange([...contacts, { name: "", phone: "" }]);
+  const patch = (i: number, p: Partial<EmContact>) =>
+    onChange(contacts.map((c, idx) => (idx === i ? { ...c, ...p } : c)));
+  const remove = (i: number) => onChange(contacts.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">Contatos de emergência</Label>
+      {contacts.length === 0 && (
+        <p className="text-sm text-muted-foreground">Adicione quem deve ser avisado (com DDD, ex.: 11 99999-9999).</p>
+      )}
+      {contacts.map((c, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <Input className="h-9 w-40" value={c.name} onChange={(e) => patch(i, { name: e.target.value })} placeholder="Nome (ex.: Mãe)" />
+          <Input className="h-9 flex-1" inputMode="tel" value={c.phone} onChange={(e) => patch(i, { phone: e.target.value })} placeholder="11 99999-9999" />
+          <Button type="button" variant="ghost" size="sm" onClick={() => remove(i)}>
+            <Trash2 className="size-3.5" />
+          </Button>
+        </div>
+      ))}
+      {contacts.length < 5 && (
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          <Plus className="size-4" /> Adicionar contato
         </Button>
       )}
     </div>

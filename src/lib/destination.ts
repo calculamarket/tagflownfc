@@ -23,6 +23,7 @@ export const DESTINATION_LABELS: Record<DestinationType, string> = {
   ab_test: "Teste A/B",
   links: "Menu de links (link na bio)",
   promo: "Promoção (vitrine de ofertas)",
+  emergency: "Emergência / Se encontrado",
 };
 
 /** Drop control characters: browsers strip them, so "java\nscript:" would
@@ -106,6 +107,7 @@ export function buildDestinationUrl(
     case "review_gate":
     case "links":
     case "promo":
+    case "emergency":
       return `/t/${fallbackTagId}/view`;
   }
 }

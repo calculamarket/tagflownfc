@@ -76,6 +76,7 @@ function PublicViewPage() {
     if (tag.destination_type === "review_gate") return <ReviewGateView payload={tag.destination} name={tag.name} />;
     if (tag.destination_type === "links") return <LinksView payload={tag.destination} name={tag.name} />;
     if (tag.destination_type === "promo") return <PromoView payload={tag.destination} name={tag.name} />;
+    if (tag.destination_type === "emergency") return <EmergencyView payload={tag.destination} name={tag.name} />;
     return <LandingView landing={landing} tag={tag} />;
   })();
 
@@ -189,6 +190,71 @@ function LandingView({
         </div>
       </div>
       <PoweredBy className="mt-6" />
+    </div>
+  );
+}
+
+type EmContact = { name?: string; phone?: string };
+function parseEmContacts(payload: Record<string, string>): EmContact[] {
+  try {
+    const raw = (payload as Record<string, unknown>).contacts;
+    const arr = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return Array.isArray(arr) ? (arr.filter((c) => c && typeof c === "object") as EmContact[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function EmergencyView({ payload, name }: { payload: Record<string, string>; name: string }) {
+  const title = payload.title?.trim() || name;
+  const message = payload.message?.trim() || "";
+  const info = payload.info?.trim() || "";
+  const contacts = parseEmContacts(payload).filter((c) => (c.phone ?? "").trim() !== "");
+
+  return (
+    <div className="min-h-screen bg-muted/30 grid place-items-center p-4">
+      <div className="w-full max-w-md space-y-4">
+        <div className="rounded-2xl border border-red-500/30 bg-card p-6 shadow-sm space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="size-11 rounded-xl bg-red-500/10 grid place-items-center text-2xl">🆘</div>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-red-500">Emergência</div>
+              <h1 className="text-xl font-semibold leading-tight">{title}</h1>
+            </div>
+          </div>
+
+          {message && <p className="text-sm text-muted-foreground">{message}</p>}
+
+          {contacts.length > 0 && (
+            <div className="space-y-2">
+              {contacts.map((c, i) => {
+                const phone = (c.phone ?? "").replace(/\D/g, "");
+                return (
+                  <div key={i} className="rounded-xl border border-border p-3">
+                    {c.name && <div className="text-sm font-medium">{c.name}</div>}
+                    <div className="mt-2 flex gap-2">
+                      <a href={`tel:${phone}`} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">
+                        📞 Ligar
+                      </a>
+                      <a href={`https://wa.me/${phone}`} target="_blank" rel="noreferrer" className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium">
+                        💬 WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {info && (
+            <div className="rounded-xl bg-muted/50 p-3">
+              <div className="mb-1 text-xs font-semibold text-muted-foreground">Informações</div>
+              <p className="whitespace-pre-line text-sm">{info}</p>
+            </div>
+          )}
+        </div>
+        <PoweredBy />
+      </div>
     </div>
   );
 }
