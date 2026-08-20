@@ -76,6 +76,15 @@ function ActivateByScan() {
           </Button>
         ) : (
           <div className="space-y-3">
+            <ol className="list-decimal space-y-2 rounded-lg border border-border bg-muted/40 p-4 pl-7 text-left text-sm text-muted-foreground">
+              <li>Crie uma conta rápida — só e-mail e senha, sem burocracia.</li>
+              <li>A etiqueta é <strong>ativada na hora</strong> e fica no seu nome.</li>
+              <li>
+                Escolha o destino e preencha os dados: link, PIX, WhatsApp, cardápio,
+                contatos e mais.
+              </li>
+              <li>Pronto! Para trocar depois, é só editar — <strong>sem regravar nada</strong>.</li>
+            </ol>
             <p className="text-sm text-muted-foreground">
               Entre ou crie uma conta grátis para ativar — leva menos de um minuto.
             </p>
