@@ -41,7 +41,7 @@ const HANDOFF: Record<string, string> = {
 
 function RedirectPage() {
   const { id } = Route.useParams();
-  const [state, setState] = useState<"loading" | "error" | "password" | "unclaimed" | "handoff">("loading");
+  const [state, setState] = useState<"loading" | "error" | "password" | "unclaimed" | "handoff" | "unconfigured">("loading");
   const [reason, setReason] = useState<keyof typeof MESSAGES>("not_found");
   const [handoff, setHandoff] = useState<{ url: string; label: string } | null>(null);
   const [password, setPassword] = useState("");
@@ -68,8 +68,10 @@ function RedirectPage() {
         }
         return;
       }
-      setReason("not_found");
-      setState("error");
+      // A tag existe e está ativa, mas o destino ainda não foi definido
+      // (ex.: recém-criada). Mostrar uma tela útil para configurar, em vez do
+      // enganoso "Tag não encontrada".
+      setState("unconfigured");
       return;
     }
     const r = res.reason as Reason;
@@ -180,6 +182,23 @@ function RedirectPage() {
               className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
             >
               Ativar minha etiqueta
+            </a>
+          </div>
+        )}
+
+        {state === "unconfigured" && (
+          <div className="space-y-4">
+            <div className="mx-auto size-12 rounded-xl bg-primary/10 grid place-items-center text-2xl">⚙️</div>
+            <h1 className="text-2xl font-semibold">Etiqueta sem destino</h1>
+            <p className="text-sm text-muted-foreground">
+              Esta etiqueta existe, mas ainda não tem um destino definido. Se ela é sua,
+              configure agora para onde ela deve apontar e insira os dados.
+            </p>
+            <a
+              href={`/tags/${id}`}
+              className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+            >
+              Configurar etiqueta
             </a>
           </div>
         )}
