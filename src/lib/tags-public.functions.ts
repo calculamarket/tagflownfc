@@ -31,7 +31,7 @@ export const resolveTag = createServerFn({ method: "POST" })
     const { data: tag, error } = await supabaseAdmin
       .from("tags")
       .select(
-        "id, user_id, status, destination_type, destination, activate_at, expire_at, max_scans, access_password",
+        "id, name, user_id, status, destination_type, destination, activate_at, expire_at, max_scans, access_password, notify_on_scan",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -135,6 +135,22 @@ export const resolveTag = createServerFn({ method: "POST" })
       variant,
       source: normalizeSource(data.source),
     });
+
+    // Aviso ao dono, se ligado nesta tag (ex.: Pet Tag "se encontrado").
+    if (tag.notify_on_scan) {
+      await supabaseAdmin.from("notifications").insert({
+        user_id: ownerId,
+        tag_id: tag.id,
+        type: "scan",
+        data: {
+          tag_name: tag.name,
+          city,
+          country,
+          source: normalizeSource(data.source),
+          at: new Date().toISOString(),
+        },
+      });
+    }
 
     // Fire tag.read webhooks without blocking the redirect.
     void import("./webhook-delivery.server").then(({ deliverWebhooks }) =>

@@ -43,6 +43,7 @@ function ConfigurePage() {
         editableName={false}
         initialType={tag.destination_type}
         initialDestination={(tag.destination ?? {}) as Record<string, string>}
+        initialNotify={tag.notify_on_scan}
         preserve={{
           status: tag.status,
           qr_style: (tag.qr_style ?? {}) as Record<string, string>,

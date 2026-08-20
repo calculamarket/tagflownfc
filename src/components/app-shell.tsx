@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Tags, QrCode, Link2, BarChart3, Zap, Users,
-  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown,
+  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown, Bell,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import { getMyBrand } from "@/lib/tenant.functions";
+import { unreadNotifications } from "@/lib/notifications.functions";
 import { Button } from "@/components/ui/button";
 
 // Itens principais (gestão das etiquetas).
@@ -19,6 +20,7 @@ const mainNav = [
   { to: "/pecas", label: "Minhas Peças", icon: Boxes },
   { to: "/ativar", label: "Ativar etiqueta", icon: PackageCheck },
   { to: "/qr-codes", label: "QR Codes", icon: QrCode },
+  { to: "/notificacoes", label: "Notificações", icon: Bell },
 ] as const;
 
 // Geradores de produção (impressão 3D) — agrupados num submenu retrátil.
@@ -55,6 +57,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const { data: brand = BRAND } = useQuery({ queryKey: ["my-brand"], queryFn: () => getMyBrand() });
+  const { data: unread = 0 } = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: () => unreadNotifications(),
+    refetchInterval: 60_000,
+  });
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
   const linkCls = (active: boolean) =>
@@ -109,10 +116,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {mainNav.map((item) => {
             const Icon = item.icon;
+            const showBadge = item.to === "/notificacoes" && unread > 0;
             return (
               <Link key={item.to} to={item.to} className={linkCls(isActive(item.to))}>
                 <Icon className="size-4" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {showBadge && (
+                  <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-destructive-foreground">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
               </Link>
             );
           })}

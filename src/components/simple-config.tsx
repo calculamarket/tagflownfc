@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2, Siren } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2, Siren, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 type Mode = "choose" | "pix" | "links" | "emergency";
@@ -43,7 +44,7 @@ export type PreserveFields = {
 };
 
 export function SimpleTagConfig({
-  id, initialName, editableName, initialType, initialDestination, preserve, newTag = false,
+  id, initialName, editableName, initialType, initialDestination, preserve, newTag = false, initialNotify,
 }: {
   id: string;
   initialName: string;
@@ -54,6 +55,7 @@ export function SimpleTagConfig({
   /** true na criação: a tag só existe após salvar, então o link avançado
    *  (→ /tags/:id) só aparece depois de salva. */
   newTag?: boolean;
+  initialNotify?: boolean;
 }) {
   const [name, setName] = useState(initialName);
   const [mode, setMode] = useState<Mode>(
@@ -64,6 +66,7 @@ export function SimpleTagConfig({
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [notifyOnScan, setNotifyOnScan] = useState(initialNotify ?? initialType === "emergency");
 
   const [pixKey, setPixKey] = useState(initialDestination.key ?? "");
   const [pixName, setPixName] = useState(initialDestination.merchant_name ?? "");
@@ -95,6 +98,7 @@ export function SimpleTagConfig({
           destination_type,
           destination,
           qr_style: preserve?.qr_style ?? {},
+          notify_on_scan: notifyOnScan,
           description: preserve?.description ?? null,
           category: preserve?.category ?? null,
           max_scans: preserve?.max_scans ?? null,
@@ -217,6 +221,17 @@ export function SimpleTagConfig({
           <Button disabled={saving} onClick={saveEmergency}>{saving ? "Salvando…" : "Salvar cartão de emergência"}</Button>
           {saved && <SavedLink tagUrl={tagUrl} />}
         </div>
+      )}
+
+      {mode !== "choose" && (
+        <label className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
+          <span className="flex items-center gap-2 text-sm">
+            <Bell className="size-4 text-primary" />
+            Avisar quando escanearem
+            <span className="text-xs text-muted-foreground">(sino no app; ótimo para “se encontrado”)</span>
+          </span>
+          <Switch checked={notifyOnScan} onCheckedChange={(v) => { setNotifyOnScan(v); setSaved(false); }} />
+        </label>
       )}
 
       <div className="flex items-center justify-between pt-2">

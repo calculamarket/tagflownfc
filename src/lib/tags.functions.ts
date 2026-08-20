@@ -25,6 +25,7 @@ const upsertSchema = z.object({
   activate_at: z.string().nullable().optional(),
   expire_at: z.string().nullable().optional(),
   access_password: z.string().max(100).nullable().optional(),
+  notify_on_scan: z.boolean().optional(),
 });
 
 export const listTags = createServerFn({ method: "GET" })
