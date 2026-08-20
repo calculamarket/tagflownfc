@@ -150,6 +150,20 @@ export const resolveTag = createServerFn({ method: "POST" })
           at: new Date().toISOString(),
         },
       });
+
+      // E-mail via Resend (fire-and-forget; no-op se RESEND_API_KEY não existir).
+      const host = headers?.get("host");
+      const appOrigin = host ? `https://${host}` : "";
+      void import("./notify-email.server").then(({ sendScanEmail }) =>
+        sendScanEmail(ownerId, {
+          tagId: tag.id,
+          tagName: tag.name,
+          city,
+          country,
+          source: normalizeSource(data.source),
+          appOrigin,
+        }),
+      );
     }
 
     // Fire tag.read webhooks without blocking the redirect.
