@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Tags, QrCode, Link2, BarChart3, Zap, Users,
-  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail,
+  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,12 +12,17 @@ import { BRAND } from "@/lib/brand";
 import { getMyBrand } from "@/lib/tenant.functions";
 import { Button } from "@/components/ui/button";
 
-const nav = [
+// Itens principais (gestão das etiquetas).
+const mainNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/tags", label: "Minhas Tags", icon: Tags },
   { to: "/pecas", label: "Minhas Peças", icon: Boxes },
   { to: "/ativar", label: "Ativar etiqueta", icon: PackageCheck },
   { to: "/qr-codes", label: "QR Codes", icon: QrCode },
+] as const;
+
+// Geradores de produção (impressão 3D) — agrupados num submenu retrátil.
+const generators = [
   { to: "/gerador-3d", label: "Gerador QR 3D", icon: Box },
   { to: "/pet-tag", label: "Pet Tag", icon: PawPrint },
   { to: "/etiqueta-plana", label: "Etiqueta Plana", icon: Tags },
@@ -27,8 +32,10 @@ const nav = [
   { to: "/molde-silicone", label: "Molde de Silicone", icon: Boxes },
   { to: "/qr-kids", label: "QR Kids", icon: Backpack },
   { to: "/criador-envelopes", label: "Criador de Envelopes", icon: Mail },
+] as const;
 
-
+// Ferramentas e configurações.
+const secondaryNav = [
   { to: "/calculadora-custos", label: "Calculadora de Custos", icon: Calculator },
   { to: "/links", label: "Links Inteligentes", icon: Link2 },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
@@ -48,6 +55,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const { data: brand = BRAND } = useQuery({ queryKey: ["my-brand"], queryFn: () => getMyBrand() });
+
+  const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
+  const linkCls = (active: boolean) =>
+    cn(
+      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+      active
+        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+        : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
+    );
+
+  // Submenu "Produção 3D": abre sozinho quando você está numa página de gerador.
+  const inGen = generators.some((g) => isActive(g.to));
+  const [genOpen, setGenOpen] = useState(inGen);
+  useEffect(() => { if (inGen) setGenOpen(true); }, [inGen]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -86,25 +107,52 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {nav.map((item) => {
+          {mainNav.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.to || pathname.startsWith(item.to + "/");
             return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
-                )}
-              >
+              <Link key={item.to} to={item.to} className={linkCls(isActive(item.to))}>
                 <Icon className="size-4" />
                 {item.label}
               </Link>
             );
           })}
+
+          {/* Submenu retrátil: geradores de produção 3D */}
+          <button
+            type="button"
+            onClick={() => setGenOpen((o) => !o)}
+            className={cn(linkCls(inGen && !genOpen), "w-full justify-between")}
+          >
+            <span className="flex items-center gap-3">
+              <Factory className="size-4" />
+              Produção 3D
+            </span>
+            <ChevronDown className={cn("size-4 transition-transform", genOpen && "rotate-180")} />
+          </button>
+          {genOpen && (
+            <div className="ml-4 space-y-1 border-l border-sidebar-border pl-2">
+              {generators.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link key={item.to} to={item.to} className={linkCls(isActive(item.to))}>
+                    <Icon className="size-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          {secondaryNav.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.to} to={item.to} className={linkCls(isActive(item.to))}>
+                <Icon className="size-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+
           {isAdmin && (
             <Link
               to="/admin"
