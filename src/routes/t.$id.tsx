@@ -195,7 +195,7 @@ function RedirectPage() {
               configure agora para onde ela deve apontar e insira os dados.
             </p>
             <a
-              href={`/tags/${id}`}
+              href={`/configurar/${id}`}
               className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
             >
               Configurar etiqueta

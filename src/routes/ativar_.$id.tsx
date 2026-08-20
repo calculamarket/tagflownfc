@@ -34,8 +34,8 @@ function ActivateByScan() {
         toast.success(`${res.model} ativado! Configure cada face.`);
         navigate({ to: "/pecas/$id", params: { id: res.id } });
       } else {
-        toast.success("Etiqueta ativada! Agora escolha o destino.");
-        navigate({ to: "/tags/$id", params: { id: res.id } });
+        toast.success("Etiqueta ativada! Agora escolha o que ela vai fazer.");
+        navigate({ to: "/configurar/$id", params: { id: res.id } });
       }
     } catch (err) {
       toast.error((err as Error).message);
