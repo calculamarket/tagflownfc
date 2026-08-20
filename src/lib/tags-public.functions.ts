@@ -138,20 +138,21 @@ export const resolveTag = createServerFn({ method: "POST" })
 
     // Aviso ao dono, se ligado nesta tag (ex.: Pet Tag "se encontrado").
     if (tag.notify_on_scan) {
-      await supabaseAdmin.from("notifications").insert({
-        user_id: ownerId,
-        tag_id: tag.id,
-        type: "scan",
-        data: {
-          tag_name: tag.name,
-          city,
-          country,
-          source: normalizeSource(data.source),
-          at: new Date().toISOString(),
-        },
-      });
+      const notifData = {
+        tag_name: tag.name,
+        city,
+        country,
+        source: normalizeSource(data.source),
+        at: new Date().toISOString(),
+      };
+      const { data: notif } = await supabaseAdmin
+        .from("notifications")
+        .insert({ user_id: ownerId, tag_id: tag.id, type: "scan", data: notifData })
+        .select("id")
+        .single();
 
-      // E-mail via Resend (fire-and-forget; no-op se RESEND_API_KEY não existir).
+      // E-mail via Resend (fire-and-forget; no-op se RESEND_API_KEY não existir;
+      // limitado a 1 por etiqueta a cada 15 min).
       const host = headers?.get("host");
       const appOrigin = host ? `https://${host}` : "";
       void import("./notify-email.server").then(({ sendScanEmail }) =>
@@ -162,6 +163,8 @@ export const resolveTag = createServerFn({ method: "POST" })
           country,
           source: normalizeSource(data.source),
           appOrigin,
+          notificationId: notif?.id ?? null,
+          notifData,
         }),
       );
     }

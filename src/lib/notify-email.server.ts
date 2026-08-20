@@ -16,7 +16,13 @@ type ScanInfo = {
   country?: string | null;
   source?: string | null;
   appOrigin?: string;
+  notificationId?: string | null;
+  notifData?: Record<string, unknown>;
 };
+
+// Anti-spam: no máximo 1 e-mail por etiqueta a cada 15 min. O sino no app
+// continua registrando TODOS os escaneamentos; só o e-mail é limitado.
+const EMAIL_COOLDOWN_MIN = 15;
 
 const esc = (s: string) =>
   String(s ?? "").replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -29,6 +35,19 @@ export async function sendScanEmail(ownerId: string, info: ScanInfo): Promise<vo
     const from = process.env.RESEND_FROM || `${BRAND.name} <onboarding@resend.dev>`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Throttle: já enviamos e-mail para esta etiqueta na última janela?
+    const cutoff = new Date(Date.now() - EMAIL_COOLDOWN_MIN * 60_000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from("notifications")
+      .select("id")
+      .eq("tag_id", info.tagId)
+      .eq("user_id", ownerId)
+      .filter("data->>emailed", "eq", "true")
+      .gte("created_at", cutoff)
+      .limit(1);
+    if (recent && recent.length > 0) return; // dentro da janela: não reenviar
+
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("email")
@@ -62,11 +81,19 @@ export async function sendScanEmail(ownerId: string, info: ScanInfo): Promise<vo
   </div>
 </div></body></html>`;
 
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ from, to, subject, html }),
     });
+
+    // Marca esta notificação como "já enviada por e-mail" — base do throttle.
+    if (res.ok && info.notificationId) {
+      await supabaseAdmin
+        .from("notifications")
+        .update({ data: { ...(info.notifData ?? {}), emailed: true } })
+        .eq("id", info.notificationId);
+    }
   } catch {
     // silencioso — aviso por e-mail nunca pode quebrar o escaneamento
   }
