@@ -371,6 +371,7 @@ export type Database = {
       }
       tag_batches: {
         Row: {
+          category: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -381,6 +382,7 @@ export type Database = {
           slots: number | null
         }
         Insert: {
+          category?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -391,6 +393,7 @@ export type Database = {
           slots?: number | null
         }
         Update: {
+          category?: string | null
           created_at?: string
           created_by?: string | null
           id?: string

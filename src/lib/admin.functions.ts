@@ -156,7 +156,7 @@ export const adminListBatches = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: batches, error } = await supabaseAdmin
       .from("tag_batches")
-      .select("id, name, quantity, notes, created_at, model, slots")
+      .select("id, name, quantity, notes, created_at, model, slots, category")
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
@@ -216,6 +216,7 @@ export const adminCreateBatch = createServerFn({ method: "POST" })
         model: data.model,
         slots: data.slots,
         notes: data.notes ?? null,
+        category: data.category ?? null,
         created_by: context.userId,
       })
       .select("id")

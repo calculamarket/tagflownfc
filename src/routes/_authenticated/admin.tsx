@@ -864,7 +864,13 @@ body { margin: 0; }
         {batches.map((b) => (
           <div key={b.id} className="px-5 py-3 flex flex-wrap items-center gap-2 text-sm">
             <div className="flex-1 min-w-40">
-              <div className="font-medium truncate">{b.name}</div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium truncate">{b.name}</span>
+                {(() => {
+                  const c = CATEGORIES.find((x) => x.id === b.category);
+                  return c ? <Badge variant="secondary" className="shrink-0">{c.icon} {c.label}</Badge> : null;
+                })()}
+              </div>
               <div className="text-xs text-muted-foreground">
                 {b.model ?? "Peça"}
                 {b.slots && b.slots > 1 ? ` · ${b.slots} QR cada` : ""} · {b.quantity} peças ·{" "}
@@ -903,14 +909,16 @@ body { margin: 0; }
             >
               <CreditCard className="size-4" /> {cr80Busy === b.id ? "Gerando…" : "Cartão CR80"}
             </Button>
-            <Button
-              variant="outline" size="sm"
-              disabled={emCardBusy === b.id}
-              onClick={() => exportEmergencyCard(b.id)}
-              title="Folha A4 de cartões de emergência (categoria Idoso) com o QR já composto"
-            >
-              <Siren className="size-4" /> {emCardBusy === b.id ? "Gerando…" : "Cartão Emergência"}
-            </Button>
+            {(b.category === "idoso" || b.category === "emergencia") && (
+              <Button
+                variant="outline" size="sm"
+                disabled={emCardBusy === b.id}
+                onClick={() => exportEmergencyCard(b.id)}
+                title="Folha A4 de cartões de emergência com o QR já composto"
+              >
+                <Siren className="size-4" /> {emCardBusy === b.id ? "Gerando…" : "Cartão Emergência"}
+              </Button>
+            )}
             <Button
               variant="outline" size="sm"
               disabled={modelsBusy === b.id}
