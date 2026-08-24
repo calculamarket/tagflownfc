@@ -4,16 +4,25 @@ import { newTagId } from "@/lib/tag-id";
 import { pageTitle } from "@/lib/brand";
 import { SimpleTagConfig } from "@/components/simple-config";
 import { TagForm } from "@/components/tag-form";
+import type { CategoryId } from "@/lib/categories";
 
 export const Route = createFileRoute("/_authenticated/tags/new")({
   head: () => ({ meta: [{ title: pageTitle("Nova tag") }] }),
-  validateSearch: (s: Record<string, unknown>): { advanced?: boolean } =>
-    s.advanced === "1" || s.advanced === true ? { advanced: true } : {},
+  validateSearch: (s: Record<string, unknown>): { advanced?: boolean; category?: CategoryId } => {
+    const categories: CategoryId[] = ["pet", "emergencia", "idoso", "pix", "menu", "wifi"];
+    const category = typeof s.category === "string" && categories.includes(s.category as CategoryId)
+      ? s.category as CategoryId
+      : undefined;
+    return {
+      ...(s.advanced === "1" || s.advanced === true ? { advanced: true } : {}),
+      ...(category ? { category } : {}),
+    };
+  },
   component: NewTag,
 });
 
 function NewTag() {
-  const { advanced } = Route.useSearch();
+  const { advanced, category } = Route.useSearch();
   const navigate = useNavigate();
   // Um id novo por montagem da página; só vira tag de verdade ao salvar.
   const id = useMemo(() => newTagId(), []);
@@ -52,7 +61,15 @@ function NewTag() {
           .
         </p>
       </div>
-      <SimpleTagConfig id={id} initialName="" editableName initialType="url" initialDestination={{}} newTag />
+      <SimpleTagConfig
+        id={id}
+        initialName=""
+        editableName
+        initialType="url"
+        initialDestination={{}}
+        category={category}
+        newTag
+      />
     </div>
   );
 }
