@@ -25,7 +25,7 @@ import { FileUpload } from "@/components/file-upload";
 import { CATEGORIES } from "@/lib/categories";
 import { buildQrSvgSheet } from "@/lib/qr-svg-sheet";
 import { openCr80Sheet, DEFAULT_CR80_PHRASE, type Cr80Orientation } from "@/lib/cr80-card";
-import { openEmergencyCardSheet } from "@/lib/emergency-card";
+import { openEmergencyCardSheet, type EmCardVariant } from "@/lib/emergency-card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -497,12 +497,13 @@ function BatchesSection() {
   };
 
   const [emCardBusy, setEmCardBusy] = useState<string | null>(null);
+  const [emCardVariant, setEmCardVariant] = useState<EmCardVariant>("cr80");
   /** Folha A4 de cartões de emergência (categoria Idoso), QR já composto. */
   const exportEmergencyCard = async (batchId: string) => {
     setEmCardBusy(batchId);
     try {
       const rows = await adminBatchTags({ data: { batchId } });
-      await openEmergencyCardSheet(rows, window.location.origin);
+      await openEmergencyCardSheet(rows, window.location.origin, { variant: emCardVariant });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -854,6 +855,21 @@ body { margin: 0; }
         </Select>
         <span className="text-xs text-muted-foreground">
           usado no “Cartão CR80” — tamanho de cartão de crédito (85,6 × 54 mm)
+        </span>
+      </div>
+
+      <div className="px-5 py-3 border-b border-border flex items-center gap-2 flex-wrap">
+        <Label className="text-xs whitespace-nowrap">Cartão Emergência — formato</Label>
+        <Select value={emCardVariant} onValueChange={(v) => setEmCardVariant(v as EmCardVariant)}>
+          <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cr80">Cartão CR80 (85,6 × 54 mm)</SelectItem>
+            <SelectItem value="vertical">Vertical / crachá (54 × 85,6 mm)</SelectItem>
+            <SelectItem value="pendant">Pingente redondo (Ø 40 mm)</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground">
+          usado no “Cartão Emergência” (lotes Idoso/Emergência)
         </span>
       </div>
 
