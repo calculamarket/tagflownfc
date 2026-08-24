@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Box, Printer, Sticker, CircleDot, Store, Plus, Trash2, FileCode, CreditCard } from "lucide-react";
+import { Search, Download, Box, Printer, Sticker, CircleDot, Store, Plus, Trash2, FileCode, CreditCard, Siren } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   adminListTenants, adminCreateTenant, adminUpdateTenant,
@@ -25,6 +25,7 @@ import { FileUpload } from "@/components/file-upload";
 import { CATEGORIES } from "@/lib/categories";
 import { buildQrSvgSheet } from "@/lib/qr-svg-sheet";
 import { openCr80Sheet, DEFAULT_CR80_PHRASE, type Cr80Orientation } from "@/lib/cr80-card";
+import { openEmergencyCardSheet } from "@/lib/emergency-card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -495,6 +496,20 @@ function BatchesSection() {
     }
   };
 
+  const [emCardBusy, setEmCardBusy] = useState<string | null>(null);
+  /** Folha A4 de cartões de emergência (categoria Idoso), QR já composto. */
+  const exportEmergencyCard = async (batchId: string) => {
+    setEmCardBusy(batchId);
+    try {
+      const rows = await adminBatchTags({ data: { batchId } });
+      await openEmergencyCardSheet(rows, window.location.origin);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setEmCardBusy(null);
+    }
+  };
+
   /** Folha SVG vetorial (plaquinhas) para impressão 3D — um arquivo com o lote. */
   const exportSvgSheet = async (batchId: string, batchName: string) => {
     setSvgBusy(batchId);
@@ -887,6 +902,14 @@ body { margin: 0; }
               title="Folha A4 de cartões CR80 (QR + NFC + frase)"
             >
               <CreditCard className="size-4" /> {cr80Busy === b.id ? "Gerando…" : "Cartão CR80"}
+            </Button>
+            <Button
+              variant="outline" size="sm"
+              disabled={emCardBusy === b.id}
+              onClick={() => exportEmergencyCard(b.id)}
+              title="Folha A4 de cartões de emergência (categoria Idoso) com o QR já composto"
+            >
+              <Siren className="size-4" /> {emCardBusy === b.id ? "Gerando…" : "Cartão Emergência"}
             </Button>
             <Button
               variant="outline" size="sm"
