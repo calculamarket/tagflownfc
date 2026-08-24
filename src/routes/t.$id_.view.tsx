@@ -321,36 +321,61 @@ function WifiView({ payload, name }: { payload: Record<string, string>; name: st
   const ssid = payload.ssid ?? "";
   const password = payload.password ?? "";
   const security = (payload.security ?? "WPA").toUpperCase();
+  const open = security === "NOPASS";
   const wifi = buildWifiPayload({ ssid, password, security, hidden: payload.hidden === "true" });
+  const [copied, setCopied] = useState(false);
+
   return (
-    <div className="min-h-screen bg-muted/30 grid place-items-center p-4">
-      <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4 shadow-sm">
-        <h1 className="text-xl font-semibold">Conectar ao Wi-Fi</h1>
-        <p className="text-sm text-muted-foreground">{name}</p>
-        {wifi && (
-          <>
-            <div className="grid place-items-center rounded-lg border border-border bg-white p-4">
-              <QrCanvas value={wifi} size={200} />
+    <div className="min-h-screen grid place-items-center p-4 bg-gradient-to-b from-sky-500/15 via-background to-background">
+      <div className="w-full max-w-sm space-y-4">
+        <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-lg">
+          {/* Cabeçalho com o símbolo de Wi-Fi */}
+          <div className="bg-gradient-to-br from-sky-500 to-indigo-600 px-6 pt-7 pb-6 text-center text-white">
+            <div className="mx-auto mb-2 grid size-14 place-items-center rounded-2xl bg-white/15 text-3xl">📶</div>
+            <div className="text-xs font-semibold uppercase tracking-widest text-white/80">Wi-Fi</div>
+            <h1 className="mt-0.5 text-2xl font-bold leading-tight break-words">{ssid || name}</h1>
+          </div>
+
+          <div className="px-6 py-6 space-y-4 text-center">
+            {wifi && (
+              <>
+                <div className="mx-auto grid w-fit place-items-center rounded-2xl border border-border bg-white p-3 shadow-sm">
+                  <QrCanvas value={wifi} size={196} />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  📷 Aponte a <strong>câmera</strong> do celular para o código e toque em conectar.
+                </p>
+              </>
+            )}
+
+            <div className="rounded-xl bg-muted/50 p-4 text-left text-sm space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Rede</span>
+                <span className="font-medium truncate">{ssid}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Segurança</span>
+                <span className="font-medium">{open ? "Aberta" : security}</span>
+              </div>
+              {!open && (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Senha</span>
+                  <span className="font-mono font-medium break-all">{password}</span>
+                </div>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Aponte a câmera do celular para conectar automaticamente.
-            </p>
-          </>
-        )}
-        <dl className="text-left space-y-2 text-sm">
-          <div className="flex justify-between border-b border-border py-2"><dt className="text-muted-foreground">Rede</dt><dd className="font-medium">{ssid}</dd></div>
-          <div className="flex justify-between border-b border-border py-2"><dt className="text-muted-foreground">Segurança</dt><dd className="font-medium">{security === "NOPASS" ? "Aberta" : security}</dd></div>
-          {security !== "NOPASS" && (
-            <div className="flex justify-between py-2"><dt className="text-muted-foreground">Senha</dt><dd className="font-mono">{password}</dd></div>
-          )}
-        </dl>
-        {security !== "NOPASS" && (
-          <button
-            onClick={async () => { await navigator.clipboard.writeText(password); }}
-            className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium">
-            Copiar senha
-          </button>
-        )}
+
+            {!open && (
+              <button
+                onClick={async () => { await navigator.clipboard.writeText(password); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground"
+              >
+                {copied ? "Senha copiada!" : "Copiar senha"}
+              </button>
+            )}
+          </div>
+        </div>
+        <PoweredBy />
       </div>
     </div>
   );

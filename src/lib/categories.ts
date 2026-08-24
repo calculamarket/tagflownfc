@@ -2,8 +2,8 @@
 // "Pet Tag"); as tags herdam a categoria e, na ativação, o cliente já é levado
 // direto ao formulário certo (com a moldagem daquela categoria).
 
-export type SimpleMode = "pix" | "links" | "emergency";
-export type CategoryId = "pet" | "emergencia" | "pix" | "menu";
+export type SimpleMode = "pix" | "links" | "emergency" | "wifi";
+export type CategoryId = "pet" | "emergencia" | "idoso" | "pix" | "menu" | "wifi";
 
 export type CategoryDef = {
   id: CategoryId;
@@ -41,8 +41,28 @@ export const CATEGORIES: CategoryDef[] = [
     infoPlaceholder: "Ex.: alergia a penicilina, tipo sanguíneo O+, medicação contínua…",
     intro: "Cadastre contatos de emergência e informações importantes (alergias, tipo sanguíneo…).",
   },
+  {
+    id: "idoso",
+    label: "Idoso — Emergência",
+    icon: "🧓",
+    mode: "emergency",
+    titleLabel: "Nome do idoso(a)",
+    titlePlaceholder: "Maria Aparecida",
+    defaultMessage: "Em caso de emergência, avise meus familiares:",
+    infoPlaceholder:
+      "Ex.: tipo sanguíneo, alergias, doenças (diabetes, cardíaco), medicações e horários, plano de saúde, médico responsável…",
+    intro:
+      "Cadastre os contatos da família e as informações de saúde do idoso — quem socorrer terá tudo à mão.",
+  },
   { id: "pix", label: "PIX", icon: "💠", mode: "pix" },
   { id: "menu", label: "Menu de links", icon: "🔗", mode: "links" },
+  {
+    id: "wifi",
+    label: "Wi-Fi",
+    icon: "📶",
+    mode: "wifi",
+    intro: "Compartilhe o Wi-Fi: o visitante aponta a câmera e conecta sozinho.",
+  },
 ];
 
 export function categoryById(id?: string | null): CategoryDef | null {

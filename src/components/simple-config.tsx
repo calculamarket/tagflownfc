@@ -15,10 +15,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2, Siren, Bell } from "lucide-react";
+import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2, Siren, Bell, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
-type Mode = "choose" | "pix" | "links" | "emergency";
+type Mode = "choose" | "pix" | "links" | "emergency" | "wifi";
 type EmContact = { name: string; phone: string };
 
 function parseContacts(raw: unknown): EmContact[] {
@@ -66,6 +66,7 @@ export function SimpleTagConfig({
     initialType === "pix" ? "pix"
       : initialType === "links" ? "links"
       : initialType === "emergency" ? "emergency"
+      : initialType === "wifi" ? "wifi"
       : cat ? cat.mode
       : "choose",
   );
@@ -92,10 +93,15 @@ export function SimpleTagConfig({
     initialType === "emergency" ? parseContacts(initialDestination.contacts) : [],
   );
 
+  // Wi-Fi
+  const [wifiSsid, setWifiSsid] = useState(initialDestination.ssid ?? "");
+  const [wifiPass, setWifiPass] = useState(initialDestination.password ?? "");
+  const [wifiSec, setWifiSec] = useState((initialDestination.security ?? "WPA").toUpperCase());
+
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const tagUrl = `${origin}/t/${id}`;
 
-  const save = async (destination_type: "pix" | "links" | "emergency", destination: Record<string, string>) => {
+  const save = async (destination_type: "pix" | "links" | "emergency" | "wifi", destination: Record<string, string>) => {
     setSaving(true);
     try {
       await upsertTag({
@@ -147,6 +153,15 @@ export function SimpleTagConfig({
       contacts: JSON.stringify(clean),
     });
   };
+  const saveWifi = () => {
+    if (!wifiSsid.trim()) { toast.error("Informe o nome da rede (SSID)."); return; }
+    save("wifi", {
+      ssid: wifiSsid.trim(),
+      password: wifiSec === "NOPASS" ? "" : wifiPass,
+      security: wifiSec,
+      hidden: "false",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -172,7 +187,7 @@ export function SimpleTagConfig({
           </button>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <ModeCard
             active={mode === "pix"}
             icon={<QrCode className="size-5" />}
@@ -193,6 +208,13 @@ export function SimpleTagConfig({
             title="Emergência / Pet"
             desc="Cartão com contatos e info. Se encontrado, avise."
             onClick={() => { setMode("emergency"); setSaved(false); }}
+          />
+          <ModeCard
+            active={mode === "wifi"}
+            icon={<Wifi className="size-5" />}
+            title="Wi-Fi"
+            desc="Compartilhe a rede: aponta a câmera e conecta."
+            onClick={() => { setMode("wifi"); setSaved(false); }}
           />
         </div>
       )}
@@ -243,6 +265,30 @@ export function SimpleTagConfig({
           </div>
 
           <Button disabled={saving} onClick={saveEmergency}>{saving ? "Salvando…" : "Salvar cartão de emergência"}</Button>
+          {saved && <SavedLink tagUrl={tagUrl} />}
+        </div>
+      )}
+
+      {mode === "wifi" && (
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nome da rede (SSID)" value={wifiSsid} onChange={(v) => { setWifiSsid(v); setSaved(false); }} placeholder="MinhaRede" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Segurança</Label>
+              <Select value={wifiSec} onValueChange={(v) => { setWifiSec(v); setSaved(false); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WPA">WPA/WPA2 (comum)</SelectItem>
+                  <SelectItem value="WEP">WEP</SelectItem>
+                  <SelectItem value="NOPASS">Aberta (sem senha)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {wifiSec !== "NOPASS" && (
+              <Field label="Senha" value={wifiPass} onChange={(v) => { setWifiPass(v); setSaved(false); }} placeholder="senha do Wi-Fi" />
+            )}
+          </div>
+          <Button disabled={saving} onClick={saveWifi}>{saving ? "Salvando…" : "Salvar Wi-Fi"}</Button>
           {saved && <SavedLink tagUrl={tagUrl} />}
         </div>
       )}
