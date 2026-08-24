@@ -12,6 +12,8 @@ export type Brand = {
   tagline: string;
   poweredBy: boolean; // mostrar "Powered by <name>" nas páginas públicas
   supportEmail: string;
+  primaryColor?: string | null; // cor primária do tenant (sobrescreve o tema)
+  logoUrl?: string | null; // logo do tenant (substitui o selo no menu)
 };
 
 export const BRAND: Brand = {
@@ -20,6 +22,8 @@ export const BRAND: Brand = {
   tagline: "QR Codes em impressão 3D, reconfiguráveis",
   poweredBy: true,
   supportEmail: "contato@3dqr.com.br",
+  primaryColor: null,
+  logoUrl: null,
 };
 
 /** Título de aba padronizado: "Seção · Marca" (ou só a marca). */

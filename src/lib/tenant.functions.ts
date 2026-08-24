@@ -1,6 +1,6 @@
 import { createServerFn, createMiddleware } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { brandFromTenant, type TenantBrandRow } from "./tenant";
+import { brandFromTenant, BRAND_COLS, type TenantBrandRow } from "./tenant";
 import { z } from "zod";
 
 /** Auth + gate de super-admin (mesmo padrão do admin.functions). */
@@ -16,8 +16,6 @@ const requireAdmin = createMiddleware({ type: "function" })
     if (!data) throw new Error("Acesso restrito a administradores.");
     return next();
   });
-
-const BRAND_COLS = "name, monogram, tagline, powered_by, support_email";
 
 /**
  * Marca do usuário logado = a do tenant onde ele é staff. Cai na marca padrão
@@ -53,6 +51,8 @@ const tenantInput = z.object({
   tagline: z.string().trim().max(120).default(""),
   powered_by: z.boolean().default(true),
   support_email: z.string().trim().email().nullable().optional(),
+  primary_color: z.string().trim().max(30).nullable().optional(),
+  logo_url: z.string().trim().max(500).nullable().optional(),
 });
 
 export const adminListTenants = createServerFn({ method: "GET" })
@@ -107,6 +107,8 @@ export const adminCreateTenant = createServerFn({ method: "POST" })
         tagline: data.tagline,
         powered_by: data.powered_by,
         support_email: data.support_email ?? null,
+        primary_color: data.primary_color ?? null,
+        logo_url: data.logo_url ?? null,
       })
       .select("id")
       .single();

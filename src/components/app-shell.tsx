@@ -10,6 +10,7 @@ import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import { getMyBrand } from "@/lib/tenant.functions";
+import { applyBrandTheme } from "@/lib/tenant";
 import { unreadNotifications } from "@/lib/notifications.functions";
 import { Button } from "@/components/ui/button";
 
@@ -72,6 +73,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
     );
 
+  // Tema white-label: aplica a cor primária do tenant do usuário logado.
+  useEffect(() => { applyBrandTheme(brand); }, [brand]);
+
   // Submenu "Produção 3D": abre sozinho quando você está numa página de gerador.
   const inGen = generators.some((g) => isActive(g.to));
   const [genOpen, setGenOpen] = useState(inGen);
@@ -104,10 +108,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className="h-16 flex items-center justify-between px-5 border-b border-sidebar-border">
           <Link to="/dashboard" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
-            <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold">
-              {brand.monogram}
-            </div>
-            {brand.name}
+            {brand.logoUrl ? (
+              <img src={brand.logoUrl} alt="" className="h-7 max-w-[140px] object-contain" />
+            ) : (
+              <>
+                <div className="size-7 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold">
+                  {brand.monogram}
+                </div>
+                {brand.name}
+              </>
+            )}
           </Link>
           <button className="lg:hidden text-sidebar-foreground" onClick={() => setMobileOpen(false)}>
             <X className="size-5" />

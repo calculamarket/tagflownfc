@@ -9,6 +9,7 @@ import { normalizeDestinationUrl } from "@/lib/destination";
 import { parseLinkItems, defaultLabel, linkItemHref, opensInApp, itemIcon, type LinkItem } from "@/lib/link-menu";
 import { parsePromoProducts, formatBRL, promoStatus, type PromoProduct } from "@/lib/promo";
 import { BRAND, type Brand } from "@/lib/brand";
+import { applyBrandTheme } from "@/lib/tenant";
 
 export const Route = createFileRoute("/t/$id_/view")({
   ssr: false,
@@ -43,6 +44,8 @@ function PublicViewPage() {
     (async () => {
       const res = await getPublicView({ data: { id } });
       if (!res.ok) return setState("not_found");
+      // Tema white-label: aplica a cor do tenant dono da tag.
+      if ("brand" in res && res.brand) applyBrandTheme(res.brand);
       setView(res);
       setState("ready");
     })().catch(() => setState("not_found"));

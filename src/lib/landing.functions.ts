@@ -116,7 +116,7 @@ export const getPublicView = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: t } = await supabaseAdmin
         .from("tags")
-        .select("tenants(name, monogram, tagline, powered_by, support_email)")
+        .select("tenants(name, monogram, tagline, powered_by, support_email, primary_color, logo_url)")
         .eq("id", data.id)
         .maybeSingle();
       const tenant = (t as { tenants: TenantBrandRow | null } | null)?.tenants ?? null;

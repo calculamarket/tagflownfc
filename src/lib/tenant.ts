@@ -7,7 +7,12 @@ export type TenantBrandRow = {
   tagline: string;
   powered_by: boolean;
   support_email: string | null;
+  primary_color?: string | null;
+  logo_url?: string | null;
 };
+
+/** Colunas de marca a selecionar no banco (usado por getMyBrand/getPublicView). */
+export const BRAND_COLS = "name, monogram, tagline, powered_by, support_email, primary_color, logo_url";
 
 /** Converte a linha de um tenant na marca usada pela UI, caindo nos padrões
  *  (BRAND) quando o tenant não existe ou tem campos vazios. */
@@ -19,7 +24,27 @@ export function brandFromTenant(t: TenantBrandRow | null | undefined): Brand {
     tagline: t.tagline || BRAND.tagline,
     poweredBy: t.powered_by,
     supportEmail: t.support_email || BRAND.supportEmail,
+    primaryColor: t.primary_color || null,
+    logoUrl: t.logo_url || null,
   };
+}
+
+/**
+ * Aplica (ou limpa) a cor primária do tenant sobrescrevendo os tokens CSS.
+ * Só roda no cliente. `--primary` é uma cor CSS completa, então o hex do
+ * revendedor entra direto.
+ */
+export function applyBrandTheme(brand: Brand): void {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  const c = brand.primaryColor?.trim();
+  if (c) {
+    root.style.setProperty("--primary", c);
+    root.style.setProperty("--sidebar-primary", c);
+  } else {
+    root.style.removeProperty("--primary");
+    root.style.removeProperty("--sidebar-primary");
+  }
 }
 
 /**

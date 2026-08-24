@@ -21,6 +21,7 @@ import QRCode from "qrcode";
 import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
 import { SaleFramePanel, openFrameSheet } from "@/components/sale-frame";
+import { FileUpload } from "@/components/file-upload";
 import { buildQrSvgSheet } from "@/lib/qr-svg-sheet";
 import { openCr80Sheet, DEFAULT_CR80_PHRASE, type Cr80Orientation } from "@/lib/cr80-card";
 import { Button } from "@/components/ui/button";
@@ -206,6 +207,13 @@ function TenantsSection() {
     onError: (e) => toast.error((e as Error).message),
   });
 
+  const saveAppearance = useMutation({
+    mutationFn: (v: { id: string; primary_color: string | null; logo_url: string | null }) =>
+      adminUpdateTenant({ data: v }),
+    onSuccess: () => { toast.success("Aparência salva."); invalidate(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
   const addMember = useMutation({
     mutationFn: (v: { tenant_id: string; email: string }) =>
       adminAddTenantMember({ data: { tenant_id: v.tenant_id, email: v.email, role: "owner" } }),
@@ -266,9 +274,16 @@ function TenantsSection() {
         {tenants.map((t) => (
           <div key={t.id} className="px-5 py-4 space-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="size-8 rounded-md bg-primary grid place-items-center text-primary-foreground text-[10px] font-bold shrink-0">
-                {t.monogram || "3D"}
-              </div>
+              {t.logo_url ? (
+                <img src={t.logo_url} alt="" className="size-8 rounded-md object-contain bg-white shrink-0" />
+              ) : (
+                <div
+                  className="size-8 rounded-md bg-primary grid place-items-center text-white text-[10px] font-bold shrink-0"
+                  style={{ background: t.primary_color || undefined }}
+                >
+                  {t.monogram || "3D"}
+                </div>
+              )}
               <div className="flex-1 min-w-40">
                 <div className="font-medium">{t.name}</div>
                 <div className="text-xs text-muted-foreground">
@@ -300,6 +315,12 @@ function TenantsSection() {
               ))}
               <AddMemberRow onAdd={(email) => addMember.mutate({ tenant_id: t.id, email })} busy={addMember.isPending} />
             </div>
+
+            <TenantAppearance
+              tenant={t}
+              busy={saveAppearance.isPending}
+              onSave={(primary_color, logo_url) => saveAppearance.mutate({ id: t.id, primary_color, logo_url })}
+            />
           </div>
         ))}
       </div>
@@ -324,6 +345,47 @@ function AddMemberRow({ onAdd, busy }: { onAdd: (email: string) => void; busy: b
       >
         <Plus className="size-3.5" /> Adicionar dono
       </Button>
+    </div>
+  );
+}
+
+/** Editor de aparência (cor + logo) de um revendedor. */
+function TenantAppearance({
+  tenant, busy, onSave,
+}: {
+  tenant: { primary_color: string | null; logo_url: string | null };
+  busy: boolean;
+  onSave: (primaryColor: string | null, logoUrl: string | null) => void;
+}) {
+  const [color, setColor] = useState(tenant.primary_color || "");
+  const [logo, setLogo] = useState(tenant.logo_url || "");
+  return (
+    <div className="pl-11 pt-1 space-y-2 border-t border-border/60 mt-1">
+      <div className="text-xs font-medium text-muted-foreground pt-2">Aparência (white-label)</div>
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="space-y-1">
+          <Label className="text-xs">Cor primária</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={color || "#4f46e5"}
+              onChange={(e) => setColor(e.target.value)}
+              className="h-9 w-12 cursor-pointer rounded border border-input bg-background p-1"
+            />
+            <Input className="h-9 w-28 font-mono text-xs" value={color} onChange={(e) => setColor(e.target.value)} placeholder="#4f46e5" />
+            {color && (
+              <Button variant="ghost" size="sm" onClick={() => setColor("")} title="Usar cor padrão">limpar</Button>
+            )}
+          </div>
+        </div>
+        <div className="space-y-1 w-56">
+          <Label className="text-xs">Logo</Label>
+          <FileUpload value={logo} onChange={setLogo} placeholder="URL do logo" />
+        </div>
+        <Button size="sm" disabled={busy} onClick={() => onSave(color.trim() || null, logo.trim() || null)}>
+          {busy ? "Salvando…" : "Salvar aparência"}
+        </Button>
+      </div>
     </div>
   );
 }
