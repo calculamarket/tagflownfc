@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2, Siren, Bell, Wifi } from "lucide-react";
+import { Copy, Check, Download, Plus, Trash2, Settings2, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 type Mode = "choose" | "pix" | "links" | "emergency" | "wifi";
