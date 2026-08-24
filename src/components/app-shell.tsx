@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Tags, QrCode, Link2, BarChart3, Zap, Users,
   Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown, Bell,
+  Wifi, HeartPulse,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,11 @@ const mainNav = [
   { to: "/ativar", label: "Ativar etiqueta", icon: PackageCheck },
   { to: "/qr-codes", label: "QR Codes", icon: QrCode },
   { to: "/notificacoes", label: "Notificações", icon: Bell },
+] as const;
+
+const categoryNav = [
+  { category: "wifi", label: "Wi-Fi", icon: Wifi },
+  { category: "idoso", label: "Idoso — Emergência", icon: HeartPulse },
 ] as const;
 
 // Geradores de produção (impressão 3D) — agrupados num submenu retrátil.
@@ -52,6 +58,9 @@ const secondaryNav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const activeCategory = useRouterState({
+    select: (s) => new URLSearchParams(s.location.searchStr).get("category"),
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState<string>("");
@@ -136,6 +145,22 @@ export function AppShell({ children }: { children: ReactNode }) {
                     {unread > 99 ? "99+" : unread}
                   </span>
                 )}
+              </Link>
+            );
+          })}
+
+          {categoryNav.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === "/tags/new" && activeCategory === item.category;
+            return (
+              <Link
+                key={item.category}
+                to="/tags/new"
+                search={{ category: item.category }}
+                className={linkCls(active)}
+              >
+                <Icon className="size-4" />
+                <span className="flex-1">{item.label}</span>
               </Link>
             );
           })}
