@@ -7,7 +7,7 @@ import type { DestinationType } from "@/lib/destination";
 import {
   LINK_ITEM_TYPES, parseLinkItems, itemIcon, type LinkItem, type LinkItemType,
 } from "@/lib/link-menu";
-import { categoryById } from "@/lib/categories";
+import { CATEGORIES, categoryById } from "@/lib/categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +15,18 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2, Siren, Bell, Wifi } from "lucide-react";
+import { Copy, Check, Download, Plus, Trash2, Settings2, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 type Mode = "choose" | "pix" | "links" | "emergency" | "wifi";
+
+/** Descrição curta padrão de cada tipo, usada quando a categoria não traz uma. */
+const CATEGORY_DESC: Record<"pix" | "links" | "emergency" | "wifi", string> = {
+  pix: "Tela de pagamento PIX. Ideal para cobrar.",
+  links: "Seus links: site, WhatsApp, Instagram…",
+  emergency: "Cartão com contatos e informações importantes.",
+  wifi: "Compartilhe a rede: aponta a câmera e conecta.",
+};
 type EmContact = { name: string; phone: string };
 
 function parseContacts(raw: unknown): EmContact[] {
@@ -60,7 +68,7 @@ export function SimpleTagConfig({
   /** Categoria de produção da tag (ex.: "pet"): direciona a ativação. */
   category?: string | null;
 }) {
-  const cat = categoryById(category);
+  const [cat, setCat] = useState(() => categoryById(category));
   const [name, setName] = useState(initialName);
   const [mode, setMode] = useState<Mode>(
     initialType === "pix" ? "pix"
@@ -114,7 +122,7 @@ export function SimpleTagConfig({
           qr_style: preserve?.qr_style ?? {},
           notify_on_scan: notifyOnScan,
           description: preserve?.description ?? null,
-          category: preserve?.category ?? null,
+          category: cat?.id ?? preserve?.category ?? null,
           max_scans: preserve?.max_scans ?? null,
           activate_at: preserve?.activate_at ?? null,
           expire_at: preserve?.expire_at ?? null,
@@ -188,34 +196,21 @@ export function SimpleTagConfig({
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          <ModeCard
-            active={mode === "pix"}
-            icon={<QrCode className="size-5" />}
-            title="Receber PIX"
-            desc="Tela de pagamento PIX. Ideal para cobrar."
-            onClick={() => { setMode("pix"); setSaved(false); }}
-          />
-          <ModeCard
-            active={mode === "links"}
-            icon={<Link2 className="size-5" />}
-            title="Menu de links"
-            desc="Seus links: site, WhatsApp, Instagram…"
-            onClick={() => { setMode("links"); setSaved(false); }}
-          />
-          <ModeCard
-            active={mode === "emergency"}
-            icon={<Siren className="size-5" />}
-            title="Emergência / Pet"
-            desc="Cartão com contatos e info. Se encontrado, avise."
-            onClick={() => { setMode("emergency"); setSaved(false); }}
-          />
-          <ModeCard
-            active={mode === "wifi"}
-            icon={<Wifi className="size-5" />}
-            title="Wi-Fi"
-            desc="Compartilhe a rede: aponta a câmera e conecta."
-            onClick={() => { setMode("wifi"); setSaved(false); }}
-          />
+          {CATEGORIES.map((c) => (
+            <ModeCard
+              key={c.id}
+              active={cat?.id === c.id}
+              icon={<span className="text-xl leading-none">{c.icon}</span>}
+              title={c.label}
+              desc={c.intro ?? CATEGORY_DESC[c.mode]}
+              onClick={() => {
+                setCat(c);
+                setMode(c.mode);
+                setShowPicker(false);
+                setSaved(false);
+              }}
+            />
+          ))}
         </div>
       )}
 
