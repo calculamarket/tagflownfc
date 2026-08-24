@@ -7,6 +7,7 @@ import type { DestinationType } from "@/lib/destination";
 import {
   LINK_ITEM_TYPES, parseLinkItems, itemIcon, type LinkItem, type LinkItemType,
 } from "@/lib/link-menu";
+import { categoryById } from "@/lib/categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,7 +45,7 @@ export type PreserveFields = {
 };
 
 export function SimpleTagConfig({
-  id, initialName, editableName, initialType, initialDestination, preserve, newTag = false, initialNotify,
+  id, initialName, editableName, initialType, initialDestination, preserve, newTag = false, initialNotify, category,
 }: {
   id: string;
   initialName: string;
@@ -56,14 +57,21 @@ export function SimpleTagConfig({
    *  (→ /tags/:id) só aparece depois de salva. */
   newTag?: boolean;
   initialNotify?: boolean;
+  /** Categoria de produção da tag (ex.: "pet"): direciona a ativação. */
+  category?: string | null;
 }) {
+  const cat = categoryById(category);
   const [name, setName] = useState(initialName);
   const [mode, setMode] = useState<Mode>(
     initialType === "pix" ? "pix"
       : initialType === "links" ? "links"
       : initialType === "emergency" ? "emergency"
+      : cat ? cat.mode
       : "choose",
   );
+  // Com categoria definida, escondemos o seletor de tipos (direcionado). Um
+  // link "usar outro tipo" revela o seletor caso o cliente queira mudar.
+  const [showPicker, setShowPicker] = useState(!cat);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [notifyOnScan, setNotifyOnScan] = useState(initialNotify ?? initialType === "emergency");
@@ -78,7 +86,7 @@ export function SimpleTagConfig({
 
   // Emergência
   const [emTitle, setEmTitle] = useState(initialDestination.title ?? "");
-  const [emMessage, setEmMessage] = useState(initialDestination.message ?? "");
+  const [emMessage, setEmMessage] = useState(initialDestination.message ?? cat?.defaultMessage ?? "");
   const [emInfo, setEmInfo] = useState(initialDestination.info ?? "");
   const [contacts, setContacts] = useState<EmContact[]>(
     initialType === "emergency" ? parseContacts(initialDestination.contacts) : [],
@@ -149,29 +157,45 @@ export function SimpleTagConfig({
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <ModeCard
-          active={mode === "pix"}
-          icon={<QrCode className="size-5" />}
-          title="Receber PIX"
-          desc="Tela de pagamento PIX. Ideal para cobrar."
-          onClick={() => { setMode("pix"); setSaved(false); }}
-        />
-        <ModeCard
-          active={mode === "links"}
-          icon={<Link2 className="size-5" />}
-          title="Menu de links"
-          desc="Seus links: site, WhatsApp, Instagram…"
-          onClick={() => { setMode("links"); setSaved(false); }}
-        />
-        <ModeCard
-          active={mode === "emergency"}
-          icon={<Siren className="size-5" />}
-          title="Emergência / Pet"
-          desc="Cartão com contatos e info. Se encontrado, avise."
-          onClick={() => { setMode("emergency"); setSaved(false); }}
-        />
-      </div>
+      {cat && !showPicker ? (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/40 bg-primary/5 px-4 py-3">
+          <span className="text-2xl">{cat.icon}</span>
+          <div className="flex-1">
+            <div className="font-medium">{cat.label}</div>
+            {cat.intro && <p className="text-xs text-muted-foreground">{cat.intro}</p>}
+          </div>
+          <button
+            onClick={() => setShowPicker(true)}
+            className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
+          >
+            usar outro tipo
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <ModeCard
+            active={mode === "pix"}
+            icon={<QrCode className="size-5" />}
+            title="Receber PIX"
+            desc="Tela de pagamento PIX. Ideal para cobrar."
+            onClick={() => { setMode("pix"); setSaved(false); }}
+          />
+          <ModeCard
+            active={mode === "links"}
+            icon={<Link2 className="size-5" />}
+            title="Menu de links"
+            desc="Seus links: site, WhatsApp, Instagram…"
+            onClick={() => { setMode("links"); setSaved(false); }}
+          />
+          <ModeCard
+            active={mode === "emergency"}
+            icon={<Siren className="size-5" />}
+            title="Emergência / Pet"
+            desc="Cartão com contatos e info. Se encontrado, avise."
+            onClick={() => { setMode("emergency"); setSaved(false); }}
+          />
+        </div>
+      )}
 
       {mode === "pix" && (
         <div className="rounded-lg border border-border bg-card p-5 space-y-4">
@@ -202,8 +226,8 @@ export function SimpleTagConfig({
       {mode === "emergency" && (
         <div className="rounded-lg border border-border bg-card p-5 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Título (ex.: nome do pet/criança)" value={emTitle} onChange={(v) => { setEmTitle(v); setSaved(false); }} placeholder={name || "Rex"} />
-            <Field label="Mensagem" value={emMessage} onChange={(v) => { setEmMessage(v); setSaved(false); }} placeholder="Se me encontrar, avise meus donos 🙏" />
+            <Field label={cat?.titleLabel ?? "Título (ex.: nome do pet/criança)"} value={emTitle} onChange={(v) => { setEmTitle(v); setSaved(false); }} placeholder={cat?.titlePlaceholder ?? name ?? "Rex"} />
+            <Field label="Mensagem" value={emMessage} onChange={(v) => { setEmMessage(v); setSaved(false); }} placeholder={cat?.defaultMessage ?? "Se me encontrar, avise meus donos 🙏"} />
           </div>
 
           <ContactsBuilder contacts={contacts} onChange={(c) => { setContacts(c); setSaved(false); }} />
@@ -213,7 +237,7 @@ export function SimpleTagConfig({
             <textarea
               value={emInfo}
               onChange={(e) => { setEmInfo(e.target.value); setSaved(false); }}
-              placeholder="Ex.: alergia a penicilina, tipo sanguíneo O+, medicação às 8h…"
+              placeholder={cat?.infoPlaceholder ?? "Ex.: alergia a penicilina, tipo sanguíneo O+, medicação às 8h…"}
               className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>

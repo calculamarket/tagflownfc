@@ -22,6 +22,7 @@ import { buildQr3mfBytes } from "@/lib/qr-3mf";
 import { createZip } from "@/lib/zip";
 import { SaleFramePanel, openFrameSheet } from "@/components/sale-frame";
 import { FileUpload } from "@/components/file-upload";
+import { CATEGORIES } from "@/lib/categories";
 import { buildQrSvgSheet } from "@/lib/qr-svg-sheet";
 import { openCr80Sheet, DEFAULT_CR80_PHRASE, type Cr80Orientation } from "@/lib/cr80-card";
 import { Button } from "@/components/ui/button";
@@ -397,6 +398,7 @@ function BatchesSection() {
   const [quantity, setQuantity] = useState("50");
   const [model, setModel] = useState("Placa");
   const [slots, setSlots] = useState("1");
+  const [category, setCategory] = useState("");
 
   // Presets match the printed products; "Totem" leaves the count free.
   const MODELS = [
@@ -419,6 +421,7 @@ function BatchesSection() {
           quantity: Number(quantity),
           model,
           slots: Math.max(1, Number(slots) || 1),
+          category: category || null,
         },
       }),
     onSuccess: (res) => {
@@ -764,6 +767,18 @@ body { margin: 0; }
         <div className="space-y-1 w-28">
           <Label className="text-xs">Peças</Label>
           <Input inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+        </div>
+        <div className="space-y-1 w-44">
+          <Label className="text-xs">Categoria de ativação</Label>
+          <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Livre (cliente escolhe)</SelectItem>
+              {CATEGORIES.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.icon} {c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Button
           disabled={!name.trim() || !(Number(quantity) > 0) || create.isPending}

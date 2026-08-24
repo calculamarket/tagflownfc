@@ -199,6 +199,7 @@ export const adminCreateBatch = createServerFn({ method: "POST" })
         model: z.string().trim().min(1).max(40).default("Peça"),
         slots: z.number().int().min(1).max(24).default(1),
         notes: z.string().trim().max(500).optional().nullable(),
+        category: z.string().trim().max(60).optional().nullable(),
       })
       .parse(d),
   )
@@ -251,6 +252,7 @@ export const adminCreateBatch = createServerFn({ method: "POST" })
         status: "active" as const,
         destination_type: "url" as const,
         destination: {},
+        category: data.category ?? null,
       })),
     );
 

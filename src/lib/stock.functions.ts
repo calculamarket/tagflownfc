@@ -18,6 +18,7 @@ export const createStockTags = createServerFn({ method: "POST" })
         name: z.string().trim().min(1).max(60).default("Placa Pix"),
         quantity: z.number().int().min(1).max(200),
         model: z.string().trim().min(1).max(40).default("Placa Pix"),
+        category: z.string().trim().max(60).optional().nullable(),
       })
       .parse(d),
   )
@@ -49,6 +50,7 @@ export const createStockTags = createServerFn({ method: "POST" })
       status: "active" as const,
       destination_type: "url" as const,
       destination: {},
+      category: data.category ?? null,
     }));
 
     const { error } = await supabaseAdmin.from("tags").insert(rows);
