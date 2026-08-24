@@ -19,6 +19,14 @@ import { QrCode, Link2, Copy, Check, Download, Plus, Trash2, Settings2, Siren, B
 import { toast } from "sonner";
 
 type Mode = "choose" | "pix" | "links" | "emergency" | "wifi";
+
+/** Descrição curta padrão de cada tipo, usada quando a categoria não traz uma. */
+const CATEGORY_DESC: Record<"pix" | "links" | "emergency" | "wifi", string> = {
+  pix: "Tela de pagamento PIX. Ideal para cobrar.",
+  links: "Seus links: site, WhatsApp, Instagram…",
+  emergency: "Cartão com contatos e informações importantes.",
+  wifi: "Compartilhe a rede: aponta a câmera e conecta.",
+};
 type EmContact = { name: string; phone: string };
 
 function parseContacts(raw: unknown): EmContact[] {
