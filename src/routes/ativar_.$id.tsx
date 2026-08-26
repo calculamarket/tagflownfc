@@ -100,9 +100,9 @@ function ActivateByScan() {
         )}
 
         <p className="text-xs text-muted-foreground">
-          Recebeu um código de ativação impresso?{" "}
-          <Link to="/ativar" className="underline hover:text-foreground">Usar código</Link>
+          Sem código de ativação: escanear e entrar já é o suficiente.
         </p>
+
       </div>
     </div>
   );
