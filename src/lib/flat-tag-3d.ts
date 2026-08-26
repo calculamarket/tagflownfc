@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 import earcut from "earcut";
 import { normalizeSlot, pack3mf, type MaterialSlot } from "./three-mf";
 import type { Tri } from "./pet-tag-3d";
+import type { ReliefMask } from "./pix-plate-3d";
 
 /**
  * Parametric "Etiqueta Plana" — a flat rounded plate with a QR code on top and
@@ -32,6 +33,10 @@ export type FlatTagOptions = {
   codeMm?: number;
   errorCorrectionLevel?: "L" | "M" | "Q" | "H";
   recessed?: boolean;
+  /** Raster of a phrase printed above the QR code (e.g. "Emergência - Leia o QR Code"). */
+  labelMask?: ReliefMask | null;
+  /** Height of the label band reserved above the QR, in mm. */
+  labelBandMm?: number;
 };
 
 export type FlatTagGeometry = {
@@ -207,6 +212,37 @@ function plateWithHoles(outer: Pt[], holes: Pt[][], z0: number, z1: number): Tri
   return tris;
 }
 
+/** Merge horizontal runs of a boolean mask into as few boxes as possible. */
+function maskToBoxes(
+  mask: ReliefMask,
+  x0: number,
+  y0: number,
+  cellW: number,
+  cellH: number,
+  z0: number,
+  z1: number,
+): Tri[] {
+  const tris: Tri[] = [];
+  for (let row = 0; row < mask.rows; row++) {
+    let run = 0;
+    for (let col = 0; col <= mask.cols; col++) {
+      const on = col < mask.cols && mask.data[row * mask.cols + col];
+      if (on) {
+        run++;
+        continue;
+      }
+      if (run > 0) {
+        const cx = x0 + (col - run) * cellW;
+        // Row 0 is the top of the image.
+        const cy = y0 + (mask.rows - 1 - row) * cellH;
+        tris.push(...box(cx, cy, z0, cx + run * cellW, cy + cellH, z1));
+        run = 0;
+      }
+    }
+  }
+  return tris;
+}
+
 export function buildFlatTagGeometry(options: FlatTagOptions): FlatTagGeometry {
   const {
     text,
@@ -226,6 +262,8 @@ export function buildFlatTagGeometry(options: FlatTagOptions): FlatTagGeometry {
     codeMm = 1,
     errorCorrectionLevel = "Q",
     recessed = false,
+    labelMask = null,
+    labelBandMm = 8,
   } = options;
 
   const outer = roundedRect(0, 0, widthMm, depthMm, radiusMm);
@@ -259,7 +297,14 @@ export function buildFlatTagGeometry(options: FlatTagOptions): FlatTagGeometry {
     areaX1 = Math.min(areaX1, widthMm - slotCx - slotW / 2 - 1.5);
   }
   const areaW = Math.max(0, areaX1 - areaX0);
-  const maxQrSizeMm = Math.max(0, Math.min(areaW, depthMm) - 2 * quietZoneMm);
+
+  // Reserve a band at the top of the plate for the phrase above the QR code.
+  const hasLabel = !!(labelMask && labelMask.cols > 0 && labelMask.rows > 0);
+  const labelGap = hasLabel ? Math.min(2, depthMm * 0.06) : 0;
+  const labelBand = hasLabel ? Math.max(2, Math.min(labelBandMm, depthMm * 0.5 - labelGap)) : 0;
+  const qrAreaDepth = Math.max(0, depthMm - labelBand - labelGap);
+
+  const maxQrSizeMm = Math.max(0, Math.min(areaW, qrAreaDepth) - 2 * quietZoneMm);
   const side = Math.min(qrSizeMm, maxQrSizeMm > 0 ? maxQrSizeMm : qrSizeMm);
 
 
@@ -268,7 +313,7 @@ export function buildFlatTagGeometry(options: FlatTagOptions): FlatTagGeometry {
   const data = qr.modules.data;
   const moduleMm = side / count;
   const originX = areaX0 + (areaW - side) / 2;
-  const originY = (depthMm - side) / 2;
+  const originY = (qrAreaDepth - side) / 2;
   const z0 = plateZ1 - OVERLAP;
 
   const code: Tri[] = [];
@@ -280,6 +325,15 @@ export function buildFlatTagGeometry(options: FlatTagOptions): FlatTagGeometry {
       const y = originY + (count - 1 - row) * moduleMm;
       code.push(...box(x, y, z0, x + moduleMm, y + moduleMm, topZ));
     }
+  }
+
+  if (hasLabel && labelMask) {
+    const scale = Math.min(areaW / labelMask.cols, labelBand / labelMask.rows);
+    const lw = labelMask.cols * scale;
+    const lh = labelMask.rows * scale;
+    const lx = areaX0 + (areaW - lw) / 2;
+    const ly = qrAreaDepth + labelGap + (labelBand - lh) / 2;
+    code.push(...maskToBoxes(labelMask, lx, ly, scale, scale, z0, topZ));
   }
 
   if (recessed && quietZoneMm > 0) {

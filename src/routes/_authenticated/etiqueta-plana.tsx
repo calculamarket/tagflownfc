@@ -9,6 +9,7 @@ import {
   buildFlatTagGeometry,
   type FlatTagOptions,
 } from "@/lib/flat-tag-3d";
+import { textToMask } from "@/lib/relief-raster";
 import { BatchGenerator } from "@/components/batch-generator";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
@@ -46,12 +47,17 @@ export const Route = createFileRoute("/_authenticated/etiqueta-plana")({
 type Level = "L" | "M" | "Q" | "H";
 const num = (v: string) => parseFloat(v.replace(",", "."));
 
+const DEFAULT_LABEL_PHRASE = "Emergência - Leia o QR Code";
+
 type Preset = {
   id: string;
   label: string;
   w: string; d: string; p: string; r: string;
   hole: boolean; hd: string; hm: string; qr: string;
   slots: boolean; sw: string; sh: string; sm: string;
+  /** Ativa a frase acima do QR (etiqueta retangular de emergência). */
+  withLabel?: boolean;
+  labelBand?: string;
 };
 
 const PRESETS: Preset[] = [
@@ -60,6 +66,7 @@ const PRESETS: Preset[] = [
   { id: "chaveiro", label: "Chaveiro com furo (45 × 30 mm)", w: "45", d: "30", p: "3", r: "6", hole: true, hd: "4", hm: "5", qr: "22", slots: false, sw: "4", sh: "22", sm: "7" },
   { id: "bagagem", label: "Bagagem (70 × 40 mm)", w: "70", d: "40", p: "3", r: "6", hole: true, hd: "6", hm: "7", qr: "30", slots: false, sw: "5", sh: "30", sm: "8" },
   { id: "patrimonio", label: "Patrimônio (40 × 40 mm)", w: "40", d: "40", p: "2", r: "3", hole: false, hd: "4", hm: "5", qr: "32", slots: false, sw: "4", sh: "30", sm: "6" },
+  { id: "emergencia", label: "Emergência retangular, com frase (60 × 45 mm)", w: "60", d: "45", p: "2.5", r: "5", hole: true, hd: "4", hm: "5", qr: "30", slots: false, sw: "4", sh: "25", sm: "7", withLabel: true, labelBand: "9" },
 ];
 
 
@@ -81,6 +88,10 @@ function FlatTagPage() {
   const [quietMm, setQuietMm] = useState("2");
   const [codeMm, setCodeMm] = useState("1");
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");
+
+  const [labelEnabled, setLabelEnabled] = useState(false);
+  const [labelText, setLabelText] = useState(DEFAULT_LABEL_PHRASE);
+  const [labelBandMm, setLabelBandMm] = useState("9");
 
   const [bodyColor, setBodyColor] = useState("#ffffff");
   const [codeColor, setCodeColor] = useState("#000000");
@@ -108,7 +119,15 @@ function FlatTagPage() {
     setWidthMm(p.w); setDepthMm(p.d); setPlateMm(p.p); setRadiusMm(p.r);
     setHole(p.hole); setHoleDiameterMm(p.hd); setHoleMarginMm(p.hm); setQrSizeMm(p.qr);
     setSlots(p.slots); setSlotWidthMm(p.sw); setSlotHeightMm(p.sh); setSlotMarginMm(p.sm);
+    setLabelEnabled(!!p.withLabel);
+    if (p.labelBand) setLabelBandMm(p.labelBand);
+    if (p.withLabel && !labelText.trim()) setLabelText(DEFAULT_LABEL_PHRASE);
   };
+
+  const labelMask = useMemo(
+    () => (labelEnabled && labelText.trim() ? textToMask(labelText) : null),
+    [labelEnabled, labelText],
+  );
 
   const options = (): FlatTagOptions => {
     const values = {
@@ -124,6 +143,7 @@ function FlatTagPage() {
       qrSizeMm: num(qrSizeMm),
       quietZoneMm: num(quietMm),
       codeMm: num(codeMm),
+      labelBandMm: num(labelBandMm),
     };
     if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     for (const [key, v] of Object.entries(values)) {
@@ -139,7 +159,13 @@ function FlatTagPage() {
     if (slots && 2 * (values.slotMarginMm + values.slotWidthMm / 2) + 10 > values.widthMm) {
       throw new Error("Não há largura suficiente entre os passadores.");
     }
-    return { text, ...values, hole, slots, errorCorrectionLevel: level, recessed: mode === "recess" };
+    if (labelEnabled && !labelText.trim()) {
+      throw new Error("Informe a frase que vai acima do QR Code, ou desative a opção.");
+    }
+    return {
+      text, ...values, hole, slots, errorCorrectionLevel: level, recessed: mode === "recess",
+      labelMask,
+    };
   };
 
   const summary = useMemo(() => {
@@ -154,7 +180,7 @@ function FlatTagPage() {
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, level, widthMm, depthMm, plateMm, radiusMm, hole, holeDiameterMm, holeMarginMm, slots, slotWidthMm, slotHeightMm, slotMarginMm, qrSizeMm, quietMm, codeMm, mode]);
+  }, [text, level, widthMm, depthMm, plateMm, radiusMm, hole, holeDiameterMm, holeMarginMm, slots, slotWidthMm, slotHeightMm, slotMarginMm, qrSizeMm, quietMm, codeMm, mode, labelEnabled, labelMask, labelBandMm]);
 
 
   const download = async (format: "3mf" | "stl") => {
@@ -325,6 +351,40 @@ function FlatTagPage() {
             </div>
           </div>
 
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex items-center gap-2">
+              <Switch id="label" checked={labelEnabled} onCheckedChange={setLabelEnabled} />
+              <Label htmlFor="label">Frase acima do QR (etiqueta retangular)</Label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Grava a frase em relevo numa faixa reservada no topo da placa, empurrando o QR
+              para baixo. Use uma peça mais alta que larga (retangular) para sobrar espaço —
+              o preset <strong>“Emergência retangular, com frase”</strong> já vem pronto.
+            </p>
+            {labelEnabled && (
+              <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+                <div className="space-y-1.5">
+                  <Label htmlFor="labelText">Frase</Label>
+                  <Input
+                    id="labelText"
+                    value={labelText}
+                    onChange={(e) => setLabelText(e.target.value)}
+                    placeholder="Emergência - Leia o QR Code"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="labelBand">Altura da faixa (mm)</Label>
+                  <Input
+                    id="labelBand"
+                    inputMode="decimal"
+                    value={labelBandMm}
+                    onChange={(e) => setLabelBandMm(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex flex-wrap gap-2">
             <Button disabled={busy} onClick={() => download("3mf")}>
               <Box className="size-4" /> Baixar .3mf (duas cores)
@@ -337,13 +397,21 @@ function FlatTagPage() {
 
         <aside className="space-y-3 rounded-lg border border-border bg-card p-5 h-fit">
           <div className="text-sm font-medium">Pré-visualização</div>
-          <canvas ref={canvasRef} className="w-full max-w-[220px] mx-auto rounded-md" />
+          <div className="rounded-md border border-border bg-white p-3 space-y-2">
+            {labelEnabled && labelText.trim() && (
+              <div className="text-center text-[11px] font-semibold uppercase tracking-wide text-neutral-800">
+                {labelText}
+              </div>
+            )}
+            <canvas ref={canvasRef} className="w-full max-w-[220px] mx-auto rounded-md" />
+          </div>
           <dl className="text-xs text-muted-foreground space-y-1">
             <div className="flex justify-between"><dt>Peça final</dt><dd>{summary?.size ?? "—"}</dd></div>
             <div className="flex justify-between"><dt>QR máximo</dt><dd>{summary ? `${summary.maxQr.toFixed(1)} mm` : "—"}</dd></div>
             <div className="flex justify-between"><dt>Troca de cor em</dt><dd>{summary ? `${summary.changeZ.toFixed(2)} mm` : "—"}</dd></div>
             <div className="flex justify-between"><dt>Furo</dt><dd>{hole ? `${holeDiameterMm} mm` : "sem furo"}</dd></div>
             <div className="flex justify-between"><dt>Passadores</dt><dd>{slots ? `2 × ${slotWidthMm} × ${slotHeightMm} mm` : "sem recortes"}</dd></div>
+            <div className="flex justify-between"><dt>Frase</dt><dd>{labelEnabled ? `${labelBandMm} mm` : "desativada"}</dd></div>
 
           </dl>
           <p className="text-xs text-muted-foreground">
