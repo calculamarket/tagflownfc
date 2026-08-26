@@ -7,7 +7,8 @@ import type { DestinationType } from "@/lib/destination";
 import {
   LINK_ITEM_TYPES, parseLinkItems, itemIcon, type LinkItem, type LinkItemType,
 } from "@/lib/link-menu";
-import { CATEGORIES, categoryById } from "@/lib/categories";
+import { categoriesFor, categoryById } from "@/lib/categories";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +69,8 @@ export function SimpleTagConfig({
   /** Categoria de produção da tag (ex.: "pet"): direciona a ativação. */
   category?: string | null;
 }) {
+  const isAdmin = useIsAdmin();
+  const visibleCategories = categoriesFor(isAdmin);
   const [cat, setCat] = useState(() => categoryById(category));
   const [name, setName] = useState(initialName);
   const [mode, setMode] = useState<Mode>(
@@ -196,7 +199,7 @@ export function SimpleTagConfig({
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {CATEGORIES.map((c) => (
+          {visibleCategories.map((c) => (
             <ModeCard
               key={c.id}
               active={cat?.id === c.id}

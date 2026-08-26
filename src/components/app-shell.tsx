@@ -14,6 +14,7 @@ import { getMyBrand } from "@/lib/tenant.functions";
 import { applyBrandTheme } from "@/lib/tenant";
 import { unreadNotifications } from "@/lib/notifications.functions";
 import { Button } from "@/components/ui/button";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 
 // Itens principais (gestão das etiquetas).
 const mainNav = [
@@ -62,9 +63,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     select: (s) => new URLSearchParams(s.location.searchStr).get("category"),
   });
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState<string>("");
   const { theme, toggle } = useTheme();
+  const isAdmin = useIsAdmin();
   const navigate = useNavigate();
   const { data: brand = BRAND } = useQuery({ queryKey: ["my-brand"], queryFn: () => getMyBrand() });
   const { data: unread = 0 } = useQuery({
@@ -72,6 +73,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     queryFn: () => unreadNotifications(),
     refetchInterval: 60_000,
   });
+
+  // Conta comum: acesso enxuto (ativar etiqueta, tags e analytics).
+  const userMain = mainNav.filter((i) => i.to === "/ativar" || i.to === "/tags");
+  const userSecondary = secondaryNav.filter((i) => i.to === "/analytics");
+  const visibleMain = isAdmin ? mainNav : userMain;
+  const visibleSecondary = isAdmin ? secondaryNav : userSecondary;
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
   const linkCls = (active: boolean) =>
@@ -94,8 +101,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
       setEmail(data.user.email ?? "");
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
-      setIsAdmin(!!roles?.some((r) => r.role === "admin"));
     });
   }, []);
 
@@ -133,7 +138,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {mainNav.map((item) => {
+          {visibleMain.map((item) => {
             const Icon = item.icon;
             const showBadge = item.to === "/notificacoes" && unread > 0;
             return (
@@ -149,7 +154,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
 
-          {categoryNav.map((item) => {
+          {isAdmin && categoryNav.map((item) => {
             const Icon = item.icon;
             const active = pathname === "/tags/new" && activeCategory === item.category;
             return (
@@ -165,8 +170,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
 
-          {/* Submenu retrátil: geradores de produção 3D */}
-          <button
+          {/* Submenu retrátil: geradores de produção 3D (admin) */}
+          {isAdmin && <button
             type="button"
             onClick={() => setGenOpen((o) => !o)}
             className={cn(linkCls(inGen && !genOpen), "w-full justify-between")}
@@ -176,8 +181,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               Produção 3D
             </span>
             <ChevronDown className={cn("size-4 transition-transform", genOpen && "rotate-180")} />
-          </button>
-          {genOpen && (
+          </button>}
+          {isAdmin && genOpen && (
             <div className="ml-4 space-y-1 border-l border-sidebar-border pl-2">
               {generators.map((item) => {
                 const Icon = item.icon;
@@ -191,7 +196,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           )}
 
-          {secondaryNav.map((item) => {
+          {visibleSecondary.map((item) => {
             const Icon = item.icon;
             return (
               <Link key={item.to} to={item.to} className={linkCls(isActive(item.to))}>

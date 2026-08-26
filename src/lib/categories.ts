@@ -3,7 +3,7 @@
 // direto ao formulário certo (com a moldagem daquela categoria).
 
 export type SimpleMode = "pix" | "links" | "emergency" | "wifi";
-export type CategoryId = "pet" | "emergencia" | "idoso" | "pix" | "menu" | "wifi";
+export type CategoryId = "pet" | "emergencia" | "idoso" | "kids" | "pix" | "menu" | "wifi";
 
 export type CategoryDef = {
   id: CategoryId;
@@ -54,8 +54,19 @@ export const CATEGORIES: CategoryDef[] = [
     intro:
       "Cadastre os contatos da família e as informações de saúde do idoso — quem socorrer terá tudo à mão.",
   },
+  {
+    id: "kids",
+    label: "QR Kids",
+    icon: "🎒",
+    mode: "emergency",
+    titleLabel: "Nome da criança",
+    titlePlaceholder: "Ana Clara",
+    defaultMessage: "Se me encontrar sozinha(o), avise meus responsáveis:",
+    infoPlaceholder: "Ex.: alergias, escola, turma, medicações, observações…",
+    intro: "Cadastre os responsáveis e informações da criança para quem encontrar a etiqueta.",
+  },
   { id: "pix", label: "PIX", icon: "💠", mode: "pix" },
-  { id: "menu", label: "Menu de links", icon: "🔗", mode: "links" },
+  { id: "menu", label: "Links Genéricos", icon: "🔗", mode: "links" },
   {
     id: "wifi",
     label: "Wi-Fi",
@@ -67,4 +78,11 @@ export const CATEGORIES: CategoryDef[] = [
 
 export function categoryById(id?: string | null): CategoryDef | null {
   return CATEGORIES.find((c) => c.id === id) ?? null;
+}
+
+/** Categorias liberadas para o cliente final (conta comum). */
+export const USER_CATEGORY_IDS: CategoryId[] = ["wifi", "idoso", "pet", "kids", "menu"];
+
+export function categoriesFor(isAdmin: boolean): CategoryDef[] {
+  return isAdmin ? CATEGORIES : CATEGORIES.filter((c) => USER_CATEGORY_IDS.includes(c.id));
 }
