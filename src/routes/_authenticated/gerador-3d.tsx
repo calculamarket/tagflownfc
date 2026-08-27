@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Box, Download } from "lucide-react";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { buildQrStl } from "@/lib/qr-stl";
+import { buildEmergencyPlate3mf, buildEmergencyPlateStl } from "@/lib/emergency-plate-3d";
 import { BatchGenerator } from "@/components/batch-generator";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
@@ -38,10 +39,17 @@ export const Route = createFileRoute("/_authenticated/gerador-3d")({
 });
 
 type Level = "L" | "M" | "Q" | "H";
+type Model = "placa" | "emergencia";
 
 const num = (v: string) => parseFloat(v.replace(",", "."));
 
 function Gerador3dPage() {
+  const [model, setModel] = useState<Model>("placa");
+  const [caption, setCaption] = useState("Emergência - Leia o QR Code");
+  const [emWidth, setEmWidth] = useState("45");
+  const [emHeight, setEmHeight] = useState("60");
+  const [emThickness, setEmThickness] = useState("1.5");
+  const [emHole, setEmHole] = useState("0");
   const [text, setText] = useState("https://www.3dqr.com.br");
   const [level, setLevel] = useState<Level>("M");
   const [sizeMm, setSizeMm] = useState("50");
@@ -88,14 +96,46 @@ function Gerador3dPage() {
     };
   };
 
+  const emergencyOptions = () => {
+    const w = num(emWidth);
+    const h = num(emHeight);
+    const t = num(emThickness);
+    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (!(w > 0) || !(h > 0) || !(t > 0)) {
+      throw new Error("Informe medidas válidas em milímetros.");
+    }
+    return {
+      widthMm: w,
+      heightMm: h,
+      thicknessMm: t,
+      reliefHeightMm: num(codeMm) || 0.6,
+      caption,
+      holeDiameterMm: num(emHole) || 0,
+      errorCorrectionLevel: level,
+      baseColor: fillColor,
+      codeColor,
+      baseSlot: bodySlot,
+      codeSlot,
+    };
+  };
+
+  const buildModel = (content: string, format: "3mf" | "stl") => {
+    if (model === "emergencia") {
+      const opts = emergencyOptions();
+      return format === "3mf"
+        ? buildEmergencyPlate3mf(content, opts)
+        : buildEmergencyPlateStl(content, opts);
+    }
+    const opts = options();
+    return format === "3mf"
+      ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
+      : buildQrStl(content, opts);
+  };
+
   const download = async (format: "3mf" | "stl") => {
     setBusy(true);
     try {
-      const opts = options();
-      const blob =
-        format === "3mf"
-          ? await buildQr3mf(text, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
-          : buildQrStl(text, opts);
+      const blob = await buildModel(text, format);
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = href;
@@ -222,12 +262,7 @@ function Gerador3dPage() {
       <BatchGenerator
         sameText={text}
         filename={filename || "qrcode-3d"}
-        build={(content, format) => {
-          const opts = options();
-          return format === "3mf"
-            ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
-            : buildQrStl(content, opts);
-        }}
+        build={(content, format) => buildModel(content, format)}
       />
     </div>
   );
