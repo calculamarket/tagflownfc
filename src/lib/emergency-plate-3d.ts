@@ -103,8 +103,8 @@ function plateBoxes(
 }
 
 function geometry(text: string, o: EmergencyPlateOptions) {
-  const width = o.widthMm ?? 45;
-  const height = o.heightMm ?? 60;
+  const width = o.widthMm ?? 40;
+  const height = o.heightMm ?? 50;
   const thickness = o.thicknessMm ?? 1.5;
   const relief = o.reliefHeightMm ?? 0.6;
   const margin = o.marginMm ?? 3;
