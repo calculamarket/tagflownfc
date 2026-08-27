@@ -165,6 +165,17 @@ function Gerador3dPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
           <div className="space-y-1.5">
+            <Label>Modelo da peça</Label>
+            <Select value={model} onValueChange={(v) => setModel(v as Model)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="placa">Placa quadrada · só QR Code</SelectItem>
+                <SelectItem value="emergencia">Etiqueta Emergência · 45 × 60 × 1,5 mm com frase</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="conteudo">Conteúdo do QR Code</Label>
             <Textarea
               id="conteudo"
@@ -188,32 +199,61 @@ function Gerador3dPage() {
                 </SelectContent>
               </Select>
             </div>
+            {model === "placa" ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="size">Tamanho do código (mm)</Label>
+                  <Input id="size" inputMode="decimal" value={sizeMm} onChange={(e) => setSizeMm(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="quiet">Quiet zone (mm)</Label>
+                  <Input id="quiet" inputMode="decimal" value={quietMm} onChange={(e) => setQuietMm(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="fill">Espessura da base (mm)</Label>
+                  <Input id="fill" inputMode="decimal" value={fillMm} onChange={(e) => setFillMm(e.target.value)} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="emw">Largura (mm)</Label>
+                  <Input id="emw" inputMode="decimal" value={emWidth} onChange={(e) => setEmWidth(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="emh">Altura (mm)</Label>
+                  <Input id="emh" inputMode="decimal" value={emHeight} onChange={(e) => setEmHeight(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="emt">Espessura da placa (mm)</Label>
+                  <Input id="emt" inputMode="decimal" value={emThickness} onChange={(e) => setEmThickness(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="emhole">Furo para cordão (mm, 0 = sem)</Label>
+                  <Input id="emhole" inputMode="decimal" value={emHole} onChange={(e) => setEmHole(e.target.value)} />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="frase">Frase acima do QR Code</Label>
+                  <Input id="frase" value={caption} onChange={(e) => setCaption(e.target.value)} />
+                </div>
+              </>
+            )}
             <div className="space-y-1.5">
-              <Label htmlFor="size">Tamanho do código (mm)</Label>
-              <Input id="size" inputMode="decimal" value={sizeMm} onChange={(e) => setSizeMm(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="quiet">Quiet zone (mm)</Label>
-              <Input id="quiet" inputMode="decimal" value={quietMm} onChange={(e) => setQuietMm(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="fill">Espessura da base (mm)</Label>
-              <Input id="fill" inputMode="decimal" value={fillMm} onChange={(e) => setFillMm(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="code">Espessura do código (mm)</Label>
+              <Label htmlFor="code">Altura do relevo (mm)</Label>
               <Input id="code" inputMode="decimal" value={codeMm} onChange={(e) => setCodeMm(e.target.value)} />
             </div>
-            <div className="space-y-1.5">
-              <Label>Modo</Label>
-              <Select value={mode} onValueChange={(v) => setMode(v as "emboss" | "recess")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="emboss">Relevo</SelectItem>
-                  <SelectItem value="recess">Baixo-relevo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {model === "placa" && (
+              <div className="space-y-1.5">
+                <Label>Modo</Label>
+                <Select value={mode} onValueChange={(v) => setMode(v as "emboss" | "recess")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="emboss">Relevo</SelectItem>
+                    <SelectItem value="recess">Baixo-relevo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <SlotCountField value={slots} onChange={setSlots} />
             <MaterialSlotFields
               label="Base"
@@ -249,8 +289,8 @@ function Gerador3dPage() {
           <div className="text-sm font-medium">Pré-visualização</div>
           <canvas ref={canvasRef} className="w-full max-w-[260px] mx-auto rounded-md" />
           <dl className="text-xs text-muted-foreground space-y-1">
-            <div className="flex justify-between"><dt>Placa final</dt><dd>{total.toFixed(1)} × {total.toFixed(1)} mm</dd></div>
-            <div className="flex justify-between"><dt>Altura total</dt><dd>{((num(fillMm) || 0) + (num(codeMm) || 0)).toFixed(2)} mm</dd></div>
+            <div className="flex justify-between"><dt>Placa final</dt><dd>{model === "placa" ? `${total.toFixed(1)} × ${total.toFixed(1)}` : `${(num(emWidth) || 0).toFixed(1)} × ${(num(emHeight) || 0).toFixed(1)}`} mm</dd></div>
+            <div className="flex justify-between"><dt>Altura total</dt><dd>{(((model === "placa" ? num(fillMm) : num(emThickness)) || 0) + (num(codeMm) || 0)).toFixed(2)} mm</dd></div>
           </dl>
           <p className="text-xs text-muted-foreground">
             No 3MF, base e código saem como dois objetos — basta atribuir o filamento de
