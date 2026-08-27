@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Box, Download } from "lucide-react";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { buildQrStl } from "@/lib/qr-stl";
+import { buildEmergencyPlate3mf, buildEmergencyPlateStl } from "@/lib/emergency-plate-3d";
 import { BatchGenerator } from "@/components/batch-generator";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
@@ -38,10 +39,17 @@ export const Route = createFileRoute("/_authenticated/gerador-3d")({
 });
 
 type Level = "L" | "M" | "Q" | "H";
+type Model = "placa" | "emergencia";
 
 const num = (v: string) => parseFloat(v.replace(",", "."));
 
 function Gerador3dPage() {
+  const [model, setModel] = useState<Model>("placa");
+  const [caption, setCaption] = useState("Emergência - Leia o QR Code");
+  const [emWidth, setEmWidth] = useState("45");
+  const [emHeight, setEmHeight] = useState("60");
+  const [emThickness, setEmThickness] = useState("1.5");
+  const [emHole, setEmHole] = useState("0");
   const [text, setText] = useState("https://www.3dqr.com.br");
   const [level, setLevel] = useState<Level>("M");
   const [sizeMm, setSizeMm] = useState("50");
@@ -88,14 +96,46 @@ function Gerador3dPage() {
     };
   };
 
+  const emergencyOptions = () => {
+    const w = num(emWidth);
+    const h = num(emHeight);
+    const t = num(emThickness);
+    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (!(w > 0) || !(h > 0) || !(t > 0)) {
+      throw new Error("Informe medidas válidas em milímetros.");
+    }
+    return {
+      widthMm: w,
+      heightMm: h,
+      thicknessMm: t,
+      reliefHeightMm: num(codeMm) || 0.6,
+      caption,
+      holeDiameterMm: num(emHole) || 0,
+      errorCorrectionLevel: level,
+      baseColor: fillColor,
+      codeColor,
+      baseSlot: bodySlot,
+      codeSlot,
+    };
+  };
+
+  const buildModel = (content: string, format: "3mf" | "stl") => {
+    if (model === "emergencia") {
+      const opts = emergencyOptions();
+      return format === "3mf"
+        ? buildEmergencyPlate3mf(content, opts)
+        : buildEmergencyPlateStl(content, opts);
+    }
+    const opts = options();
+    return format === "3mf"
+      ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
+      : buildQrStl(content, opts);
+  };
+
   const download = async (format: "3mf" | "stl") => {
     setBusy(true);
     try {
-      const opts = options();
-      const blob =
-        format === "3mf"
-          ? await buildQr3mf(text, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
-          : buildQrStl(text, opts);
+      const blob = await buildModel(text, format);
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = href;
@@ -125,6 +165,17 @@ function Gerador3dPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
           <div className="space-y-1.5">
+            <Label>Modelo da peça</Label>
+            <Select value={model} onValueChange={(v) => setModel(v as Model)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="placa">Placa quadrada · só QR Code</SelectItem>
+                <SelectItem value="emergencia">Etiqueta Emergência · 45 × 60 × 1,5 mm com frase</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="conteudo">Conteúdo do QR Code</Label>
             <Textarea
               id="conteudo"
@@ -148,32 +199,61 @@ function Gerador3dPage() {
                 </SelectContent>
               </Select>
             </div>
+            {model === "placa" ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="size">Tamanho do código (mm)</Label>
+                  <Input id="size" inputMode="decimal" value={sizeMm} onChange={(e) => setSizeMm(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="quiet">Quiet zone (mm)</Label>
+                  <Input id="quiet" inputMode="decimal" value={quietMm} onChange={(e) => setQuietMm(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="fill">Espessura da base (mm)</Label>
+                  <Input id="fill" inputMode="decimal" value={fillMm} onChange={(e) => setFillMm(e.target.value)} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="emw">Largura (mm)</Label>
+                  <Input id="emw" inputMode="decimal" value={emWidth} onChange={(e) => setEmWidth(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="emh">Altura (mm)</Label>
+                  <Input id="emh" inputMode="decimal" value={emHeight} onChange={(e) => setEmHeight(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="emt">Espessura da placa (mm)</Label>
+                  <Input id="emt" inputMode="decimal" value={emThickness} onChange={(e) => setEmThickness(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="emhole">Furo para cordão (mm, 0 = sem)</Label>
+                  <Input id="emhole" inputMode="decimal" value={emHole} onChange={(e) => setEmHole(e.target.value)} />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="frase">Frase acima do QR Code</Label>
+                  <Input id="frase" value={caption} onChange={(e) => setCaption(e.target.value)} />
+                </div>
+              </>
+            )}
             <div className="space-y-1.5">
-              <Label htmlFor="size">Tamanho do código (mm)</Label>
-              <Input id="size" inputMode="decimal" value={sizeMm} onChange={(e) => setSizeMm(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="quiet">Quiet zone (mm)</Label>
-              <Input id="quiet" inputMode="decimal" value={quietMm} onChange={(e) => setQuietMm(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="fill">Espessura da base (mm)</Label>
-              <Input id="fill" inputMode="decimal" value={fillMm} onChange={(e) => setFillMm(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="code">Espessura do código (mm)</Label>
+              <Label htmlFor="code">Altura do relevo (mm)</Label>
               <Input id="code" inputMode="decimal" value={codeMm} onChange={(e) => setCodeMm(e.target.value)} />
             </div>
-            <div className="space-y-1.5">
-              <Label>Modo</Label>
-              <Select value={mode} onValueChange={(v) => setMode(v as "emboss" | "recess")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="emboss">Relevo</SelectItem>
-                  <SelectItem value="recess">Baixo-relevo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {model === "placa" && (
+              <div className="space-y-1.5">
+                <Label>Modo</Label>
+                <Select value={mode} onValueChange={(v) => setMode(v as "emboss" | "recess")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="emboss">Relevo</SelectItem>
+                    <SelectItem value="recess">Baixo-relevo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <SlotCountField value={slots} onChange={setSlots} />
             <MaterialSlotFields
               label="Base"
@@ -209,8 +289,8 @@ function Gerador3dPage() {
           <div className="text-sm font-medium">Pré-visualização</div>
           <canvas ref={canvasRef} className="w-full max-w-[260px] mx-auto rounded-md" />
           <dl className="text-xs text-muted-foreground space-y-1">
-            <div className="flex justify-between"><dt>Placa final</dt><dd>{total.toFixed(1)} × {total.toFixed(1)} mm</dd></div>
-            <div className="flex justify-between"><dt>Altura total</dt><dd>{((num(fillMm) || 0) + (num(codeMm) || 0)).toFixed(2)} mm</dd></div>
+            <div className="flex justify-between"><dt>Placa final</dt><dd>{model === "placa" ? `${total.toFixed(1)} × ${total.toFixed(1)}` : `${(num(emWidth) || 0).toFixed(1)} × ${(num(emHeight) || 0).toFixed(1)}`} mm</dd></div>
+            <div className="flex justify-between"><dt>Altura total</dt><dd>{(((model === "placa" ? num(fillMm) : num(emThickness)) || 0) + (num(codeMm) || 0)).toFixed(2)} mm</dd></div>
           </dl>
           <p className="text-xs text-muted-foreground">
             No 3MF, base e código saem como dois objetos — basta atribuir o filamento de
@@ -222,12 +302,7 @@ function Gerador3dPage() {
       <BatchGenerator
         sameText={text}
         filename={filename || "qrcode-3d"}
-        build={(content, format) => {
-          const opts = options();
-          return format === "3mf"
-            ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
-            : buildQrStl(content, opts);
-        }}
+        build={(content, format) => buildModel(content, format)}
       />
     </div>
   );
