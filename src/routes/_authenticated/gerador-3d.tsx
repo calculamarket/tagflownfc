@@ -46,8 +46,8 @@ const num = (v: string) => parseFloat(v.replace(",", "."));
 function Gerador3dPage() {
   const [model, setModel] = useState<Model>("placa");
   const [caption, setCaption] = useState("Emergência - Leia o QR Code");
-  const [emWidth, setEmWidth] = useState("45");
-  const [emHeight, setEmHeight] = useState("60");
+  const [emWidth, setEmWidth] = useState("40");
+  const [emHeight, setEmHeight] = useState("50");
   const [emThickness, setEmThickness] = useState("1.5");
   const [emHole, setEmHole] = useState("0");
   const [text, setText] = useState("https://www.3dqr.com.br");
@@ -170,7 +170,7 @@ function Gerador3dPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="placa">Placa quadrada · só QR Code</SelectItem>
-                <SelectItem value="emergencia">Etiqueta Emergência · 45 × 60 × 1,5 mm com frase</SelectItem>
+                <SelectItem value="emergencia">Etiqueta Emergência · 40 × 50 × 1,5 mm com frase</SelectItem>
               </SelectContent>
             </Select>
           </div>
