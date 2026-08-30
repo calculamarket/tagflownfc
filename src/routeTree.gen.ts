@@ -35,6 +35,7 @@ import { Route as AuthenticatedPetTagRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPlacaPixRouteImport } from './routes/_authenticated/placa-pix'
 import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
 import { Route as AuthenticatedQrKidsRouteImport } from './routes/_authenticated/qr-kids'
+import { Route as AuthenticatedQuebraCabecaMontessoriRouteImport } from './routes/_authenticated/quebra-cabeca-montessori'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
@@ -186,6 +187,12 @@ const AuthenticatedQrKidsRoute = AuthenticatedQrKidsRouteImport.update({
   path: '/qr-kids',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedQuebraCabecaMontessoriRoute =
+  AuthenticatedQuebraCabecaMontessoriRouteImport.update({
+    id: '/quebra-cabeca-montessori',
+    path: '/quebra-cabeca-montessori',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -280,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/qr-kids': typeof AuthenticatedQrKidsRoute
+  '/quebra-cabeca-montessori': typeof AuthenticatedQuebraCabecaMontessoriRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tags': typeof AuthenticatedTagsRouteWithChildren
   '/team': typeof AuthenticatedTeamRoute
@@ -320,6 +328,7 @@ export interface FileRoutesByTo {
   '/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/qr-kids': typeof AuthenticatedQrKidsRoute
+  '/quebra-cabeca-montessori': typeof AuthenticatedQuebraCabecaMontessoriRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/ativar/$id': typeof AtivarIdRoute
@@ -361,6 +370,7 @@ export interface FileRoutesById {
   '/_authenticated/placa-pix': typeof AuthenticatedPlacaPixRoute
   '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
   '/_authenticated/qr-kids': typeof AuthenticatedQrKidsRoute
+  '/_authenticated/quebra-cabeca-montessori': typeof AuthenticatedQuebraCabecaMontessoriRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tags': typeof AuthenticatedTagsRouteWithChildren
   '/_authenticated/team': typeof AuthenticatedTeamRoute
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/placa-pix'
     | '/qr-codes'
     | '/qr-kids'
+    | '/quebra-cabeca-montessori'
     | '/settings'
     | '/tags'
     | '/team'
@@ -443,6 +454,7 @@ export interface FileRouteTypes {
     | '/placa-pix'
     | '/qr-codes'
     | '/qr-kids'
+    | '/quebra-cabeca-montessori'
     | '/settings'
     | '/team'
     | '/ativar/$id'
@@ -483,6 +495,7 @@ export interface FileRouteTypes {
     | '/_authenticated/placa-pix'
     | '/_authenticated/qr-codes'
     | '/_authenticated/qr-kids'
+    | '/_authenticated/quebra-cabeca-montessori'
     | '/_authenticated/settings'
     | '/_authenticated/tags'
     | '/_authenticated/team'
@@ -693,6 +706,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQrKidsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/quebra-cabeca-montessori': {
+      id: '/_authenticated/quebra-cabeca-montessori'
+      path: '/quebra-cabeca-montessori'
+      fullPath: '/quebra-cabeca-montessori'
+      preLoaderRoute: typeof AuthenticatedQuebraCabecaMontessoriRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -824,6 +844,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlacaPixRoute: typeof AuthenticatedPlacaPixRoute
   AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
   AuthenticatedQrKidsRoute: typeof AuthenticatedQrKidsRoute
+  AuthenticatedQuebraCabecaMontessoriRoute: typeof AuthenticatedQuebraCabecaMontessoriRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTagsRoute: typeof AuthenticatedTagsRouteWithChildren
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
@@ -855,6 +876,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlacaPixRoute: AuthenticatedPlacaPixRoute,
   AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
   AuthenticatedQrKidsRoute: AuthenticatedQrKidsRoute,
+  AuthenticatedQuebraCabecaMontessoriRoute:
+    AuthenticatedQuebraCabecaMontessoriRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTagsRoute: AuthenticatedTagsRouteWithChildren,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
