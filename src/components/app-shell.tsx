@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Tags, QrCode, Link2, BarChart3, Zap, Users,
   Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown, Bell,
-  Wifi, HeartPulse,
+  Wifi, HeartPulse, Palette,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +42,7 @@ const generators = [
   { to: "/molde-silicone", label: "Molde de Silicone", icon: Boxes },
   { to: "/qr-kids", label: "QR Kids", icon: Backpack },
   { to: "/criador-envelopes", label: "Criador de Envelopes", icon: Mail },
+  { to: "/kit-pintura", label: "Kit de Pintura 3D", icon: Palette },
 ] as const;
 
 // Ferramentas e configurações.
