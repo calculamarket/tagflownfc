@@ -6,6 +6,7 @@ import { Box, Download } from "lucide-react";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { buildQrStl } from "@/lib/qr-stl";
 import { buildEmergencyPlate3mf, buildEmergencyPlateStl } from "@/lib/emergency-plate-3d";
+import { buildNfcTag3mf, buildNfcTagStl } from "@/lib/nfc-tag-3d";
 import { BatchGenerator } from "@/components/batch-generator";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/gerador-3d")({
 });
 
 type Level = "L" | "M" | "Q" | "H";
-type Model = "placa" | "emergencia";
+type Model = "placa" | "emergencia" | "nfc";
 
 const num = (v: string) => parseFloat(v.replace(",", "."));
 
