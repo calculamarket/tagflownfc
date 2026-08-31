@@ -6,6 +6,7 @@ import { Box, Download } from "lucide-react";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { buildQrStl } from "@/lib/qr-stl";
 import { buildEmergencyPlate3mf, buildEmergencyPlateStl } from "@/lib/emergency-plate-3d";
+import { buildNfcTag3mf, buildNfcTagStl } from "@/lib/nfc-tag-3d";
 import { BatchGenerator } from "@/components/batch-generator";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/gerador-3d")({
 });
 
 type Level = "L" | "M" | "Q" | "H";
-type Model = "placa" | "emergencia";
+type Model = "placa" | "emergencia" | "nfc";
 
 const num = (v: string) => parseFloat(v.replace(",", "."));
 
@@ -120,8 +121,11 @@ function Gerador3dPage() {
   };
 
   const buildModel = (content: string, format: "3mf" | "stl") => {
-    if (model === "emergencia") {
+    if (model === "emergencia" || model === "nfc") {
       const opts = emergencyOptions();
+      if (model === "nfc") {
+        return format === "3mf" ? buildNfcTag3mf(content, opts) : buildNfcTagStl(content, opts);
+      }
       return format === "3mf"
         ? buildEmergencyPlate3mf(content, opts)
         : buildEmergencyPlateStl(content, opts);
@@ -166,11 +170,25 @@ function Gerador3dPage() {
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
           <div className="space-y-1.5">
             <Label>Modelo da peça</Label>
-            <Select value={model} onValueChange={(v) => setModel(v as Model)}>
+            <Select
+              value={model}
+              onValueChange={(v) => {
+                const m = v as Model;
+                setModel(m);
+                if (m === "emergencia") {
+                  setEmWidth("40");
+                  setEmHeight("50");
+                } else if (m === "nfc") {
+                  setEmWidth("45");
+                  setEmHeight("60");
+                }
+              }}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="placa">Placa quadrada · só QR Code</SelectItem>
                 <SelectItem value="emergencia">Etiqueta Emergência · 40 × 50 × 1,5 mm com frase</SelectItem>
+                <SelectItem value="nfc">QR + NFC · 45 × 60 × 1,5 mm com ícone NFC</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -232,10 +250,12 @@ function Gerador3dPage() {
                   <Label htmlFor="emhole">Furo para cordão (mm, 0 = sem)</Label>
                   <Input id="emhole" inputMode="decimal" value={emHole} onChange={(e) => setEmHole(e.target.value)} />
                 </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="frase">Frase acima do QR Code</Label>
-                  <Input id="frase" value={caption} onChange={(e) => setCaption(e.target.value)} />
-                </div>
+                {model === "emergencia" && (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="frase">Frase acima do QR Code</Label>
+                    <Input id="frase" value={caption} onChange={(e) => setCaption(e.target.value)} />
+                  </div>
+                )}
               </>
             )}
             <div className="space-y-1.5">
