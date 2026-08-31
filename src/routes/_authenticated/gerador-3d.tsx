@@ -51,6 +51,7 @@ function Gerador3dPage() {
   const [emHeight, setEmHeight] = useState("50");
   const [emThickness, setEmThickness] = useState("1.5");
   const [emHole, setEmHole] = useState("0");
+  const [nfcQuietMm, setNfcQuietMm] = useState("1.5");
   const [text, setText] = useState("https://www.3dqr.com.br");
   const [level, setLevel] = useState<Level>("M");
   const [sizeMm, setSizeMm] = useState("50");
@@ -124,7 +125,12 @@ function Gerador3dPage() {
     if (model === "emergencia" || model === "nfc") {
       const opts = emergencyOptions();
       if (model === "nfc") {
-        return format === "3mf" ? buildNfcTag3mf(content, opts) : buildNfcTagStl(content, opts);
+        const quietZone = num(nfcQuietMm);
+        if (!(quietZone >= 0) || quietZone * 2 >= opts.widthMm) {
+          throw new Error("Informe uma zona de silêncio válida para o QR Code.");
+        }
+        const nfcOpts = { ...opts, quietZoneMm: quietZone };
+        return format === "3mf" ? buildNfcTag3mf(content, nfcOpts) : buildNfcTagStl(content, nfcOpts);
       }
       return format === "3mf"
         ? buildEmergencyPlate3mf(content, opts)
@@ -250,6 +256,19 @@ function Gerador3dPage() {
                   <Label htmlFor="emhole">Furo para cordão (mm, 0 = sem)</Label>
                   <Input id="emhole" inputMode="decimal" value={emHole} onChange={(e) => setEmHole(e.target.value)} />
                 </div>
+                {model === "nfc" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="nfc-quiet">Zona de silêncio lateral (mm)</Label>
+                    <Input
+                      id="nfc-quiet"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.1"
+                      value={nfcQuietMm}
+                      onChange={(e) => setNfcQuietMm(e.target.value)}
+                    />
+                  </div>
+                )}
                 {model === "emergencia" && (
                   <div className="space-y-1.5 sm:col-span-2">
                     <Label htmlFor="frase">Frase acima do QR Code</Label>

@@ -22,6 +22,8 @@ export type NfcTagOptions = {
   marginMm?: number;
   /** Height of the NFC icon/label strip below the QR code, in mm. */
   nfcZoneMm?: number;
+  /** Clear space between each side wall and the QR code, in mm. */
+  quietZoneMm?: number;
   errorCorrectionLevel?: "L" | "M" | "Q" | "H";
   /** Corner hole for a cord / hook (0 disables it). */
   holeDiameterMm?: number;
@@ -145,7 +147,8 @@ function geometry(text: string, o: NfcTagOptions) {
   const thickness = o.thicknessMm ?? 1.5;
   const relief = o.reliefHeightMm ?? 0.6;
   const margin = o.marginMm ?? 3;
-  const nfcZone = o.nfcZoneMm ?? 12;
+  const nfcZone = o.nfcZoneMm ?? 9;
+  const quietZone = o.quietZoneMm ?? 1.5;
   const hole = o.holeDiameterMm ?? 0;
 
   const z0 = thickness - OVERLAP_MM;
@@ -189,12 +192,13 @@ function geometry(text: string, o: NfcTagOptions) {
   const qr = QRCode.create(text, { errorCorrectionLevel: o.errorCorrectionLevel ?? "M" });
   const n = qr.modules.size;
   const data = qr.modules.data;
-  const areaW = width - margin * 2;
-  const areaH = topLimit - (nfcY + nfcZone + 2); // 2 mm gap above the NFC strip
+  const areaW = Math.max(0, width - quietZone * 2);
+  const nfcGap = 1.5;
+  const areaH = topLimit - (nfcY + nfcZone + nfcGap);
   const side = Math.min(areaW, areaH);
   const moduleMm = side / n;
   const ox = (width - side) / 2;
-  const oy = nfcY + nfcZone + 2 + (areaH - side) / 2;
+  const oy = nfcY + nfcZone + nfcGap + (areaH - side) / 2;
 
   for (let row = 0; row < n; row++) {
     for (let col = 0; col < n; col++) {
