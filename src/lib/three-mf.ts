@@ -244,6 +244,7 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     `<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>` +
     `<Default Extension="config" ContentType="application/xml"/>` +
     `<Default Extension="json" ContentType="application/json"/>` +
+    `<Default Extension="txt" ContentType="text/plain"/>` +
     `</Types>`;
 
   const rels =
@@ -276,5 +277,6 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     { name: "Metadata/Slic3r_PE_model.config", data: encoder.encode(prusaConfig) },
     { name: "Metadata/model_settings.config", data: encoder.encode(orcaConfig) },
     { name: "Metadata/project_settings.config", data: encoder.encode(projectSettings) },
+    { name: "Metadata/print_notes.txt", data: encoder.encode(printNotes) },
   ]);
 }
