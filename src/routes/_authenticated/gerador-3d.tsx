@@ -250,10 +250,12 @@ function Gerador3dPage() {
                   <Label htmlFor="emhole">Furo para cordão (mm, 0 = sem)</Label>
                   <Input id="emhole" inputMode="decimal" value={emHole} onChange={(e) => setEmHole(e.target.value)} />
                 </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="frase">Frase acima do QR Code</Label>
-                  <Input id="frase" value={caption} onChange={(e) => setCaption(e.target.value)} />
-                </div>
+                {model === "emergencia" && (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="frase">Frase acima do QR Code</Label>
+                    <Input id="frase" value={caption} onChange={(e) => setCaption(e.target.value)} />
+                  </div>
+                )}
               </>
             )}
             <div className="space-y-1.5">
