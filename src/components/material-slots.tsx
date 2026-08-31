@@ -2,7 +2,17 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { FILAMENT_TYPES, type FilamentType, type MaterialSlot } from "@/lib/three-mf";
+import { FILAMENT_TYPES, MATERIAL_PROFILES, type FilamentType, type MaterialSlot } from "@/lib/three-mf";
+
+/** Short temperature hint shown under the material selector. */
+function TempHint({ material }: { material: FilamentType }) {
+  const p = MATERIAL_PROFILES[material];
+  return (
+    <p className="text-xs text-muted-foreground">
+      Bico {p.nozzleMin}–{p.nozzleMax}°C · mesa {p.bed}°C
+    </p>
+  );
+}
 
 type Props = {
   label: string;
@@ -46,6 +56,7 @@ export function MaterialSlotFields({ label, idPrefix, value, onChange, slots }: 
             ))}
           </SelectContent>
         </Select>
+        <TempHint material={value.material} />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor={`${idPrefix}-cor`}>{label} · cor</Label>
@@ -121,7 +132,10 @@ export function SlotPalette({ value, onChange }: PaletteProps) {
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground">{slot.color.toUpperCase()}</span>
+            <span className="text-xs text-muted-foreground">
+              {slot.color.toUpperCase()} · bico {MATERIAL_PROFILES[slot.material].nozzleMin}–
+              {MATERIAL_PROFILES[slot.material].nozzleMax}°C
+            </span>
           </div>
         ))}
       </div>
