@@ -253,6 +253,21 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     `Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>` +
     `</Relationships>`;
 
+  // Print notes: one block per distinct material actually used, so whoever
+  // slices the file sees the temperature limits (e.g. PETG <= 240C to avoid
+  // stringing) without leaving the slicer.
+  const usedMaterials = Array.from(new Set(slotList.map((s) => s.material)));
+  const printNotes =
+    `TagFlow - Notas de impressao\r\n` +
+    `=============================\r\n\r\n` +
+    usedMaterials
+      .map((m) => {
+        const p = MATERIAL_PROFILES[m];
+        const slots = slotList.filter((s) => s.material === m).map((s) => `T${s.extruder}`);
+        return `[${m}] (slot ${slots.join(", ")})\r\n${p.notes}\r\n`;
+      })
+      .join("\r\n");
+
   const encoder = new TextEncoder();
   return createZip([
     { name: "[Content_Types].xml", data: encoder.encode(contentTypes) },
