@@ -147,7 +147,7 @@ function geometry(text: string, o: NfcTagOptions) {
   const thickness = o.thicknessMm ?? 1.5;
   const relief = o.reliefHeightMm ?? 0.6;
   const margin = o.marginMm ?? 3;
-  const nfcZone = o.nfcZoneMm ?? 9;
+  const nfcZone = o.nfcZoneMm ?? 4.5;
   const quietZone = o.quietZoneMm ?? 1.5;
   const hole = o.holeDiameterMm ?? 0;
 
@@ -155,16 +155,16 @@ function geometry(text: string, o: NfcTagOptions) {
   const z1 = thickness + relief;
 
   const holeSpec = hole > 0 ? { cx: width / 2, cy: height - margin - hole / 2, d: hole } : null;
-  const topLimit = holeSpec ? holeSpec.cy - hole / 2 - 1.5 : height - margin;
+  const topLimit = holeSpec ? holeSpec.cy - hole / 2 - 1.5 : height - quietZone;
 
   const detail: Box[] = [];
 
   // Keep the NFC mark compact and centred inside its strip. The strip itself
   // remains unchanged so it continues to separate the mark from the QR quiet
   // zone, but the artwork no longer dominates the plate.
-  const nfcY = margin;
-  const iconSize = Math.min(6, nfcZone * 0.5);
-  const labelHeight = Math.min(3.6, nfcZone * 0.3);
+  const nfcY = Math.min(quietZone, 0.75);
+  const iconSize = Math.min(4, nfcZone * 0.75);
+  const labelHeight = Math.min(2.5, nfcZone * 0.5);
   const labelWidth = Math.min(9, width * 0.2);
   const markGap = 1.5;
   const markWidth = iconSize + markGap + labelWidth;
@@ -193,7 +193,7 @@ function geometry(text: string, o: NfcTagOptions) {
   const n = qr.modules.size;
   const data = qr.modules.data;
   const areaW = Math.max(0, width - quietZone * 2);
-  const nfcGap = 1.5;
+  const nfcGap = 0.5;
   const areaH = topLimit - (nfcY + nfcZone + nfcGap);
   const side = Math.min(areaW, areaH);
   const moduleMm = side / n;

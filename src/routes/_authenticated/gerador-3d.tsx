@@ -267,6 +267,9 @@ function Gerador3dPage() {
                       value={nfcQuietMm}
                       onChange={(e) => setNfcQuietMm(e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Aplicada entre o QR e as bordas superior e laterais.
+                    </p>
                   </div>
                 )}
                 {model === "emergencia" && (
