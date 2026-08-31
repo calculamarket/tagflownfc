@@ -32,6 +32,67 @@ export type Mf3Object = {
   slot: MaterialSlot;
 };
 
+export type MaterialProfile = {
+  /** Nozzle temperature range °C. */
+  nozzleMin: number;
+  nozzleMax: number;
+  /** Default nozzle temp used in the print profile. */
+  nozzle: number;
+  /** First-layer nozzle temp. */
+  nozzleFirst: number;
+  /** Bed temp °C. */
+  bed: number;
+  /** Human-readable printing notes shipped inside the 3MF. */
+  notes: string;
+};
+
+export const MATERIAL_PROFILES: Record<FilamentType, MaterialProfile> = {
+  PLA: {
+    nozzleMin: 190, nozzleMax: 220, nozzle: 210, nozzleFirst: 215, bed: 60,
+    notes:
+      "PLA: bico 190-220C (padrao 210C), mesa 60C. Nao precisa de fechamento. " +
+      "Cooling 100% a partir da camada 3.",
+  },
+  PETG: {
+    nozzleMin: 220, nozzleMax: 240, nozzle: 235, nozzleFirst: 240, bed: 70,
+    notes:
+      "PETG: bico 220-240C (padrao 235C) - NAO ultrapasse 240C, temperaturas " +
+      "maiores causam stringing (fios) nas pecas. Mesa 70C. Cooling 40-60%; " +
+      "evite 100% pois prejudica a aderencia entre camadas. Se ainda houver " +
+      "fios, reduza a temperatura em 5C e aumente a retracao para ~1mm.",
+  },
+  ABS: {
+    nozzleMin: 230, nozzleMax: 250, nozzle: 240, nozzleFirst: 245, bed: 100,
+    notes:
+      "ABS: bico 230-250C (padrao 240C), mesa 100C. Requer impressora fechada " +
+      "para evitar warping. Cooling 0-20%. Ventile o ambiente.",
+  },
+  ASA: {
+    nozzleMin: 235, nozzleMax: 255, nozzle: 245, nozzleFirst: 250, bed: 100,
+    notes:
+      "ASA: bico 235-255C (padrao 245C), mesa 100C. Impressora fechada " +
+      "obrigatoria; resistente a UV, ideal para pecas externas.",
+  },
+  TPU: {
+    nozzleMin: 210, nozzleMax: 230, nozzle: 220, nozzleFirst: 225, bed: 50,
+    notes:
+      "TPU (flexivel): bico 210-230C (padrao 220C), mesa 50C. Imprima devagar " +
+      "(20-40mm/s) e desative a retracao ou use valores bem baixos.",
+  },
+  PC: {
+    nozzleMin: 250, nozzleMax: 280, nozzle: 265, nozzleFirst: 270, bed: 110,
+    notes:
+      "PC (policarbonato): bico 250-280C (padrao 265C), mesa 110C. Filamento " +
+      "higroscopico - seque a 80C por 4h antes de imprimir.",
+  },
+  PA: {
+    nozzleMin: 240, nozzleMax: 270, nozzle: 255, nozzleFirst: 260, bed: 90,
+    notes:
+      "PA (nylon): bico 240-270C (padrao 255C), mesa 90C. Muito higroscopico: " +
+      "seque a 70C por 6h antes de imprimir.",
+  },
+};
+
 export function normalizeSlot(
   slot: Partial<MaterialSlot> | undefined,
   fallback: MaterialSlot,
