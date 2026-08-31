@@ -207,6 +207,18 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     filament_type: slotList.map((s) => s.material),
     filament_colour: slotList.map((s) => s.color.toUpperCase()),
     filament_settings_id: slotList.map((s) => `${s.material}`),
+    // Temperatures per extruder slot, taken from the material profiles.
+    nozzle_temperature: slotList.map((s) => `${MATERIAL_PROFILES[s.material].nozzle}`),
+    nozzle_temperature_initial_layer: slotList.map(
+      (s) => `${MATERIAL_PROFILES[s.material].nozzleFirst}`,
+    ),
+    nozzle_temperature_range_low: slotList.map(
+      (s) => `${MATERIAL_PROFILES[s.material].nozzleMin}`,
+    ),
+    nozzle_temperature_range_high: slotList.map(
+      (s) => `${MATERIAL_PROFILES[s.material].nozzleMax}`,
+    ),
+    bed_temperature: slotList.map((s) => `${MATERIAL_PROFILES[s.material].bed}`),
     // Fast-but-safe speed profile so plates don't take hours to print.
     outer_wall_speed: "200",
     inner_wall_speed: "300",
