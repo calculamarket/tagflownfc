@@ -142,6 +142,12 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<model unit="millimeter" xml:lang="en-US" ` +
     `xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">` +
+    `<metadata name="Application">TagFlow</metadata>` +
+    `<metadata name="Description">` +
+    `Materiais: ${objects.map((o) => o.slot.material).join(", ")}. ` +
+    `Consulte Metadata/print_notes.txt para limites de temperatura ` +
+    `(ex.: PETG nao ultrapassar 240C para evitar stringing).` +
+    `</metadata>` +
     `<resources><basematerials id="1">${materials}</basematerials>${resources}${assembly}</resources>` +
     `<build>${items}</build>` +
     `</model>`;
