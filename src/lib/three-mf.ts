@@ -32,6 +32,67 @@ export type Mf3Object = {
   slot: MaterialSlot;
 };
 
+export type MaterialProfile = {
+  /** Nozzle temperature range °C. */
+  nozzleMin: number;
+  nozzleMax: number;
+  /** Default nozzle temp used in the print profile. */
+  nozzle: number;
+  /** First-layer nozzle temp. */
+  nozzleFirst: number;
+  /** Bed temp °C. */
+  bed: number;
+  /** Human-readable printing notes shipped inside the 3MF. */
+  notes: string;
+};
+
+export const MATERIAL_PROFILES: Record<FilamentType, MaterialProfile> = {
+  PLA: {
+    nozzleMin: 190, nozzleMax: 220, nozzle: 210, nozzleFirst: 215, bed: 60,
+    notes:
+      "PLA: bico 190-220C (padrao 210C), mesa 60C. Nao precisa de fechamento. " +
+      "Cooling 100% a partir da camada 3.",
+  },
+  PETG: {
+    nozzleMin: 220, nozzleMax: 240, nozzle: 235, nozzleFirst: 240, bed: 70,
+    notes:
+      "PETG: bico 220-240C (padrao 235C) - NAO ultrapasse 240C, temperaturas " +
+      "maiores causam stringing (fios) nas pecas. Mesa 70C. Cooling 40-60%; " +
+      "evite 100% pois prejudica a aderencia entre camadas. Se ainda houver " +
+      "fios, reduza a temperatura em 5C e aumente a retracao para ~1mm.",
+  },
+  ABS: {
+    nozzleMin: 230, nozzleMax: 250, nozzle: 240, nozzleFirst: 245, bed: 100,
+    notes:
+      "ABS: bico 230-250C (padrao 240C), mesa 100C. Requer impressora fechada " +
+      "para evitar warping. Cooling 0-20%. Ventile o ambiente.",
+  },
+  ASA: {
+    nozzleMin: 235, nozzleMax: 255, nozzle: 245, nozzleFirst: 250, bed: 100,
+    notes:
+      "ASA: bico 235-255C (padrao 245C), mesa 100C. Impressora fechada " +
+      "obrigatoria; resistente a UV, ideal para pecas externas.",
+  },
+  TPU: {
+    nozzleMin: 210, nozzleMax: 230, nozzle: 220, nozzleFirst: 225, bed: 50,
+    notes:
+      "TPU (flexivel): bico 210-230C (padrao 220C), mesa 50C. Imprima devagar " +
+      "(20-40mm/s) e desative a retracao ou use valores bem baixos.",
+  },
+  PC: {
+    nozzleMin: 250, nozzleMax: 280, nozzle: 265, nozzleFirst: 270, bed: 110,
+    notes:
+      "PC (policarbonato): bico 250-280C (padrao 265C), mesa 110C. Filamento " +
+      "higroscopico - seque a 80C por 4h antes de imprimir.",
+  },
+  PA: {
+    nozzleMin: 240, nozzleMax: 270, nozzle: 255, nozzleFirst: 260, bed: 90,
+    notes:
+      "PA (nylon): bico 240-270C (padrao 255C), mesa 90C. Muito higroscopico: " +
+      "seque a 70C por 6h antes de imprimir.",
+  },
+};
+
 export function normalizeSlot(
   slot: Partial<MaterialSlot> | undefined,
   fallback: MaterialSlot,
@@ -81,6 +142,12 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<model unit="millimeter" xml:lang="en-US" ` +
     `xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">` +
+    `<metadata name="Application">TagFlow</metadata>` +
+    `<metadata name="Description">` +
+    `Materiais: ${objects.map((o) => o.slot.material).join(", ")}. ` +
+    `Consulte Metadata/print_notes.txt para limites de temperatura ` +
+    `(ex.: PETG nao ultrapassar 240C para evitar stringing).` +
+    `</metadata>` +
     `<resources><basematerials id="1">${materials}</basematerials>${resources}${assembly}</resources>` +
     `<build>${items}</build>` +
     `</model>`;
@@ -146,6 +213,18 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     filament_type: slotList.map((s) => s.material),
     filament_colour: slotList.map((s) => s.color.toUpperCase()),
     filament_settings_id: slotList.map((s) => `${s.material}`),
+    // Temperatures per extruder slot, taken from the material profiles.
+    nozzle_temperature: slotList.map((s) => `${MATERIAL_PROFILES[s.material].nozzle}`),
+    nozzle_temperature_initial_layer: slotList.map(
+      (s) => `${MATERIAL_PROFILES[s.material].nozzleFirst}`,
+    ),
+    nozzle_temperature_range_low: slotList.map(
+      (s) => `${MATERIAL_PROFILES[s.material].nozzleMin}`,
+    ),
+    nozzle_temperature_range_high: slotList.map(
+      (s) => `${MATERIAL_PROFILES[s.material].nozzleMax}`,
+    ),
+    bed_temperature: slotList.map((s) => `${MATERIAL_PROFILES[s.material].bed}`),
     // Fast-but-safe speed profile so plates don't take hours to print.
     outer_wall_speed: "200",
     inner_wall_speed: "300",
@@ -171,6 +250,7 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     `<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>` +
     `<Default Extension="config" ContentType="application/xml"/>` +
     `<Default Extension="json" ContentType="application/json"/>` +
+    `<Default Extension="txt" ContentType="text/plain"/>` +
     `</Types>`;
 
   const rels =
@@ -180,6 +260,21 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     `Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>` +
     `</Relationships>`;
 
+  // Print notes: one block per distinct material actually used, so whoever
+  // slices the file sees the temperature limits (e.g. PETG <= 240C to avoid
+  // stringing) without leaving the slicer.
+  const usedMaterials = Array.from(new Set(slotList.map((s) => s.material)));
+  const printNotes =
+    `TagFlow - Notas de impressao\r\n` +
+    `=============================\r\n\r\n` +
+    usedMaterials
+      .map((m) => {
+        const p = MATERIAL_PROFILES[m];
+        const slots = slotList.filter((s) => s.material === m).map((s) => `T${s.extruder}`);
+        return `[${m}] (slot ${slots.join(", ")})\r\n${p.notes}\r\n`;
+      })
+      .join("\r\n");
+
   const encoder = new TextEncoder();
   return createZip([
     { name: "[Content_Types].xml", data: encoder.encode(contentTypes) },
@@ -188,5 +283,6 @@ export function pack3mf(objects: Mf3Object[]): Promise<Blob> {
     { name: "Metadata/Slic3r_PE_model.config", data: encoder.encode(prusaConfig) },
     { name: "Metadata/model_settings.config", data: encoder.encode(orcaConfig) },
     { name: "Metadata/project_settings.config", data: encoder.encode(projectSettings) },
+    { name: "Metadata/print_notes.txt", data: encoder.encode(printNotes) },
   ]);
 }
