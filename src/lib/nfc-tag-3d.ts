@@ -82,7 +82,7 @@ function nfcIconBoxes(
 ): Box[] {
   const boxes: Box[] = [];
   const rMax = size / 2;
-  const thick = Math.max(0.6, size * 0.09);
+  const thick = Math.max(0.5, size * 0.075);
   // Emitter dot.
   const dot = size * 0.14;
   boxes.push([cx - dot / 2, cy - rMax + size * 0.06, z0, cx + dot / 2, cy - rMax + size * 0.06 + dot, z1]);
@@ -156,10 +156,17 @@ function geometry(text: string, o: NfcTagOptions) {
 
   const detail: Box[] = [];
 
-  // NFC strip at the bottom: waves icon + "NFC" label, side by side.
+  // Keep the NFC mark compact and centred inside its strip. The strip itself
+  // remains unchanged so it continues to separate the mark from the QR quiet
+  // zone, but the artwork no longer dominates the plate.
   const nfcY = margin;
-  const iconSize = nfcZone * 0.85;
-  const iconCx = margin + iconSize / 2 + 1;
+  const iconSize = Math.min(6, nfcZone * 0.5);
+  const labelHeight = Math.min(3.6, nfcZone * 0.3);
+  const labelWidth = Math.min(9, width * 0.2);
+  const markGap = 1.5;
+  const markWidth = iconSize + markGap + labelWidth;
+  const markX = (width - markWidth) / 2;
+  const iconCx = markX + iconSize / 2;
   const iconCy = nfcY + nfcZone / 2;
   detail.push(...nfcIconBoxes(iconCx, iconCy, iconSize, z0, z1));
 
@@ -168,10 +175,10 @@ function geometry(text: string, o: NfcTagOptions) {
     ...maskToBoxes(
       labelMask,
       {
-        x: iconCx + iconSize / 2 + 2,
-        y: nfcY,
-        w: width - margin - (iconCx + iconSize / 2 + 2),
-        h: nfcZone,
+        x: markX + iconSize + markGap,
+        y: iconCy - labelHeight / 2,
+        w: labelWidth,
+        h: labelHeight,
       },
       z0,
       z1,
