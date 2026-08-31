@@ -121,8 +121,11 @@ function Gerador3dPage() {
   };
 
   const buildModel = (content: string, format: "3mf" | "stl") => {
-    if (model === "emergencia") {
+    if (model === "emergencia" || model === "nfc") {
       const opts = emergencyOptions();
+      if (model === "nfc") {
+        return format === "3mf" ? buildNfcTag3mf(content, opts) : buildNfcTagStl(content, opts);
+      }
       return format === "3mf"
         ? buildEmergencyPlate3mf(content, opts)
         : buildEmergencyPlateStl(content, opts);
@@ -167,11 +170,25 @@ function Gerador3dPage() {
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
           <div className="space-y-1.5">
             <Label>Modelo da peça</Label>
-            <Select value={model} onValueChange={(v) => setModel(v as Model)}>
+            <Select
+              value={model}
+              onValueChange={(v) => {
+                const m = v as Model;
+                setModel(m);
+                if (m === "emergencia") {
+                  setEmWidth("40");
+                  setEmHeight("50");
+                } else if (m === "nfc") {
+                  setEmWidth("45");
+                  setEmHeight("60");
+                }
+              }}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="placa">Placa quadrada · só QR Code</SelectItem>
                 <SelectItem value="emergencia">Etiqueta Emergência · 40 × 50 × 1,5 mm com frase</SelectItem>
+                <SelectItem value="nfc">QR + NFC · 45 × 60 × 1,5 mm com ícone NFC</SelectItem>
               </SelectContent>
             </Select>
           </div>
