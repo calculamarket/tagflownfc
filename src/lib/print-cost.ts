@@ -246,26 +246,31 @@ export type ProductionMixItem = {
   units: number;
   hoursUsed: number;
   profit: number;
+  /** Lucro por hora de máquina desse produto — é o critério usado para ranquear os "melhores itens". */
+  profitPerHour: number;
 };
 
 export type ProductionMixResult = {
-  /** Produtos a produzir, na ordem em que a capacidade foi alocada (mais lucro/hora primeiro). */
+  /** Produtos a produzir, ranqueados do melhor pro pior lucro/hora — os "melhores itens" a vender. */
   items: ProductionMixItem[];
   monthlyCapacityHours: number;
   totalHoursUsed: number;
   totalProfit: number;
-  /** Bate a meta usando os produtos cadastrados, dentro da capacidade mensal? */
+  profitGoal: number;
+  /** Bate a meta usando 100% da capacidade mensal com os produtos cadastrados? */
   feasible: boolean;
   /** Quanto falta para a meta mesmo usando 100% da capacidade com o mix atual. */
   shortfall: number;
+  /** Quanto o lucro do mix passa da meta, usando toda a capacidade disponível. */
+  surplus: number;
 };
 
 /**
- * Monta o plano de produção do mês: quantas unidades de cada produto cadastrado
- * vender para bater a meta de lucro por máquina, usando a capacidade disponível
- * da forma mais eficiente possível — prioriza sempre o produto com maior lucro
- * por hora de máquina, e passa para o próximo assim que a meta é atingida ou a
- * capacidade se esgota.
+ * Monta o plano de produção do mês: usa 100% da capacidade disponível da
+ * máquina (horas/dia × dias/mês) alocando primeiro para o produto cadastrado
+ * com maior lucro por hora, depois o próximo melhor, e assim por diante até a
+ * capacidade se esgotar — mostrando o lucro máximo possível no mês com o mix
+ * atual de produtos, não só o mínimo para bater a meta.
  */
 export function calcProductionMix(
   products: MixProduct[],
@@ -289,18 +294,14 @@ export function calcProductionMix(
   const items: ProductionMixItem[] = [];
 
   for (const p of candidates) {
-    if (cumulativeProfit >= profitGoal || remainingHours <= 0) break;
+    if (remainingHours <= 0) break;
 
-    const maxUnitsByCapacity = Math.floor(remainingHours / p.printHours);
-    if (maxUnitsByCapacity <= 0) continue;
-
-    const unitsNeededToReachGoal = Math.ceil((profitGoal - cumulativeProfit) / p.profitPerUnit);
-    const units = Math.min(maxUnitsByCapacity, Math.max(unitsNeededToReachGoal, 0));
+    const units = Math.floor(remainingHours / p.printHours);
     if (units <= 0) continue;
 
     const hoursUsed = units * p.printHours;
     const profit = units * p.profitPerUnit;
-    items.push({ id: p.id, label: p.label, units, hoursUsed, profit });
+    items.push({ id: p.id, label: p.label, units, hoursUsed, profit, profitPerHour: p.density });
     cumulativeProfit += profit;
     remainingHours -= hoursUsed;
   }
@@ -310,7 +311,9 @@ export function calcProductionMix(
     monthlyCapacityHours,
     totalHoursUsed: monthlyCapacityHours - remainingHours,
     totalProfit: cumulativeProfit,
+    profitGoal,
     feasible: cumulativeProfit >= profitGoal,
     shortfall: Math.max(0, profitGoal - cumulativeProfit),
+    surplus: Math.max(0, cumulativeProfit - profitGoal),
   };
 }

@@ -544,9 +544,9 @@ function CalculatorPage() {
           <div className="text-sm font-semibold">Plano de produção do mês</div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Com os produtos cadastrados e a capacidade da máquina, este é o jeito mais eficiente de
-          usar as horas disponíveis: começa pelo produto de maior lucro por hora e completa com os
-          seguintes até bater a meta.
+          Usa 100% da capacidade disponível da máquina no mês, alocada sempre pelos melhores itens
+          primeiro (maior lucro por hora), depois o próximo melhor, e assim por diante — mostrando o
+          lucro máximo possível com o mix de produtos cadastrado, não só o mínimo para bater a meta.
         </p>
         {history.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -570,7 +570,8 @@ function CalculatorPage() {
                       <span className="font-semibold">{item.units} un</span> de {item.label}
                     </span>
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatDuration(item.hoursUsed)} · {formatBRL(item.profit)}
+                      {formatDuration(item.hoursUsed)} · {formatBRL(item.profit)} ·{" "}
+                      {formatBRL(item.profitPerHour)}/h
                     </span>
                   </li>
                 ))}
@@ -585,12 +586,15 @@ function CalculatorPage() {
             </div>
             {productionMix.feasible ? (
               <div className="rounded-md bg-success/15 px-3 py-2 text-sm text-success">
-                Meta batida: lucro estimado de {formatBRL(productionMix.totalProfit)} (meta{" "}
-                {formatBRL(profitGoal)}).
+                Meta batida usando 100% da capacidade: lucro estimado de{" "}
+                {formatBRL(productionMix.totalProfit)} (meta {formatBRL(profitGoal)}
+                {productionMix.surplus > 0 && <>, {formatBRL(productionMix.surplus)} acima dela</>}
+                ).
               </div>
             ) : (
               <div className="rounded-md bg-warning/15 px-3 py-2 text-sm text-warning-foreground">
-                Mesmo usando 100% da capacidade com os produtos cadastrados, faltam{" "}
+                Mesmo usando 100% da capacidade com os produtos cadastrados, o lucro máximo possível
+                é {formatBRL(productionMix.totalProfit)} — faltam{" "}
                 {formatBRL(productionMix.shortfall)} para a meta de {formatBRL(profitGoal)}.
               </div>
             )}
