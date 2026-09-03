@@ -71,3 +71,37 @@ export const deleteCostCalculation = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// Meta de lucro por máquina/mês + capacidade (horas/dia × dias/mês). Uma
+// linha por usuário — não é histórico, é a configuração corrente.
+const settingsSchema = z.object({
+  profit_goal_cents: z.number().int().min(0),
+  machine_hours_per_day: z.number().min(0).max(24),
+  machine_days_per_month: z.number().min(0).max(31),
+});
+
+export const getCostSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("print_cost_settings")
+      .select("*")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const saveCostSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => settingsSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("print_cost_settings")
+      .upsert(
+        { ...data, user_id: context.userId, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

@@ -274,6 +274,30 @@ export type Database = {
           },
         ]
       }
+      print_cost_settings: {
+        Row: {
+          machine_days_per_month: number
+          machine_hours_per_day: number
+          profit_goal_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          machine_days_per_month?: number
+          machine_hours_per_day?: number
+          profit_goal_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          machine_days_per_month?: number
+          machine_hours_per_day?: number
+          profit_goal_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

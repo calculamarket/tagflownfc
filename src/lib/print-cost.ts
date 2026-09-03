@@ -135,3 +135,70 @@ export function toCalculationRow(i: PrintCostInputs, r: PrintCostResult) {
     real_margin_pct: safe(r.margemReal),
   };
 }
+
+/** Meta de lucro por máquina/mês e o regime de operação usado para calcular a capacidade. */
+export type CapacityGoalInputs = {
+  /** Meta de lucro líquido por máquina, em R$/mês. */
+  profitGoal: number;
+  machineHoursPerDay: number;
+  machineDaysPerMonth: number;
+};
+
+export type CapacityGoalResult = {
+  /** Horas de produção disponíveis por mês (horas/dia × dias/mês). */
+  monthlyCapacityHours: number;
+  /** Máximo de unidades que a máquina imprime no mês, dado o tempo de impressão do produto. */
+  maxUnitsPerMonth: number;
+  /** Unidades/mês necessárias para bater a meta. Null quando o produto não dá lucro (meta inatingível a qualquer quantidade). */
+  neededUnitsForGoal: number | null;
+  /** Dá pra bater a meta sem estourar a capacidade da máquina? */
+  feasible: boolean;
+  /** % da capacidade mensal usada (para bater a meta, ou rodando no máximo quando inviável). */
+  utilizationPct: number;
+  /** Lucro possível nesse produto rodando a máquina 100% do tempo disponível. */
+  maxProfitAtCapacity: number;
+};
+
+/**
+ * Quanto vender de um produto por mês para bater a meta de lucro por máquina,
+ * sempre limitado às horas de impressão que a máquina tem disponíveis no mês.
+ */
+export function calcCapacityGoal(
+  printHours: number,
+  profitPerUnit: number,
+  goal: CapacityGoalInputs,
+): CapacityGoalResult {
+  const monthlyCapacityHours = Math.max(
+    0,
+    safe(goal.machineHoursPerDay) * safe(goal.machineDaysPerMonth),
+  );
+  const ph = safe(printHours);
+  const maxUnitsPerMonth = ph > 0 ? Math.floor(monthlyCapacityHours / ph) : 0;
+  const maxProfitAtCapacity = maxUnitsPerMonth * safe(profitPerUnit);
+
+  if (profitPerUnit <= 0) {
+    return {
+      monthlyCapacityHours,
+      maxUnitsPerMonth,
+      neededUnitsForGoal: null,
+      feasible: false,
+      utilizationPct: 0,
+      maxProfitAtCapacity,
+    };
+  }
+
+  const neededUnitsForGoal = Math.ceil(safe(goal.profitGoal) / profitPerUnit);
+  const feasible = neededUnitsForGoal <= maxUnitsPerMonth;
+  const unitsForUtilization = feasible ? neededUnitsForGoal : maxUnitsPerMonth;
+  const utilizationPct =
+    monthlyCapacityHours > 0 ? ((unitsForUtilization * ph) / monthlyCapacityHours) * 100 : 0;
+
+  return {
+    monthlyCapacityHours,
+    maxUnitsPerMonth,
+    neededUnitsForGoal,
+    feasible,
+    utilizationPct,
+    maxProfitAtCapacity,
+  };
+}

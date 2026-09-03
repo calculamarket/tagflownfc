@@ -1,18 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listTags } from "@/lib/tags.functions";
 import {
   listCostCalculations,
   saveCostCalculation,
   deleteCostCalculation,
+  getCostSettings,
+  saveCostSettings,
 } from "@/lib/print-cost.functions";
 import {
   calcPrintCost,
+  calcCapacityGoal,
   formatBRL,
   toCalculationRow,
   EMPTY_INPUTS,
   type PrintCostInputs,
+  type CapacityGoalInputs,
+  type CapacityGoalResult,
 } from "@/lib/print-cost";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +27,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import {
   Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
 } from "@/components/ui/command";
-import { Calculator, Save, Trash2, ChevronsUpDown, Check, Package } from "lucide-react";
+import { Calculator, Save, Trash2, ChevronsUpDown, Check, Package, Target } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -89,6 +94,51 @@ function CalculatorPage() {
   const { data: history = [] } = useQuery({
     queryKey: ["cost-calculations"],
     queryFn: () => listCostCalculations(),
+  });
+
+  // Meta de lucro por máquina/mês + capacidade (horas/dia × dias/mês). Usada
+  // pela tabela de Produtos Calculados abaixo para dizer quanto vender de
+  // cada produto para bater a meta, dentro do limite de horas da máquina.
+  const [profitGoal, setProfitGoal] = useState(1000);
+  const [hoursPerDay, setHoursPerDay] = useState(16);
+  const [daysPerMonth, setDaysPerMonth] = useState(30);
+  const [settingsSeeded, setSettingsSeeded] = useState(false);
+
+  const { data: costSettings } = useQuery({
+    queryKey: ["cost-settings"],
+    queryFn: () => getCostSettings(),
+  });
+
+  useEffect(() => {
+    if (costSettings && !settingsSeeded) {
+      setProfitGoal(costSettings.profit_goal_cents / 100);
+      setHoursPerDay(Number(costSettings.machine_hours_per_day));
+      setDaysPerMonth(Number(costSettings.machine_days_per_month));
+      setSettingsSeeded(true);
+    }
+  }, [costSettings, settingsSeeded]);
+
+  const goalInputs: CapacityGoalInputs = {
+    profitGoal,
+    machineHoursPerDay: hoursPerDay,
+    machineDaysPerMonth: daysPerMonth,
+  };
+  const monthlyCapacityHours = Math.max(0, hoursPerDay * daysPerMonth);
+
+  const saveSettings = useMutation({
+    mutationFn: () =>
+      saveCostSettings({
+        data: {
+          profit_goal_cents: Math.round(profitGoal * 100),
+          machine_hours_per_day: hoursPerDay,
+          machine_days_per_month: daysPerMonth,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Meta de produção salva.");
+      qc.invalidateQueries({ queryKey: ["cost-settings"] });
+    },
+    onError: (e) => toast.error((e as Error).message),
   });
 
   const result = useMemo(() => calcPrintCost(inputs), [inputs]);
@@ -259,11 +309,54 @@ function CalculatorPage() {
         </div>
       </div>
 
-      {/* Histórico */}
+      {/* Meta de produção por máquina */}
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Target className="size-4 text-primary" />
+          <div className="text-sm font-semibold">Meta de produção por máquina</div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Defina quanto cada máquina precisa lucrar por mês e quantas horas por mês ela roda. A
+          tabela de Produtos Calculados abaixo usa isso para mostrar quanto vender de cada produto
+          para bater a meta — sempre dentro do limite de horas disponíveis da máquina.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <GoalField
+            label="Meta de lucro líquido / máquina / mês"
+            prefix="R$"
+            value={profitGoal}
+            onChange={setProfitGoal}
+          />
+          <GoalField
+            label="Horas de operação por dia"
+            suffix="h"
+            value={hoursPerDay}
+            onChange={setHoursPerDay}
+          />
+          <GoalField
+            label="Dias de operação por mês"
+            suffix="dias"
+            value={daysPerMonth}
+            onChange={setDaysPerMonth}
+          />
+        </div>
+        <div className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2">
+          <span className="text-xs text-muted-foreground">Capacidade mensal por máquina</span>
+          <span className="text-sm font-semibold">{formatDuration(monthlyCapacityHours)}</span>
+        </div>
+        <Button size="sm" disabled={saveSettings.isPending} onClick={() => saveSettings.mutate()}>
+          <Save className="size-4" /> {saveSettings.isPending ? "Salvando…" : "Salvar meta"}
+        </Button>
+      </div>
+
+      {/* Produtos calculados */}
       <div className="rounded-lg border border-border bg-card">
         <div className="p-5 border-b border-border">
-          <div className="font-semibold">Histórico de cálculos</div>
-          <p className="text-sm text-muted-foreground">Seus cálculos salvos, mais recentes primeiro.</p>
+          <div className="font-semibold">Produtos Calculados</div>
+          <p className="text-sm text-muted-foreground">
+            Seus cálculos salvos, mais recentes primeiro — com quanto vender por mês para bater a
+            meta de lucro por máquina, dentro da capacidade disponível.
+          </p>
         </div>
         {history.length === 0 ? (
           <p className="px-5 py-10 text-center text-sm text-muted-foreground">
@@ -279,39 +372,58 @@ function CalculatorPage() {
                   <th className="px-4 py-3 font-medium">Custo</th>
                   <th className="px-4 py-3 font-medium">Preço sugerido</th>
                   <th className="px-4 py-3 font-medium">Margem</th>
+                  <th className="px-4 py-3 font-medium">Qtd./mês p/ meta</th>
+                  <th className="px-4 py-3 font-medium">Capacidade máx./mês</th>
+                  <th className="px-4 py-3 font-medium">Situação</th>
                   <th className="px-4 py-3 font-medium">Data</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {history.map((h) => (
-                  <tr key={h.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-3 font-medium">{h.label || "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {(h as { tag?: { name?: string } | null }).tag?.name ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {formatBRL(h.cost_with_failure_cents / 100)}
-                    </td>
-                    <td className="px-4 py-3 font-medium">
-                      {formatBRL(h.suggested_price_cents / 100)}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {Number(h.real_margin_pct).toFixed(1)}%
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">
-                      {new Date(h.created_at).toLocaleDateString("pt-BR")}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button
-                        size="sm" variant="ghost"
-                        onClick={() => { if (confirm("Remover este cálculo?")) del.mutate(h.id); }}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {history.map((h) => {
+                  const goal = calcCapacityGoal(
+                    Number(h.print_hours),
+                    h.net_profit_cents / 100,
+                    goalInputs,
+                  );
+                  return (
+                    <tr key={h.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3 font-medium">{h.label || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {(h as { tag?: { name?: string } | null }).tag?.name ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {formatBRL(h.cost_with_failure_cents / 100)}
+                      </td>
+                      <td className="px-4 py-3 font-medium">
+                        {formatBRL(h.suggested_price_cents / 100)}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {Number(h.real_margin_pct).toFixed(1)}%
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {goal.neededUnitsForGoal === null ? "—" : `${goal.neededUnitsForGoal} un`}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {goal.maxUnitsPerMonth} un
+                      </td>
+                      <td className="px-4 py-3">
+                        <GoalStatusBadge goal={goal} />
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {new Date(h.created_at).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          size="sm" variant="ghost"
+                          onClick={() => { if (confirm("Remover este cálculo?")) del.mutate(h.id); }}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -363,6 +475,79 @@ function NumberField({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Campo numérico genérico (label + prefixo/sufixo opcional) para a "Meta de
+ * produção por máquina" — mesma aparência do NumberField, mas independente de
+ * FieldDef/PrintCostInputs e com onChange já em número (não string bruta).
+ */
+function GoalField({
+  label,
+  prefix,
+  suffix,
+  value,
+  onChange,
+}: {
+  label: string;
+  prefix?: string;
+  suffix?: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [raw, setRaw] = useState(value ? String(value).replace(".", ",") : "");
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="relative">
+        {prefix && (
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+            {prefix}
+          </span>
+        )}
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={raw}
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^\d.,]/g, "");
+            setRaw(v);
+            onChange(parseDecimal(v));
+          }}
+          placeholder="0"
+          className={cn(prefix && "pl-8", suffix && "pr-12")}
+        />
+        {suffix && (
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+            {suffix}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Selo de situação da linha na tabela de Produtos Calculados: dá pra bater a meta? */
+function GoalStatusBadge({ goal }: { goal: CapacityGoalResult }) {
+  if (goal.neededUnitsForGoal === null) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-destructive/15 px-2 py-0.5 text-xs text-destructive">
+        Sem lucro
+      </span>
+    );
+  }
+  if (goal.feasible) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-success/15 px-2 py-0.5 text-xs text-success">
+        Viável · {Math.round(goal.utilizationPct)}% da capacidade
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-xs text-warning-foreground">
+      Máx. {formatBRL(goal.maxProfitAtCapacity)}/mês
+    </span>
   );
 }
 
