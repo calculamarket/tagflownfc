@@ -280,6 +280,39 @@ export type Database = {
           },
         ]
       }
+      print_cost_machines: {
+        Row: {
+          created_at: string
+          id: string
+          kwh_price_cents: number
+          machine_life_hours: number
+          machine_price_cents: number
+          name: string
+          power_watts: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kwh_price_cents?: number
+          machine_life_hours?: number
+          machine_price_cents?: number
+          name: string
+          power_watts?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kwh_price_cents?: number
+          machine_life_hours?: number
+          machine_price_cents?: number
+          name?: string
+          power_watts?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       print_cost_settings: {
         Row: {
           machine_days_per_month: number

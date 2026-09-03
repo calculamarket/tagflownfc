@@ -9,6 +9,7 @@ import {
   getCostSettings,
   saveCostSettings,
 } from "@/lib/print-cost.functions";
+import { listMachines, saveMachine, deleteMachine } from "@/lib/print-cost-machines.functions";
 import {
   calcPrintCost,
   calcCapacityGoal,
@@ -28,6 +29,13 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import {
   Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
 } from "@/components/ui/command";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Calculator,
   Save,
@@ -56,6 +64,14 @@ type FieldDef = {
   /** "duration" renderiza campos separados de horas/minutos em vez do NumberField genérico. */
   kind?: "duration";
 };
+
+/** Campos preenchidos automaticamente ao selecionar um perfil de máquina salvo. */
+const MACHINE_FIELD_KEYS: FieldKey[] = [
+  "machinePrice",
+  "machineLifeHours",
+  "powerWatts",
+  "kwhPrice",
+];
 
 const SECTIONS: { title: string; hint?: string; fields: FieldDef[] }[] = [
   {
@@ -105,6 +121,72 @@ function CalculatorPage() {
   const { data: history = [] } = useQuery({
     queryKey: ["cost-calculations"],
     queryFn: () => listCostCalculations(),
+  });
+
+  // Perfis de máquina salvos (preço, vida útil, potência, kWh) — o usuário tem
+  // impressoras de modelos diferentes e só quer selecionar qual está usando em
+  // vez de digitar tudo de novo a cada cálculo.
+  const { data: machines = [] } = useQuery({
+    queryKey: ["cost-machines"],
+    queryFn: () => listMachines(),
+  });
+  const [selectedMachineId, setSelectedMachineId] = useState<string | null>(null);
+  const [machineName, setMachineName] = useState("");
+  // Incrementado sempre que os 4 campos de máquina mudam por fora (seleção de
+  // perfil), para forçar o NumberField deles a "remontar" e mostrar o valor
+  // novo — o NumberField normalmente só lê o valor inicial, não sincroniza.
+  const [machineFieldsVersion, setMachineFieldsVersion] = useState(0);
+
+  const applyMachine = (m: (typeof machines)[number]) => {
+    setInputs((s) => ({
+      ...s,
+      machinePrice: m.machine_price_cents / 100,
+      machineLifeHours: Number(m.machine_life_hours),
+      powerWatts: Number(m.power_watts),
+      kwhPrice: m.kwh_price_cents / 100,
+    }));
+    setSelectedMachineId(m.id);
+    setMachineName(m.name);
+    setMachineFieldsVersion((v) => v + 1);
+  };
+
+  const handleSelectMachine = (value: string) => {
+    if (value === "__manual__") {
+      setSelectedMachineId(null);
+      return;
+    }
+    const m = machines.find((x) => x.id === value);
+    if (m) applyMachine(m);
+  };
+
+  const saveMachineMut = useMutation({
+    mutationFn: () =>
+      saveMachine({
+        data: {
+          name: machineName.trim(),
+          machine_price_cents: Math.round(inputs.machinePrice * 100),
+          machine_life_hours: inputs.machineLifeHours,
+          power_watts: inputs.powerWatts,
+          kwh_price_cents: Math.round(inputs.kwhPrice * 100),
+        },
+      }),
+    onSuccess: (row) => {
+      toast.success("Máquina salva.");
+      qc.invalidateQueries({ queryKey: ["cost-machines"] });
+      setSelectedMachineId(row.id);
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const deleteMachineMut = useMutation({
+    mutationFn: (id: string) => deleteMachine({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Máquina removida.");
+      qc.invalidateQueries({ queryKey: ["cost-machines"] });
+      setSelectedMachineId(null);
+      setMachineName("");
+    },
+    onError: (e) => toast.error((e as Error).message),
   });
 
   // Meta de lucro por máquina/mês + capacidade (horas/dia × dias/mês). Usada
@@ -244,24 +326,79 @@ function CalculatorPage() {
               {section.hint && (
                 <p className="mt-1 mb-3 text-xs text-muted-foreground">{section.hint}</p>
               )}
+              {section.title === "Máquina e energia" && (
+                <div className="mb-4 flex flex-wrap items-end gap-3 rounded-md bg-muted/40 p-3">
+                  <div className="min-w-[160px] flex-1 space-y-1.5">
+                    <Label className="text-xs">Máquina salva</Label>
+                    <Select
+                      value={selectedMachineId ?? "__manual__"}
+                      onValueChange={handleSelectMachine}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhuma selecionada" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__manual__">Manual (não vincular)</SelectItem>
+                        {machines.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="min-w-[160px] flex-1 space-y-1.5">
+                    <Label className="text-xs">Nome para salvar</Label>
+                    <Input
+                      value={machineName}
+                      onChange={(e) => setMachineName(e.target.value)}
+                      placeholder="Ex.: Ender 3 V2"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={!machineName.trim() || saveMachineMut.isPending}
+                    onClick={() => saveMachineMut.mutate()}
+                  >
+                    <Save className="size-4" />
+                    {saveMachineMut.isPending ? "Salvando…" : "Salvar máquina"}
+                  </Button>
+                  {selectedMachineId && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={deleteMachineMut.isPending}
+                      onClick={() => deleteMachineMut.mutate(selectedMachineId)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              )}
               <div className={cn("grid gap-4 sm:grid-cols-3", !section.hint && "mt-4")}>
-                {section.fields.map((f) =>
-                  f.kind === "duration" ? (
+                {section.fields.map((f) => {
+                  // Os 4 campos de máquina são preenchidos por fora quando um
+                  // perfil salvo é selecionado — remonta o NumberField deles
+                  // nesse momento para o texto exibido acompanhar o valor novo.
+                  const fieldKey = MACHINE_FIELD_KEYS.includes(f.key)
+                    ? `${f.key}-${machineFieldsVersion}`
+                    : f.key;
+                  return f.kind === "duration" ? (
                     <DurationField
-                      key={f.key}
+                      key={fieldKey}
                       label={f.label}
                       value={inputs[f.key]}
                       onChange={(hours) => setInputs((s) => ({ ...s, [f.key]: hours }))}
                     />
                   ) : (
                     <NumberField
-                      key={f.key}
+                      key={fieldKey}
                       def={f}
                       value={inputs[f.key]}
                       onChange={(v) => setField(f.key, v)}
                     />
-                  ),
-                )}
+                  );
+                })}
               </div>
             </div>
           ))}
