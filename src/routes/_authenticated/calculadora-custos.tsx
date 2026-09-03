@@ -32,7 +32,15 @@ export const Route = createFileRoute("/_authenticated/calculadora-custos")({
 });
 
 type FieldKey = Exclude<keyof PrintCostInputs, "sellsMarketplace">;
-type FieldDef = { key: FieldKey; label: string; suffix?: string; prefix?: string; placeholder?: string };
+type FieldDef = {
+  key: FieldKey;
+  label: string;
+  suffix?: string;
+  prefix?: string;
+  placeholder?: string;
+  /** "duration" renderiza campos separados de horas/minutos em vez do NumberField genérico. */
+  kind?: "duration";
+};
 
 const SECTIONS: { title: string; hint?: string; fields: FieldDef[] }[] = [
   {
@@ -56,7 +64,7 @@ const SECTIONS: { title: string; hint?: string; fields: FieldDef[] }[] = [
   {
     title: "Tempo e mão de obra",
     fields: [
-      { key: "printHours", label: "Tempo de impressão", suffix: "h" },
+      { key: "printHours", label: "Tempo de impressão", kind: "duration" },
       { key: "prepMinutes", label: "Preparo / pós-processo", suffix: "min" },
       { key: "laborHour", label: "Valor da hora de trabalho", prefix: "R$" },
     ],
@@ -163,14 +171,23 @@ function CalculatorPage() {
                 <p className="mt-1 mb-3 text-xs text-muted-foreground">{section.hint}</p>
               )}
               <div className={cn("grid gap-4 sm:grid-cols-3", !section.hint && "mt-4")}>
-                {section.fields.map((f) => (
-                  <NumberField
-                    key={f.key}
-                    def={f}
-                    value={inputs[f.key]}
-                    onChange={(v) => setField(f.key, v)}
-                  />
-                ))}
+                {section.fields.map((f) =>
+                  f.kind === "duration" ? (
+                    <DurationField
+                      key={f.key}
+                      label={f.label}
+                      value={inputs[f.key]}
+                      onChange={(hours) => setInputs((s) => ({ ...s, [f.key]: hours }))}
+                    />
+                  ) : (
+                    <NumberField
+                      key={f.key}
+                      def={f}
+                      value={inputs[f.key]}
+                      onChange={(v) => setField(f.key, v)}
+                    />
+                  ),
+                )}
               </div>
             </div>
           ))}
@@ -206,6 +223,7 @@ function CalculatorPage() {
           <div className="rounded-lg border border-border bg-card p-5 space-y-3">
             <div className="text-sm font-semibold">Resultado</div>
 
+            <Row label="Tempo de impressão" value={formatDuration(inputs.printHours)} />
             <Row label="Filamento" value={formatBRL(result.custoFilamento)} />
             <Row label="Energia" value={formatBRL(result.custoEnergia)} />
             <Row label="Depreciação" value={formatBRL(result.custoDepreciacao)} />
@@ -343,6 +361,87 @@ function NumberField({
             {def.suffix}
           </span>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Converte horas decimais (ex.: 1.3667) em texto "1h 22min" para exibição fora do form. */
+function formatDuration(hoursDecimal: number): string {
+  const totalMinutes = Math.round(Math.max(0, hoursDecimal) * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0 && m === 0) return "0min";
+  if (h === 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}min`;
+}
+
+/**
+ * Tempo de impressão como horas + minutos (ex.: "1h e 22min") em vez de uma
+ * casa decimal só — evita ter que converter minutos de cabeça (22min = 0,37h).
+ * Internamente ainda guarda horas decimais, então o resto do cálculo não muda.
+ */
+function DurationField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (hoursDecimal: number) => void;
+}) {
+  const totalMinutesInit = Math.round(Math.max(0, value || 0) * 60);
+  const initH = Math.floor(totalMinutesInit / 60);
+  const initM = totalMinutesInit % 60;
+  const [h, setH] = useState(initH ? String(initH) : "");
+  const [m, setM] = useState(initM ? String(initM) : "");
+
+  const commit = (hStr: string, mStr: string) => {
+    const hn = Math.max(0, parseInt(hStr, 10) || 0);
+    const mn = Math.max(0, Math.min(59, parseInt(mStr, 10) || 0));
+    onChange(hn + mn / 60);
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            inputMode="numeric"
+            value={h}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, "");
+              setH(v);
+              commit(v, m);
+            }}
+            placeholder="0"
+            className="pr-8"
+          />
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+            h
+          </span>
+        </div>
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            inputMode="numeric"
+            value={m}
+            onChange={(e) => {
+              let v = e.target.value.replace(/\D/g, "");
+              if (v !== "" && Number(v) > 59) v = "59";
+              setM(v);
+              commit(h, v);
+            }}
+            placeholder="0"
+            className="pr-10"
+          />
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+            min
+          </span>
+        </div>
       </div>
     </div>
   );
