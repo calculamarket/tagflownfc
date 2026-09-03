@@ -12,6 +12,7 @@ import {
 import {
   calcPrintCost,
   calcCapacityGoal,
+  calcProductionMix,
   formatBRL,
   toCalculationRow,
   EMPTY_INPUTS,
@@ -27,7 +28,16 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import {
   Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
 } from "@/components/ui/command";
-import { Calculator, Save, Trash2, ChevronsUpDown, Check, Package, Target } from "lucide-react";
+import {
+  Calculator,
+  Save,
+  Trash2,
+  ChevronsUpDown,
+  Check,
+  Package,
+  Target,
+  ClipboardList,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +90,7 @@ const SECTIONS: { title: string; hint?: string; fields: FieldDef[] }[] = [
       { key: "failureRatePct", label: "Taxa de falha", suffix: "%" },
       { key: "extraCosts", label: "Custos extras", prefix: "R$" },
       { key: "marginPct", label: "Margem desejada", suffix: "%" },
+      { key: "taxPct", label: "Imposto sobre a venda", suffix: "%" },
     ],
   },
 ];
@@ -124,6 +135,19 @@ function CalculatorPage() {
     machineDaysPerMonth: daysPerMonth,
   };
   const monthlyCapacityHours = Math.max(0, hoursPerDay * daysPerMonth);
+
+  // Plano de produção do mês: quanto vender de cada produto cadastrado para
+  // bater a meta de lucro, usando a capacidade da máquina da forma mais
+  // eficiente (mais lucro/hora primeiro).
+  const productionMix = calcProductionMix(
+    history.map((h) => ({
+      id: h.id,
+      label: h.label || (h as { tag?: { name?: string } | null }).tag?.name || "Sem nome",
+      printHours: Number(h.print_hours),
+      profitPerUnit: h.net_profit_cents / 100,
+    })),
+    goalInputs,
+  );
 
   const saveSettings = useMutation({
     mutationFn: () =>
@@ -263,6 +287,11 @@ function CalculatorPage() {
                   value={inputs.marketplaceFeePct}
                   onChange={(v) => setField("marketplaceFeePct", v)}
                 />
+                <NumberField
+                  def={{ key: "affiliateFeePct", label: "Comissão para afiliados", suffix: "%" }}
+                  value={inputs.affiliateFeePct}
+                  onChange={(v) => setField("affiliateFeePct", v)}
+                />
               </div>
             )}
           </div>
@@ -282,6 +311,28 @@ function CalculatorPage() {
               <Row label="Custo base" value={formatBRL(result.custoBase)} strong />
               <Row label="Custo com falha" value={formatBRL(result.custoComFalha)} />
             </div>
+
+            {(result.custoImposto > 0 ||
+              result.custoComissaoMarketplace > 0 ||
+              result.custoComissaoAfiliados > 0) && (
+              <div className="border-t border-border pt-3">
+                {result.custoImposto > 0 && (
+                  <Row label="Imposto sobre a venda" value={formatBRL(result.custoImposto)} />
+                )}
+                {result.custoComissaoMarketplace > 0 && (
+                  <Row
+                    label="Comissão marketplace"
+                    value={formatBRL(result.custoComissaoMarketplace)}
+                  />
+                )}
+                {result.custoComissaoAfiliados > 0 && (
+                  <Row
+                    label="Comissão afiliados"
+                    value={formatBRL(result.custoComissaoAfiliados)}
+                  />
+                )}
+              </div>
+            )}
 
             <div className="rounded-md bg-primary/10 p-3 space-y-2">
               <div className="text-xs text-muted-foreground">Preço de venda sugerido</div>
@@ -347,6 +398,67 @@ function CalculatorPage() {
         <Button size="sm" disabled={saveSettings.isPending} onClick={() => saveSettings.mutate()}>
           <Save className="size-4" /> {saveSettings.isPending ? "Salvando…" : "Salvar meta"}
         </Button>
+      </div>
+
+      {/* Plano de produção (mix de produtos) */}
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="size-4 text-primary" />
+          <div className="text-sm font-semibold">Plano de produção do mês</div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Com os produtos cadastrados e a capacidade da máquina, este é o jeito mais eficiente de
+          usar as horas disponíveis: começa pelo produto de maior lucro por hora e completa com os
+          seguintes até bater a meta.
+        </p>
+        {history.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Cadastre ao menos um produto calculado para ver o plano de produção.
+          </p>
+        ) : (
+          <>
+            {productionMix.items.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum produto cadastrado dá lucro hoje — ajuste os cálculos para gerar um plano.
+              </p>
+            ) : (
+              <ol className="space-y-2">
+                {productionMix.items.map((item, idx) => (
+                  <li
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2 text-sm"
+                  >
+                    <span>
+                      <span className="font-semibold">{idx + 1}.</span> Vender{" "}
+                      <span className="font-semibold">{item.units} un</span> de {item.label}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {formatDuration(item.hoursUsed)} · {formatBRL(item.profit)}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <div className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2">
+              <span className="text-xs text-muted-foreground">Capacidade usada no plano</span>
+              <span className="text-sm font-semibold">
+                {formatDuration(productionMix.totalHoursUsed)} de{" "}
+                {formatDuration(productionMix.monthlyCapacityHours)}
+              </span>
+            </div>
+            {productionMix.feasible ? (
+              <div className="rounded-md bg-success/15 px-3 py-2 text-sm text-success">
+                Meta batida: lucro estimado de {formatBRL(productionMix.totalProfit)} (meta{" "}
+                {formatBRL(profitGoal)}).
+              </div>
+            ) : (
+              <div className="rounded-md bg-warning/15 px-3 py-2 text-sm text-warning-foreground">
+                Mesmo usando 100% da capacidade com os produtos cadastrados, faltam{" "}
+                {formatBRL(productionMix.shortfall)} para a meta de {formatBRL(profitGoal)}.
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Produtos calculados */}

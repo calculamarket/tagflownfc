@@ -21,8 +21,10 @@ const saveSchema = z.object({
   failure_rate_pct: z.number().min(0),
   extra_costs_cents: z.number().int().min(0),
   margin_pct: z.number().min(0),
+  tax_pct: z.number().min(0),
   sells_marketplace: z.boolean(),
   marketplace_fee_pct: z.number().min(0),
+  affiliate_fee_pct: z.number().min(0),
 
   cost_filament_cents: z.number().int(),
   cost_energy_cents: z.number().int(),

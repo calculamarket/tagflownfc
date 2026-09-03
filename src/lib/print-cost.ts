@@ -16,8 +16,10 @@ export type PrintCostInputs = {
   failureRatePct: number; // % taxa de falha
   extraCosts: number; // custos extras (R$)
   marginPct: number; // % margem desejada
+  taxPct: number; // % de imposto sobre a venda (ex.: Simples Nacional)
   sellsMarketplace: boolean;
   marketplaceFeePct: number; // % comissão do marketplace
+  affiliateFeePct: number; // % comissão para afiliados (só quando vende em marketplace)
 };
 
 export type PrintCostResult = {
@@ -27,6 +29,12 @@ export type PrintCostResult = {
   custoMaoDeObra: number;
   custoBase: number;
   custoComFalha: number;
+  /** Imposto sobre a venda, em R$ (percentual aplicado sobre o preço de venda sugerido). */
+  custoImposto: number;
+  /** Comissão do marketplace, em R$ (0 quando não vende em marketplace). */
+  custoComissaoMarketplace: number;
+  /** Comissão de afiliados, em R$ (0 quando não vende em marketplace). */
+  custoComissaoAfiliados: number;
   precoVendaSugerido: number;
   lucroLiquido: number;
   margemReal: number;
@@ -46,15 +54,22 @@ export const EMPTY_INPUTS: PrintCostInputs = {
   failureRatePct: 0,
   extraCosts: 0,
   marginPct: 0,
+  taxPct: 0,
   sellsMarketplace: false,
   marketplaceFeePct: 0,
+  affiliateFeePct: 0,
 };
 
 const safe = (n: number) => (Number.isFinite(n) ? n : 0);
 
 /** Replica exatamente a lógica da calculadora standalone. */
 export function calcPrintCost(i: PrintCostInputs): PrintCostResult {
-  const comissao = i.sellsMarketplace ? safe(i.marketplaceFeePct) : 0;
+  // Comissão de marketplace e de afiliados só valem quando a venda é em
+  // marketplace; o imposto incide sempre que há venda.
+  const marketplacePct = i.sellsMarketplace ? safe(i.marketplaceFeePct) : 0;
+  const affiliatePct = i.sellsMarketplace ? safe(i.affiliateFeePct) : 0;
+  const taxPct = safe(i.taxPct);
+  const totalFeePct = marketplacePct + affiliatePct + taxPct;
 
   const custoFilamento =
     (safe(i.filamentGrams) * (1 + safe(i.wastePct) / 100) / 1000) * safe(i.filamentPriceKg);
@@ -75,11 +90,19 @@ export function calcPrintCost(i: PrintCostInputs): PrintCostResult {
   const failureDiv = 1 - safe(i.failureRatePct) / 100;
   const custoComFalha = failureDiv > 0 ? custoBase / failureDiv : custoBase;
 
-  const priceDiv = 1 - safe(i.marginPct) / 100 - comissao / 100;
+  const priceDiv = 1 - safe(i.marginPct) / 100 - totalFeePct / 100;
   const precoVendaSugerido = priceDiv > 0 ? custoComFalha / priceDiv : 0;
 
+  const custoImposto = (precoVendaSugerido * taxPct) / 100;
+  const custoComissaoMarketplace = (precoVendaSugerido * marketplacePct) / 100;
+  const custoComissaoAfiliados = (precoVendaSugerido * affiliatePct) / 100;
+
   const lucroLiquido =
-    precoVendaSugerido - custoComFalha - (precoVendaSugerido * comissao) / 100;
+    precoVendaSugerido -
+    custoComFalha -
+    custoImposto -
+    custoComissaoMarketplace -
+    custoComissaoAfiliados;
 
   const margemReal =
     precoVendaSugerido > 0 ? (lucroLiquido / precoVendaSugerido) * 100 : 0;
@@ -91,6 +114,9 @@ export function calcPrintCost(i: PrintCostInputs): PrintCostResult {
     custoMaoDeObra,
     custoBase,
     custoComFalha,
+    custoImposto,
+    custoComissaoMarketplace,
+    custoComissaoAfiliados,
     precoVendaSugerido,
     lucroLiquido,
     margemReal,
@@ -122,8 +148,10 @@ export function toCalculationRow(i: PrintCostInputs, r: PrintCostResult) {
     failure_rate_pct: safe(i.failureRatePct),
     extra_costs_cents: toCents(i.extraCosts),
     margin_pct: safe(i.marginPct),
+    tax_pct: safe(i.taxPct),
     sells_marketplace: i.sellsMarketplace,
     marketplace_fee_pct: safe(i.marketplaceFeePct),
+    affiliate_fee_pct: safe(i.affiliateFeePct),
     cost_filament_cents: toCents(r.custoFilamento),
     cost_energy_cents: toCents(r.custoEnergia),
     cost_depreciation_cents: toCents(r.custoDepreciacao),
@@ -200,5 +228,89 @@ export function calcCapacityGoal(
     feasible,
     utilizationPct,
     maxProfitAtCapacity,
+  };
+}
+
+/** Um produto candidato ao mix de produção — os únicos dados que o plano precisa. */
+export type MixProduct = {
+  id: string;
+  label: string;
+  printHours: number;
+  profitPerUnit: number;
+};
+
+/** Quanto vender de um produto dentro do plano de mix, e quanto isso consome/gera. */
+export type ProductionMixItem = {
+  id: string;
+  label: string;
+  units: number;
+  hoursUsed: number;
+  profit: number;
+};
+
+export type ProductionMixResult = {
+  /** Produtos a produzir, na ordem em que a capacidade foi alocada (mais lucro/hora primeiro). */
+  items: ProductionMixItem[];
+  monthlyCapacityHours: number;
+  totalHoursUsed: number;
+  totalProfit: number;
+  /** Bate a meta usando os produtos cadastrados, dentro da capacidade mensal? */
+  feasible: boolean;
+  /** Quanto falta para a meta mesmo usando 100% da capacidade com o mix atual. */
+  shortfall: number;
+};
+
+/**
+ * Monta o plano de produção do mês: quantas unidades de cada produto cadastrado
+ * vender para bater a meta de lucro por máquina, usando a capacidade disponível
+ * da forma mais eficiente possível — prioriza sempre o produto com maior lucro
+ * por hora de máquina, e passa para o próximo assim que a meta é atingida ou a
+ * capacidade se esgota.
+ */
+export function calcProductionMix(
+  products: MixProduct[],
+  goal: CapacityGoalInputs,
+): ProductionMixResult {
+  const monthlyCapacityHours = Math.max(
+    0,
+    safe(goal.machineHoursPerDay) * safe(goal.machineDaysPerMonth),
+  );
+  const profitGoal = safe(goal.profitGoal);
+
+  // Só entram no mix produtos que de fato consomem tempo de máquina e dão lucro
+  // — os demais não ajudam a decidir o que produzir.
+  const candidates = products
+    .filter((p) => safe(p.printHours) > 0 && safe(p.profitPerUnit) > 0)
+    .map((p) => ({ ...p, density: safe(p.profitPerUnit) / safe(p.printHours) }))
+    .sort((a, b) => b.density - a.density);
+
+  let remainingHours = monthlyCapacityHours;
+  let cumulativeProfit = 0;
+  const items: ProductionMixItem[] = [];
+
+  for (const p of candidates) {
+    if (cumulativeProfit >= profitGoal || remainingHours <= 0) break;
+
+    const maxUnitsByCapacity = Math.floor(remainingHours / p.printHours);
+    if (maxUnitsByCapacity <= 0) continue;
+
+    const unitsNeededToReachGoal = Math.ceil((profitGoal - cumulativeProfit) / p.profitPerUnit);
+    const units = Math.min(maxUnitsByCapacity, Math.max(unitsNeededToReachGoal, 0));
+    if (units <= 0) continue;
+
+    const hoursUsed = units * p.printHours;
+    const profit = units * p.profitPerUnit;
+    items.push({ id: p.id, label: p.label, units, hoursUsed, profit });
+    cumulativeProfit += profit;
+    remainingHours -= hoursUsed;
+  }
+
+  return {
+    items,
+    monthlyCapacityHours,
+    totalHoursUsed: monthlyCapacityHours - remainingHours,
+    totalProfit: cumulativeProfit,
+    feasible: cumulativeProfit >= profitGoal,
+    shortfall: Math.max(0, profitGoal - cumulativeProfit),
   };
 }

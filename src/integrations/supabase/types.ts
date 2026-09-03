@@ -172,6 +172,7 @@ export type Database = {
       }
       print_cost_calculations: {
         Row: {
+          affiliate_fee_pct: number
           cost_base_cents: number
           cost_depreciation_cents: number
           cost_energy_cents: number
@@ -199,10 +200,12 @@ export type Database = {
           sells_marketplace: boolean
           suggested_price_cents: number
           tag_id: string | null
+          tax_pct: number
           user_id: string
           waste_pct: number
         }
         Insert: {
+          affiliate_fee_pct?: number
           cost_base_cents: number
           cost_depreciation_cents: number
           cost_energy_cents: number
@@ -230,10 +233,12 @@ export type Database = {
           sells_marketplace?: boolean
           suggested_price_cents: number
           tag_id?: string | null
+          tax_pct?: number
           user_id: string
           waste_pct: number
         }
         Update: {
+          affiliate_fee_pct?: number
           cost_base_cents?: number
           cost_depreciation_cents?: number
           cost_energy_cents?: number
@@ -261,6 +266,7 @@ export type Database = {
           sells_marketplace?: boolean
           suggested_price_cents?: number
           tag_id?: string | null
+          tax_pct?: number
           user_id?: string
           waste_pct?: number
         }
