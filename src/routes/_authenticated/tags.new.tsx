@@ -9,7 +9,7 @@ import type { CategoryId } from "@/lib/categories";
 export const Route = createFileRoute("/_authenticated/tags/new")({
   head: () => ({ meta: [{ title: pageTitle("Nova tag") }] }),
   validateSearch: (s: Record<string, unknown>): { advanced?: boolean; category?: CategoryId } => {
-    const categories: CategoryId[] = ["pet", "emergencia", "idoso", "pix", "menu", "wifi"];
+    const categories: CategoryId[] = ["pet", "emergencia", "idoso", "kids", "pix", "menu", "wifi", "redes"];
     const category = typeof s.category === "string" && categories.includes(s.category as CategoryId)
       ? s.category as CategoryId
       : undefined;
