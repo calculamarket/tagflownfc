@@ -5,18 +5,22 @@ import { normalizeDestinationUrl } from "./destination";
 export type LinkItem = {
   type: LinkItemType;
   label: string;
-  value?: string; // url / @user / phone / e-mail / chave PIX / endereço
+  value?: string; // url / @user / phone / e-mail / chave PIX / endereço / SSID
   message?: string; // WhatsApp
   // PIX extras
   name?: string;
   city?: string;
   amount?: string;
+  // Wi-Fi extras
+  password?: string;
+  security?: string; // WPA | WEP | NOPASS
 };
 
 export type LinkItemType =
   | "instagram"
   | "whatsapp"
   | "pix"
+  | "wifi"
   | "url"
   | "phone"
   | "email"

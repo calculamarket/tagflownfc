@@ -94,7 +94,7 @@ export function categoryById(id?: string | null): CategoryDef | null {
 }
 
 /** Categorias liberadas para o cliente final (conta comum). */
-export const USER_CATEGORY_IDS: CategoryId[] = ["pet", "kids", "idoso", "redes", "menu"];
+export const USER_CATEGORY_IDS: CategoryId[] = ["pet", "kids", "idoso", "redes", "menu", "wifi"];
 
 export function categoriesFor(isAdmin: boolean): CategoryDef[] {
   return isAdmin ? CATEGORIES : CATEGORIES.filter((c) => USER_CATEGORY_IDS.includes(c.id));

@@ -6,7 +6,7 @@ import { categoryById, type CategoryId } from "@/lib/categories";
 import { BarChart3, QrCode, ScanLine, Tags } from "lucide-react";
 
 /** As únicas categorias oferecidas nesta área de ativação. */
-const ATIVAR_IDS: CategoryId[] = ["pet", "kids", "idoso", "redes", "menu"];
+const ATIVAR_IDS: CategoryId[] = ["pet", "kids", "idoso", "redes", "menu", "wifi"];
 
 export const Route = createFileRoute("/ativar")({
   ssr: false,
