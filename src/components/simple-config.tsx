@@ -190,12 +190,14 @@ export function SimpleTagConfig({
             <div className="font-medium">{cat.label}</div>
             {cat.intro && <p className="text-xs text-muted-foreground">{cat.intro}</p>}
           </div>
-          <button
-            onClick={() => setShowPicker(true)}
-            className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
-          >
-            usar outro tipo
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowPicker(true)}
+              className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
+            >
+              usar outro tipo
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
