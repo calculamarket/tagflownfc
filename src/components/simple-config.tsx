@@ -300,7 +300,10 @@ export function SimpleTagConfig({
         ) : (
           <span />
         )}
-        <Link to="/tags" className="text-xs text-muted-foreground hover:text-foreground">Minhas Tags</Link>
+        <span className="flex items-center gap-4">
+          <Link to="/analytics" className="text-xs text-muted-foreground hover:text-foreground">Analytics</Link>
+          <Link to="/tags" className="text-xs text-muted-foreground hover:text-foreground">Minhas Tags</Link>
+        </span>
       </div>
     </div>
   );
