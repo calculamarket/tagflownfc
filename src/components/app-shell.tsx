@@ -23,7 +23,7 @@ const mainNav = [
   { to: "/pecas", label: "Minhas Peças", icon: Boxes },
   { to: "/ativar", label: "Ativar etiqueta", icon: PackageCheck },
   { to: "/qr-codes", label: "QR Codes", icon: QrCode },
-  { to: "/notificacoes", label: "Notificações", icon: Bell },
+  
 ] as const;
 
 const categoryNav = [
@@ -70,11 +70,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
   const { data: brand = BRAND } = useQuery({ queryKey: ["my-brand"], queryFn: () => getMyBrand() });
-  const { data: unread = 0 } = useQuery({
-    queryKey: ["notifications-unread"],
-    queryFn: () => unreadNotifications(),
-    refetchInterval: 60_000,
-  });
 
   // Conta comum: acesso enxuto (ativar etiqueta, tags e analytics).
   const userMain = mainNav.filter((i) => i.to === "/ativar" || i.to === "/tags");
