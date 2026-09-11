@@ -488,6 +488,7 @@ function LinksView({ payload, name }: { payload: Record<string, string>; name: s
   const title = payload.title || name;
   const [openPix, setOpenPix] = useState<number | null>(null);
 
+
   return (
     <div className="min-h-screen bg-muted/30 py-10 px-4">
       <div className="max-w-md mx-auto space-y-3">
