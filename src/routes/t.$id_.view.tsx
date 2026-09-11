@@ -500,7 +500,7 @@ function LinksView({ payload, name }: { payload: Record<string, string>; name: s
 
         {items.map((item, i) => {
           const label = item.label || defaultLabel(item.type);
-          if (item.type === "pix") {
+          if (item.type === "pix" || item.type === "wifi") {
             const open = openPix === i;
             return (
               <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
@@ -511,7 +511,7 @@ function LinksView({ payload, name }: { payload: Record<string, string>; name: s
                   <span><span className="mr-2">{itemIcon(item.type)}</span>{label}</span>
                   <span className="text-muted-foreground">{open ? "▲" : "▼"}</span>
                 </button>
-                {open && <InlinePix item={item} />}
+                {open && (item.type === "pix" ? <InlinePix item={item} /> : <InlineWifi item={item} />)}
               </div>
             );
           }
@@ -616,6 +616,49 @@ function PromoCard({ product }: { product: PromoProduct }) {
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Wi-Fi option inside a link menu: shows the connect QR + the credentials. */
+function InlineWifi({ item }: { item: LinkItem }) {
+  const [copied, setCopied] = useState(false);
+  const ssid = (item.value ?? "").trim();
+  const security = (item.security ?? "WPA").toUpperCase();
+  const open = security === "NOPASS";
+  const password = open ? "" : (item.password ?? "");
+  const payload = buildWifiPayload({ ssid, password, security });
+  if (!payload) {
+    return <div className="px-4 pb-4 text-sm text-muted-foreground">Rede Wi-Fi não configurada.</div>;
+  }
+  return (
+    <div className="px-4 pb-4 space-y-3 border-t border-border pt-3 text-center">
+      <div className="grid place-items-center rounded-lg border border-border bg-white p-3">
+        <QrCanvas value={payload} size={180} />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        📷 Aponte a <strong>câmera</strong> do celular para o código e toque em conectar.
+      </p>
+      <div className="rounded-lg bg-muted/50 p-3 text-left text-sm space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-muted-foreground">Rede</span>
+          <span className="font-medium truncate">{ssid}</span>
+        </div>
+        {!open && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">Senha</span>
+            <span className="font-mono font-medium truncate">{password}</span>
+          </div>
+        )}
+      </div>
+      {!open && password && (
+        <button
+          onClick={async () => { await navigator.clipboard.writeText(password); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+          className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-semibold"
+        >
+          {copied ? "✓ Senha copiada" : "Copiar senha"}
+        </button>
+      )}
     </div>
   );
 }
