@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Tags, QrCode, Link2, BarChart3, Zap, Users,
-  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown, Bell,
+  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown,
   Wifi, HeartPulse, Palette, Puzzle,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import { getMyBrand } from "@/lib/tenant.functions";
 import { applyBrandTheme } from "@/lib/tenant";
-import { unreadNotifications } from "@/lib/notifications.functions";
+
 import { Button } from "@/components/ui/button";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 
@@ -23,7 +23,7 @@ const mainNav = [
   { to: "/pecas", label: "Minhas Peças", icon: Boxes },
   { to: "/ativar", label: "Ativar etiqueta", icon: PackageCheck },
   { to: "/qr-codes", label: "QR Codes", icon: QrCode },
-  { to: "/notificacoes", label: "Notificações", icon: Bell },
+  
 ] as const;
 
 const categoryNav = [
@@ -70,11 +70,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
   const { data: brand = BRAND } = useQuery({ queryKey: ["my-brand"], queryFn: () => getMyBrand() });
-  const { data: unread = 0 } = useQuery({
-    queryKey: ["notifications-unread"],
-    queryFn: () => unreadNotifications(),
-    refetchInterval: 60_000,
-  });
 
   // Conta comum: acesso enxuto (ativar etiqueta, tags e analytics).
   const userMain = mainNav.filter((i) => i.to === "/ativar" || i.to === "/tags");
@@ -142,16 +137,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {visibleMain.map((item) => {
             const Icon = item.icon;
-            const showBadge = item.to === "/notificacoes" && unread > 0;
             return (
               <Link key={item.to} to={item.to} className={linkCls(isActive(item.to))}>
                 <Icon className="size-4" />
                 <span className="flex-1">{item.label}</span>
-                {showBadge && (
-                  <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-destructive-foreground">
-                    {unread > 99 ? "99+" : unread}
-                  </span>
-                )}
               </Link>
             );
           })}

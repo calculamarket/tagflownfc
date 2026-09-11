@@ -15,8 +15,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Copy, Check, Download, Plus, Trash2, Settings2, Bell } from "lucide-react";
+import { Copy, Check, Download, Plus, Trash2, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Mode = "choose" | "pix" | "links" | "emergency" | "wifi";
@@ -54,7 +53,7 @@ export type PreserveFields = {
 };
 
 export function SimpleTagConfig({
-  id, initialName, editableName, initialType, initialDestination, preserve, newTag = false, initialNotify, category,
+  id, initialName, editableName, initialType, initialDestination, preserve, newTag = false, category,
 }: {
   id: string;
   initialName: string;
@@ -65,7 +64,7 @@ export function SimpleTagConfig({
   /** true na criação: a tag só existe após salvar, então o link avançado
    *  (→ /tags/:id) só aparece depois de salva. */
   newTag?: boolean;
-  initialNotify?: boolean;
+  
   /** Categoria de produção da tag (ex.: "pet"): direciona a ativação. */
   category?: string | null;
 }) {
@@ -86,7 +85,7 @@ export function SimpleTagConfig({
   const [showPicker, setShowPicker] = useState(!cat);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [notifyOnScan, setNotifyOnScan] = useState(initialNotify ?? initialType === "emergency");
+  
 
   const [pixKey, setPixKey] = useState(initialDestination.key ?? "");
   const [pixName, setPixName] = useState(initialDestination.merchant_name ?? "");
@@ -123,7 +122,7 @@ export function SimpleTagConfig({
           destination_type,
           destination,
           qr_style: preserve?.qr_style ?? {},
-          notify_on_scan: notifyOnScan,
+          notify_on_scan: false,
           description: preserve?.description ?? null,
           category: cat?.id ?? preserve?.category ?? null,
           max_scans: preserve?.max_scans ?? null,
@@ -190,12 +189,14 @@ export function SimpleTagConfig({
             <div className="font-medium">{cat.label}</div>
             {cat.intro && <p className="text-xs text-muted-foreground">{cat.intro}</p>}
           </div>
-          <button
-            onClick={() => setShowPicker(true)}
-            className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
-          >
-            usar outro tipo
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowPicker(true)}
+              className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
+            >
+              usar outro tipo
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -291,26 +292,18 @@ export function SimpleTagConfig({
         </div>
       )}
 
-      {mode !== "choose" && (
-        <label className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
-          <span className="flex items-center gap-2 text-sm">
-            <Bell className="size-4 text-primary" />
-            Avisar quando escanearem
-            <span className="text-xs text-muted-foreground">(sino no app; ótimo para “se encontrado”)</span>
-          </span>
-          <Switch checked={notifyOnScan} onCheckedChange={(v) => { setNotifyOnScan(v); setSaved(false); }} />
-        </label>
-      )}
-
       <div className="flex items-center justify-between pt-2">
-        {(!newTag || saved) ? (
+        {isAdmin && (!newTag || saved) ? (
           <Link to="/tags/$id" params={{ id }} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
             <Settings2 className="size-3.5" /> Modo avançado (todos os tipos)
           </Link>
         ) : (
           <span />
         )}
-        <Link to="/tags" className="text-xs text-muted-foreground hover:text-foreground">Minhas Tags</Link>
+        <span className="flex items-center gap-4">
+          <Link to="/analytics" className="text-xs text-muted-foreground hover:text-foreground">Analytics</Link>
+          <Link to="/tags" className="text-xs text-muted-foreground hover:text-foreground">Minhas Tags</Link>
+        </span>
       </div>
     </div>
   );
