@@ -40,6 +40,7 @@ export const LINK_ITEM_TYPES: TypeMeta[] = [
   { type: "instagram", label: "Instagram", placeholder: "@seu_usuario", icon: "📸" },
   { type: "whatsapp", label: "WhatsApp", placeholder: "5511999999999", icon: "💬" },
   { type: "pix", label: "PIX", placeholder: "chave PIX", icon: "💠" },
+  { type: "wifi", label: "Wi-Fi", placeholder: "nome da rede (SSID)", icon: "📶" },
   { type: "menu", label: "Cardápio", placeholder: "link ou PDF do cardápio", icon: "🍽️" },
   { type: "ifood", label: "iFood", placeholder: "https://ifood.com.br/…", icon: "🍔" },
   { type: "maps", label: "Localização", placeholder: "endereço ou link do mapa", icon: "📍" },
@@ -165,7 +166,9 @@ export function linkItemHref(item: LinkItem): string {
       if (/^https?:\/\//i.test(v)) return v;
       return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v)}`;
     }
+    // Handled inline on the page (expands to show the QR + credentials).
     case "pix":
+    case "wifi":
       return "";
     // Plain links (owner pastes a URL, or uploads a file for menu/catalog).
     case "url":
