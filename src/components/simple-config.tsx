@@ -122,7 +122,7 @@ export function SimpleTagConfig({
           destination_type,
           destination,
           qr_style: preserve?.qr_style ?? {},
-          notify_on_scan: notifyOnScan,
+          notify_on_scan: false,
           description: preserve?.description ?? null,
           category: cat?.id ?? preserve?.category ?? null,
           max_scans: preserve?.max_scans ?? null,
