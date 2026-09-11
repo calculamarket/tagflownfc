@@ -137,16 +137,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {visibleMain.map((item) => {
             const Icon = item.icon;
-            const showBadge = item.to === "/notificacoes" && unread > 0;
             return (
               <Link key={item.to} to={item.to} className={linkCls(isActive(item.to))}>
                 <Icon className="size-4" />
                 <span className="flex-1">{item.label}</span>
-                {showBadge && (
-                  <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-destructive-foreground">
-                    {unread > 99 ? "99+" : unread}
-                  </span>
-                )}
               </Link>
             );
           })}
