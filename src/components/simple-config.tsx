@@ -53,7 +53,7 @@ export type PreserveFields = {
 };
 
 export function SimpleTagConfig({
-  id, initialName, editableName, initialType, initialDestination, preserve, newTag = false, initialNotify, category,
+  id, initialName, editableName, initialType, initialDestination, preserve, newTag = false, category,
 }: {
   id: string;
   initialName: string;
@@ -64,7 +64,7 @@ export function SimpleTagConfig({
   /** true na criação: a tag só existe após salvar, então o link avançado
    *  (→ /tags/:id) só aparece depois de salva. */
   newTag?: boolean;
-  initialNotify?: boolean;
+  
   /** Categoria de produção da tag (ex.: "pet"): direciona a ativação. */
   category?: string | null;
 }) {
@@ -85,7 +85,7 @@ export function SimpleTagConfig({
   const [showPicker, setShowPicker] = useState(!cat);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [notifyOnScan, setNotifyOnScan] = useState(initialNotify ?? initialType === "emergency");
+  
 
   const [pixKey, setPixKey] = useState(initialDestination.key ?? "");
   const [pixName, setPixName] = useState(initialDestination.merchant_name ?? "");
