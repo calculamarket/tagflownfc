@@ -291,19 +291,8 @@ export function SimpleTagConfig({
         </div>
       )}
 
-      {mode !== "choose" && (
-        <label className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
-          <span className="flex items-center gap-2 text-sm">
-            <Bell className="size-4 text-primary" />
-            Avisar quando escanearem
-            <span className="text-xs text-muted-foreground">(sino no app; ótimo para “se encontrado”)</span>
-          </span>
-          <Switch checked={notifyOnScan} onCheckedChange={(v) => { setNotifyOnScan(v); setSaved(false); }} />
-        </label>
-      )}
-
       <div className="flex items-center justify-between pt-2">
-        {(!newTag || saved) ? (
+        {isAdmin && (!newTag || saved) ? (
           <Link to="/tags/$id" params={{ id }} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
             <Settings2 className="size-3.5" /> Modo avançado (todos os tipos)
           </Link>
