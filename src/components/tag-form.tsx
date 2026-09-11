@@ -482,6 +482,21 @@ function LinksBuilder({
                 <Input className="h-8" inputMode="decimal" placeholder="Valor" value={it.amount ?? ""} onChange={(e) => update(i, { amount: e.target.value })} />
               </div>
             )}
+            {it.type === "wifi" && (
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={(it.security ?? "WPA").toUpperCase()} onValueChange={(v) => update(i, { security: v })}>
+                  <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WPA">WPA / WPA2</SelectItem>
+                    <SelectItem value="WEP">WEP</SelectItem>
+                    <SelectItem value="NOPASS">Rede aberta</SelectItem>
+                  </SelectContent>
+                </Select>
+                {(it.security ?? "WPA").toUpperCase() !== "NOPASS" && (
+                  <Input className="h-8" placeholder="Senha do Wi-Fi" value={it.password ?? ""} onChange={(e) => update(i, { password: e.target.value })} />
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
