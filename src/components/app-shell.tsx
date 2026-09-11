@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Tags, QrCode, Link2, BarChart3, Zap, Users,
-  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown, Bell,
+  Plug, Settings, User, LogOut, Menu, X, Moon, Sun, Shield, Inbox, PackageCheck, Boxes, Calculator, Box, PawPrint, Sparkles, Anchor, Backpack, Mail, Factory, ChevronDown,
   Wifi, HeartPulse, Palette, Puzzle,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import { getMyBrand } from "@/lib/tenant.functions";
 import { applyBrandTheme } from "@/lib/tenant";
-import { unreadNotifications } from "@/lib/notifications.functions";
+
 import { Button } from "@/components/ui/button";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 
