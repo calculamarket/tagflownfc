@@ -15,6 +15,7 @@ import { Route as AtivarRouteImport } from './routes/ativar'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TIdRouteImport } from './routes/t.$id'
+import { Route as AtivarAnalyticsRouteImport } from './routes/ativar_.analytics'
 import { Route as AtivarIdRouteImport } from './routes/ativar_.$id'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedTagsRouteImport } from './routes/_authenticated/tags'
@@ -77,6 +78,11 @@ const IndexRoute = IndexRouteImport.update({
 const TIdRoute = TIdRouteImport.update({
   id: '/t/$id',
   path: '/t/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AtivarAnalyticsRoute = AtivarAnalyticsRouteImport.update({
+  id: '/ativar_/analytics',
+  path: '/ativar/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtivarIdRoute = AtivarIdRouteImport.update({
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/tags': typeof AuthenticatedTagsRouteWithChildren
   '/team': typeof AuthenticatedTeamRoute
   '/ativar/$id': typeof AtivarIdRoute
+  '/ativar/analytics': typeof AtivarAnalyticsRoute
   '/t/$id': typeof TIdRoute
   '/configurar/$id': typeof AuthenticatedConfigurarIdRoute
   '/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
@@ -332,6 +339,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/ativar/$id': typeof AtivarIdRoute
+  '/ativar/analytics': typeof AtivarAnalyticsRoute
   '/t/$id': typeof TIdRoute
   '/configurar/$id': typeof AuthenticatedConfigurarIdRoute
   '/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
@@ -375,6 +383,7 @@ export interface FileRoutesById {
   '/_authenticated/tags': typeof AuthenticatedTagsRouteWithChildren
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/ativar_/$id': typeof AtivarIdRoute
+  '/ativar_/analytics': typeof AtivarAnalyticsRoute
   '/t/$id': typeof TIdRoute
   '/_authenticated/configurar/$id': typeof AuthenticatedConfigurarIdRoute
   '/_authenticated/landing/$tagId': typeof AuthenticatedLandingTagIdRoute
@@ -418,6 +427,7 @@ export interface FileRouteTypes {
     | '/tags'
     | '/team'
     | '/ativar/$id'
+    | '/ativar/analytics'
     | '/t/$id'
     | '/configurar/$id'
     | '/landing/$tagId'
@@ -458,6 +468,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/ativar/$id'
+    | '/ativar/analytics'
     | '/t/$id'
     | '/configurar/$id'
     | '/landing/$tagId'
@@ -500,6 +511,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tags'
     | '/_authenticated/team'
     | '/ativar_/$id'
+    | '/ativar_/analytics'
     | '/t/$id'
     | '/_authenticated/configurar/$id'
     | '/_authenticated/landing/$tagId'
@@ -518,6 +530,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AtivarIdRoute: typeof AtivarIdRoute
+  AtivarAnalyticsRoute: typeof AtivarAnalyticsRoute
   TIdRoute: typeof TIdRoute
   TIdViewRoute: typeof TIdViewRoute
 }
@@ -564,6 +577,13 @@ declare module '@tanstack/react-router' {
       path: '/t/$id'
       fullPath: '/t/$id'
       preLoaderRoute: typeof TIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ativar_/analytics': {
+      id: '/ativar_/analytics'
+      path: '/ativar/analytics'
+      fullPath: '/ativar/analytics'
+      preLoaderRoute: typeof AtivarAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ativar_/$id': {
@@ -897,6 +917,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AtivarIdRoute: AtivarIdRoute,
+  AtivarAnalyticsRoute: AtivarAnalyticsRoute,
   TIdRoute: TIdRoute,
   TIdViewRoute: TIdViewRoute,
 }
