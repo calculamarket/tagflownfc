@@ -367,6 +367,14 @@ function LinksMiniBuilder({ items, onChange }: { items: LinkItem[]; onChange: (i
             onChange={(e) => patch(i, { value: e.target.value })}
             placeholder={meta.get(it.type)?.placeholder ?? "https://…"}
           />
+          {it.type === "wifi" && (
+            <Input
+              className="h-9 w-40"
+              value={it.password ?? ""}
+              onChange={(e) => patch(i, { password: e.target.value })}
+              placeholder="senha do Wi-Fi"
+            />
+          )}
           <Button type="button" variant="ghost" size="sm" onClick={() => remove(i)}>
             <Trash2 className="size-3.5" />
           </Button>
