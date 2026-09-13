@@ -122,20 +122,24 @@ function ActivatePage() {
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {categories.map((c) => (
-              <Link
-                key={c.id}
-                to="/tags/new"
-                search={{ category: c.id }}
-                className="rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/5"
-              >
-                <div className="flex items-center gap-2 font-medium">
-                  <span className="text-xl leading-none">{c.icon}</span>
-                  {c.label}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">{c.intro ?? "Configure em segundos."}</p>
-              </Link>
-            ))}
+            {categories.map((c) => {
+              const href = c.id === "pet" ? "/ativar/pet" : "/tags/new";
+              const search = c.id === "pet" ? undefined : { category: c.id };
+              return (
+                <Link
+                  key={c.id}
+                  to={href}
+                  search={search}
+                  className="rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/5"
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="text-xl leading-none">{c.icon}</span>
+                    {c.label}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{c.intro ?? "Configure em segundos."}</p>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
