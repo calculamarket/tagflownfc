@@ -120,12 +120,25 @@ function PetTagLanding() {
           </p>
 
           <div className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row">
-            <Link to={activateTo} className="flex-1">
-              <Button className="w-full gap-2 text-base">
-                Ativar Pet Tag
-                <ArrowRight className="size-4" />
-              </Button>
-            </Link>
+            {signedIn ? (
+              <Link to="/tags/new" search={{ category: "pet" }} className="flex-1">
+                <Button className="w-full gap-2 text-base">
+                  Ativar Pet Tag
+                  <ArrowRight className="size-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Link
+                to="/auth"
+                search={{ mode: "signup", redirect: "/tags/new?category=pet" }}
+                className="flex-1"
+              >
+                <Button className="w-full gap-2 text-base">
+                  Ativar Pet Tag
+                  <ArrowRight className="size-4" />
+                </Button>
+              </Link>
+            )}
             <Link to="/ativar" className="flex-1">
               <Button variant="outline" className="w-full">
                 Ver outras etiquetas
