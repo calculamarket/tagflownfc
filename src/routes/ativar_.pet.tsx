@@ -74,8 +74,6 @@ function PetTagLanding() {
     });
   }, []);
 
-  const activateTo = signedIn ? "/tags/new?category=pet" : "/auth?mode=signup&redirect=%2Ftags%2Fnew%3Fcategory%3Dpet";
-
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b border-border bg-background">
