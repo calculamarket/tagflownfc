@@ -281,12 +281,25 @@ function PetTagLanding() {
             Ative sua Pet Tag agora e tenha a tranquilidade de saber que, se ele se perder, quem encontrar terá os contatos certos na hora certa.
           </p>
           <div className="mx-auto mt-6 flex max-w-sm flex-col gap-3 sm:flex-row">
-            <Link to={activateTo} className="flex-1">
-              <Button variant="secondary" className="w-full gap-2">
-                Ativar Pet Tag
-                <ArrowRight className="size-4" />
-              </Button>
-            </Link>
+            {signedIn ? (
+              <Link to="/tags/new" search={{ category: "pet" }} className="flex-1">
+                <Button variant="secondary" className="w-full gap-2">
+                  Ativar Pet Tag
+                  <ArrowRight className="size-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Link
+                to="/auth"
+                search={{ mode: "signup", redirect: "/tags/new?category=pet" }}
+                className="flex-1"
+              >
+                <Button variant="secondary" className="w-full gap-2">
+                  Ativar Pet Tag
+                  <ArrowRight className="size-4" />
+                </Button>
+              </Link>
+            )}
             <Link to="/ativar" className="flex-1">
               <Button
                 variant="outline"
