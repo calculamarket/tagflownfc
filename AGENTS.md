@@ -11,3 +11,4 @@
 
 - Keep A4 label layout, raster export and PNG density metadata in a shared browser-side module, reused by label screens, so print dimensions and pagination remain consistent.
 - Enable A4 export in the shared batch control through optional configuration and reuse its batch-content builder, so PNG quantities and same/unique modes match the 3D export settings without affecting other generators.
+- Activation label exports must obtain server-confirmed stock IDs through the shared registered-label helper before rendering; reuse reserved codes across formats so every printed activation URL exists and points to the same piece.

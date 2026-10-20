@@ -16,7 +16,7 @@ export const createStockTags = createServerFn({ method: "POST" })
     z
       .object({
         name: z.string().trim().min(1).max(60).default("Placa Pix"),
-        quantity: z.number().int().min(1).max(200),
+        quantity: z.number().int().min(1).max(500),
         model: z.string().trim().min(1).max(40).default("Placa Pix"),
         category: z.string().trim().max(60).optional().nullable(),
       })
@@ -54,7 +54,10 @@ export const createStockTags = createServerFn({ method: "POST" })
     }));
 
     const { error } = await supabaseAdmin.from("tags").insert(rows);
-    if (error) throw new Error(error.message);
+    if (error) {
+      await supabaseAdmin.from("tag_batches").delete().eq("id", batch.id);
+      throw new Error(error.message);
+    }
 
     return {
       batchId: batch.id,
