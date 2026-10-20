@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet, Link, createRootRouteWithContext, useRouter, HeadContent, Scripts,
+  Outlet, Link, createRootRouteWithContext, useRouter, HeadContent, Scripts, type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import type { QueryClient } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -51,7 +51,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">
           Algo deu errado. Tente novamente ou volte ao início.
         </p>
-        {error?.message && (
+        {error instanceof Error && error.message && (
           <pre className="mt-4 max-h-48 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/50 p-3 text-left text-xs text-muted-foreground">
             {error.message}
           </pre>

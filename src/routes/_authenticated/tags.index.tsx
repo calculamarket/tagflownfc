@@ -8,11 +8,19 @@ import { Plus, ExternalLink, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { DESTINATION_LABELS } from "@/lib/destination";
 import { format } from "date-fns";
+import { A4LabelExport } from "@/components/a4-label-export";
 
 const tagsQO = queryOptions({ queryKey: ["tags"], queryFn: () => listTags() });
 
 export const Route = createFileRoute("/_authenticated/tags/")({
-  head: () => ({ meta: [{ title: "Minhas Tags · 3D QR" }] }),
+  head: () => ({ meta: [
+    { title: "Minhas Tags · 3D QR" },
+    { name: "description", content: "Gerencie suas etiquetas e exporte folhas A4 em PNG a 300 dpi." },
+    { property: "og:title", content: "Minhas Tags · 3D QR" },
+    { property: "og:description", content: "Gerencie suas etiquetas e exporte folhas A4 em PNG a 300 dpi." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(tagsQO),
   component: TagsPage,
 });
@@ -113,6 +121,7 @@ function TagsPage() {
         <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/40 px-4 py-2.5">
           <span className="text-sm font-medium">{selected.size} selecionada(s)</span>
           <div className="flex items-center gap-2">
+            <A4LabelExport count={selected.size} getTexts={() => tags.filter((t) => selected.has(t.id)).map((t) => `${window.location.origin}/t/${t.id}`)} />
             <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
               Limpar
             </Button>

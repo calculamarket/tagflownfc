@@ -16,6 +16,7 @@ import { pageTitle } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { A4LabelExport } from "@/components/a4-label-export";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -24,6 +25,10 @@ export const Route = createFileRoute("/_authenticated/qr-kids")({
   head: () => ({
     meta: [
       { title: pageTitle("QR Kids") },
+      { property: "og:title", content: pageTitle("QR Kids") },
+      { property: "og:description", content: "Crie etiquetas QR Kids, folhas A4 em PNG a 300 dpi e insertos para impressão 3D." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
@@ -288,6 +293,7 @@ function QrKidsPage() {
             <Button variant="outline" onClick={printSheet}>
               <Printer className="size-4" /> Folha A4 ({sizeMm} mm)
             </Button>
+            <A4LabelExport count={Math.max(1, Math.min(200, Math.floor(num(qty)) || 1))} initialSize={sizeMm} initialShape={shape} level={level} getTexts={() => mintUrls(Math.max(1, Math.min(200, Math.floor(num(qty)) || 1)))} />
           </div>
         </div>
 
