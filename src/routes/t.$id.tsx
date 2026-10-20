@@ -5,7 +5,15 @@ import { buildDestinationUrl } from "@/lib/destination";
 
 export const Route = createFileRoute("/t/$id")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Redirecionando…" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [
+    { title: "Abrir etiqueta · 3D QR" },
+    { name: "description", content: "Acesse ou ative sua etiqueta 3D QR." },
+    { property: "og:title", content: "Abrir etiqueta · 3D QR" },
+    { property: "og:description", content: "Acesse ou ative sua etiqueta 3D QR." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
   component: RedirectPage,
 });
 
@@ -174,8 +182,8 @@ function RedirectPage() {
             <div className="mx-auto size-12 rounded-xl bg-primary/10 grid place-items-center text-2xl">📦</div>
             <h1 className="text-2xl font-semibold">Etiqueta ainda não ativada</h1>
             <p className="text-sm text-muted-foreground">
-              Esta peça ainda não foi configurada. Se ela é sua, ative com o código que veio
-              na embalagem e escolha para onde ela deve apontar.
+              Esta peça ainda não foi configurada. Se ela é sua, crie sua conta ou entre
+              para ativar e cadastrar os dados. Não é necessário código de ativação.
             </p>
             <a
               href={`/ativar/${id}`}

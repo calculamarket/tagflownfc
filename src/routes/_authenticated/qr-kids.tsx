@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { LABEL_ORIGIN } from "@/lib/registered-labels";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Backpack, Download, Printer, FileCode, Box, Boxes } from "lucide-react";
@@ -42,7 +44,8 @@ export const Route = createFileRoute("/_authenticated/qr-kids")({
 const num = (v: string) => parseFloat(v.replace(",", "."));
 
 function QrKidsPage() {
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://www.3dqr.com.br";
+  const origin = LABEL_ORIGIN;
+  const makeStock = useServerFn(createStockTags);
 
   const [mode, setMode] = useState<"auto" | "manual">("auto");
   const [url, setUrl] = useState(`${origin}/t/kids`);
@@ -78,8 +81,8 @@ function QrKidsPage() {
    *  uma por etiqueta, como nos demais geradores. */
   const mintUrls = async (count: number): Promise<string[]> => {
     if (mode === "manual") return Array.from({ length: count }, () => url);
-    const res = await createStockTags({
-      data: { name: "QR Kids", quantity: count, model: "QR Kids" },
+    const res = await makeStock({
+      data: { name: "QR Kids", quantity: count, model: "QR Kids", category: "kids" },
     });
     return res.tags.map((t) => `${origin}/t/${t.id}`);
   };

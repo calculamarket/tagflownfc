@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { createStockTags } from "@/lib/stock.functions";
+import { registeredLabelItems } from "@/lib/registered-labels";
 import { toast } from "sonner";
 import { Layers, Download } from "lucide-react";
 import {
@@ -23,21 +26,36 @@ type Props = {
   /** Builds one model for the given QR content. */
   build: (text: string, format: "3mf" | "stl") => Promise<Blob> | Blob;
   a4?: { sizeMm: number; level: QrLevel };
+  activation?: { model: string; category?: string };
+  getSameText?: () => Promise<string>;
 };
 
 const DEFAULT_BASE = "https://www.3dqr.com.br/t";
 
-export function BatchGenerator({ sameText, filename, build, a4 }: Props) {
+export function BatchGenerator({ sameText, filename, build, a4, activation, getSameText }: Props) {
+  const mint = useServerFn(createStockTags);
   const [quantity, setQuantity] = useState("10");
   const [mode, setMode] = useState<BatchMode>("unique");
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const count = Math.round(Number(quantity.replace(",", ".")));
-  const getItems = () => buildBatchItems({ quantity: count, mode, baseUrl, sameText });
+  const getItems = async () => {
+    if (!activation) return buildBatchItems({ quantity: count, mode, baseUrl, sameText });
+    return registeredLabelItems(count, mode, async (quantity) => {
+      if (mode === "same" && getSameText) {
+        const url = await getSameText();
+        const id = new URL(url).pathname.split("/").pop();
+        if (!id) throw new Error("Etiqueta não cadastrada.");
+        return [{ id }];
+      }
+      return (await mint({ data: { ...activation, name: activation.model, quantity } })).tags;
+    });
+  };
 
   const run = async (format: "3mf" | "stl") => {
     try {
-      const items = getItems();
+      setProgress({ done: 0, total: count });
+      const items = await getItems();
       setProgress({ done: 0, total: items.length });
       const zip = await buildBatchZip({
         items,
@@ -94,7 +112,7 @@ export function BatchGenerator({ sameText, filename, build, a4 }: Props) {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        {!activation && <div className="space-y-1.5">
           <Label htmlFor="base">URL base dos códigos únicos</Label>
           <Input
             id="base"
@@ -102,13 +120,13 @@ export function BatchGenerator({ sameText, filename, build, a4 }: Props) {
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
           />
-        </div>
+        </div>}
       </div>
 
       <p className="text-xs text-muted-foreground">
         {mode === "unique"
-          ? `Cada peça recebe um código curto próprio, no formato ${baseUrl.replace(/\/$/, "")}/a1b2c3d4.`
-          : "Todas as peças usarão o conteúdo do QR Code definido acima."}
+          ? activation ? "QR Codes cadastrados no sistema, prontos para ativação." : `Cada peça recebe um código curto próprio, no formato ${baseUrl.replace(/\/$/, "")}/a1b2c3d4.`
+          : activation ? "Todas as peças compartilham a mesma etiqueta cadastrada." : "Todas as peças usarão o conteúdo do QR Code definido acima."}
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -120,7 +138,7 @@ export function BatchGenerator({ sameText, filename, build, a4 }: Props) {
         </Button>
         {a4 && <A4LabelExport
           count={count}
-          getTexts={() => getItems().map((item) => item.text)}
+          getTexts={async () => (await getItems()).map((item) => item.text)}
           initialSize={a4.sizeMm}
           level={a4.level}
           disabled={busy || !Number.isFinite(count) || count < 1 || count > 500}
