@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep A4 label layout, raster export and PNG density metadata in a shared browser-side module, reused by label screens, so print dimensions and pagination remain consistent.
