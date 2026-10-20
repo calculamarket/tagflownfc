@@ -51,7 +51,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
         <p className="mt-2 text-sm text-muted-foreground">
           Algo deu errado. Tente novamente ou volte ao início.
         </p>
-        {error?.message && (
+        {error instanceof Error && error.message && (
           <pre className="mt-4 max-h-48 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/50 p-3 text-left text-xs text-muted-foreground">
             {error.message}
           </pre>
