@@ -90,7 +90,7 @@ function Gerador3dPage() {
     const quiet = num(quietMm);
     const base = num(fillMm);
     const mod = num(codeMm);
-    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (qrPurpose === "custom" && !text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     if (!(size > 0) || !(base > 0) || !(mod > 0) || !(quiet >= 0)) {
       throw new Error("Informe medidas válidas em milímetros.");
     }
@@ -108,7 +108,7 @@ function Gerador3dPage() {
     const w = num(emWidth);
     const h = num(emHeight);
     const t = num(emThickness);
-    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (qrPurpose === "custom" && !text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     if (!(w > 0) || !(h > 0) || !(t > 0)) {
       throw new Error("Informe medidas válidas em milímetros.");
     }
@@ -348,7 +348,7 @@ function Gerador3dPage() {
               }}
               initialSize={a4Size}
               level={level}
-              disabled={busy || !text.trim()}
+              disabled={busy || (qrPurpose === "custom" && !text.trim())}
             />
           </div>
         </div>

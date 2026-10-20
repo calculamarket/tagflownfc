@@ -40,7 +40,7 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const count = Math.round(Number(quantity.replace(",", ".")));
   const getItems = async () => {
-    if (!activation) return buildBatchItems({ quantity: count, mode, baseUrl, sameText });
+    if (!activation && mode === "same") return buildBatchItems({ quantity: count, mode, baseUrl, sameText });
     return registeredLabelItems(count, mode, async (quantity) => {
       if (mode === "same" && getSameText) {
         const url = await getSameText();
@@ -48,7 +48,8 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
         if (!id) throw new Error("Etiqueta não cadastrada.");
         return [{ id }];
       }
-      return (await mint({ data: { ...activation, name: activation.model, quantity } })).tags;
+      const model = activation?.model ?? "Etiqueta QR";
+      return (await mint({ data: { ...activation, model, name: model, quantity } })).tags;
     });
   };
 
@@ -116,16 +117,15 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
           <Label htmlFor="base">URL base dos códigos únicos</Label>
           <Input
             id="base"
-            disabled={mode !== "unique"}
-            value={baseUrl}
-            onChange={(e) => setBaseUrl(e.target.value)}
+            disabled
+            value={DEFAULT_BASE}
           />
         </div>}
       </div>
 
       <p className="text-xs text-muted-foreground">
         {mode === "unique"
-          ? activation ? "QR Codes cadastrados no sistema, prontos para ativação." : `Cada peça recebe um código curto próprio, no formato ${baseUrl.replace(/\/$/, "")}/a1b2c3d4.`
+          ? "QR Codes cadastrados no sistema, prontos para ativação."
           : activation ? "Todas as peças compartilham a mesma etiqueta cadastrada." : "Todas as peças usarão o conteúdo do QR Code definido acima."}
       </p>
 

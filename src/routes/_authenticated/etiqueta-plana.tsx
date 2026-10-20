@@ -148,7 +148,7 @@ function FlatTagPage() {
       codeMm: num(codeMm),
       labelBandMm: num(labelBandMm),
     };
-    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (qrPurpose === "custom" && !text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     for (const [key, v] of Object.entries(values)) {
       if (!Number.isFinite(v) || v < 0) throw new Error(`Medida inválida: ${key}.`);
     }
