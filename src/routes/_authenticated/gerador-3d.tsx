@@ -8,6 +8,7 @@ import { buildQrStl } from "@/lib/qr-stl";
 import { buildEmergencyPlate3mf, buildEmergencyPlateStl } from "@/lib/emergency-plate-3d";
 import { buildNfcTag3mf, buildNfcTagStl } from "@/lib/nfc-tag-3d";
 import { BatchGenerator } from "@/components/batch-generator";
+import { A4LabelExport } from "@/components/a4-label-export";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
@@ -25,12 +26,12 @@ export const Route = createFileRoute("/_authenticated/gerador-3d")({
       {
         name: "description",
         content:
-          "Gere o arquivo 3MF (duas cores) ou STL de qualquer QR Code, com tamanho, quiet zone, alturas e cores definidos em milímetros.",
+          "Gere QR Codes em 3MF, STL ou folhas A4 em PNG a 300 dpi, individualmente ou em lote.",
       },
       { property: "og:title", content: "Gerador de QR 3D · 3D QR" },
       {
         property: "og:description",
-        content: "Crie o modelo 3D imprimível de qualquer QR Code em segundos.",
+        content: "Crie QR Codes em 3MF, STL e folhas A4 em PNG a 300 dpi, com quantidade e tamanho selecionáveis.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -161,6 +162,7 @@ function Gerador3dPage() {
   };
 
   const total = (num(sizeMm) || 0) + 2 * (num(quietMm) || 0);
+  const a4Size = model === "placa" ? total : num(emWidth);
 
   return (
     <div className="p-6 lg:p-10 max-w-6xl mx-auto space-y-6">
@@ -324,6 +326,16 @@ function Gerador3dPage() {
             <Button variant="outline" disabled={busy} onClick={() => download("stl")}>
               <Download className="size-4" /> Baixar .stl
             </Button>
+            <A4LabelExport
+              count={1}
+              getTexts={() => {
+                if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+                return [text];
+              }}
+              initialSize={a4Size}
+              level={level}
+              disabled={busy || !text.trim()}
+            />
           </div>
         </div>
 
@@ -345,6 +357,7 @@ function Gerador3dPage() {
         sameText={text}
         filename={filename || "qrcode-3d"}
         build={(content, format) => buildModel(content, format)}
+        a4={{ sizeMm: a4Size, level }}
       />
     </div>
   );

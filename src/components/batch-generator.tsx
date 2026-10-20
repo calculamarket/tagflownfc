@@ -9,6 +9,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { A4LabelExport } from "@/components/a4-label-export";
+import type { QrLevel } from "@/lib/round-label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -20,24 +22,22 @@ type Props = {
   filename: string;
   /** Builds one model for the given QR content. */
   build: (text: string, format: "3mf" | "stl") => Promise<Blob> | Blob;
+  a4?: { sizeMm: number; level: QrLevel };
 };
 
 const DEFAULT_BASE = "https://www.3dqr.com.br/t";
 
-export function BatchGenerator({ sameText, filename, build }: Props) {
+export function BatchGenerator({ sameText, filename, build, a4 }: Props) {
   const [quantity, setQuantity] = useState("10");
   const [mode, setMode] = useState<BatchMode>("unique");
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const count = Math.round(Number(quantity.replace(",", ".")));
+  const getItems = () => buildBatchItems({ quantity: count, mode, baseUrl, sameText });
 
   const run = async (format: "3mf" | "stl") => {
     try {
-      const items = buildBatchItems({
-        quantity: Math.round(Number(quantity.replace(",", "."))),
-        mode,
-        baseUrl,
-        sameText,
-      });
+      const items = getItems();
       setProgress({ done: 0, total: items.length });
       const zip = await buildBatchZip({
         items,
@@ -118,6 +118,13 @@ export function BatchGenerator({ sameText, filename, build }: Props) {
         <Button variant="outline" disabled={busy} onClick={() => run("stl")}>
           <Download className="size-4" /> Gerar lote .stl (.zip)
         </Button>
+        {a4 && <A4LabelExport
+          count={count}
+          getTexts={() => getItems().map((item) => item.text)}
+          initialSize={a4.sizeMm}
+          level={a4.level}
+          disabled={busy || !Number.isFinite(count) || count < 1 || count > 500}
+        />}
         {progress ? (
           <span className="text-xs text-muted-foreground">
             Gerando {progress.done}/{progress.total}…
