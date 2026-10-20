@@ -14,6 +14,7 @@ import { imageToMask, maskToDataUrl, textToMask } from "@/lib/relief-raster";
 import { buildPixPayload } from "@/lib/qr-payloads";
 import { useServerFn } from "@tanstack/react-start";
 import { createStockTags } from "@/lib/stock.functions";
+import { registeredTagUrl } from "@/lib/registered-labels";
 import { buildBatchZip } from "@/lib/batch-qr";
 import { SlotPalette, PartSlotPicker } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
@@ -52,8 +53,7 @@ const num = (v: string) => parseFloat(v.replace(",", "."));
 type Level = "L" | "M" | "Q" | "H";
 
 /** Public link of a system tag — scanning it opens the activation flow. */
-const tagUrl = (id: string) =>
-  `${typeof window === "undefined" ? "https://www.3dqr.com.br" : window.location.origin}/t/${id}`;
+const tagUrl = registeredTagUrl;
 
 function PixPlatePage() {
   // Conteúdo do QR
@@ -307,6 +307,15 @@ function PixPlatePage() {
 
   const makeStock = useServerFn(createStockTags);
 
+  const ensureActivation = async () => {
+    if (activationId) return tagUrl(activationId);
+    const res = await makeStock({ data: { name: "Placa Pix", quantity: 1, model: "Placa Pix" } });
+    const first = res.tags[0];
+    if (!first) throw new Error("Não foi possível cadastrar a etiqueta.");
+    setActivationId(first.id);
+    return tagUrl(first.id);
+  };
+
   /** Reserve one system code for a single plate (no activation code needed). */
   const generateActivation = async () => {
     setBusy(true);
@@ -362,11 +371,12 @@ function PixPlatePage() {
         items = res.tags.map((t) => ({ index: t.index, id: t.id, text: tagUrl(t.id) }));
       } else {
         // Mesmo QR em todas: valida uma vez e repete o mesmo arquivo.
-        options();
+        const second = useSecond && secondType === "ativacao" ? await ensureActivation() : secondPayload;
+        options(second);
         items = Array.from({ length: quantity }, (_, i) => ({
           index: i + 1,
           id: activationId,
-          text: secondPayload,
+          text: second,
         }));
       }
 
@@ -390,7 +400,8 @@ function PixPlatePage() {
   const download = async (format: "3mf" | "stl", part: "both" | "plate" | "base" = exportPart) => {
     setBusy(true);
     try {
-      const opts = { ...options(), part };
+      const second = useSecond && secondType === "ativacao" && part !== "base" ? await ensureActivation() : undefined;
+      const opts = { ...options(second), part };
       const blob =
         format === "3mf"
           ? await buildPixPlate3mf({ ...opts, plateSlot, codeSlot, code2Slot, artSlot, baseSlot })
