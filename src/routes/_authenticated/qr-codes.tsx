@@ -2,11 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { listTags } from "@/lib/tags.functions";
 import { TagQrPreview } from "@/components/tag-qr-preview";
+import { A4LabelExport } from "@/components/a4-label-export";
 
 const tagsQO = queryOptions({ queryKey: ["tags"], queryFn: () => listTags() });
 
 export const Route = createFileRoute("/_authenticated/qr-codes")({
-  head: () => ({ meta: [{ title: "QR Codes · 3D QR" }] }),
+  head: () => ({ meta: [
+    { title: "QR Codes · 3D QR" },
+    { name: "description", content: "Baixe QR Codes e folhas de etiquetas A4 em PNG a 300 dpi." },
+    { property: "og:title", content: "QR Codes · 3D QR" },
+    { property: "og:description", content: "Baixe QR Codes e folhas de etiquetas A4 em PNG a 300 dpi." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(tagsQO),
   component: QRPage,
 });
@@ -17,6 +25,7 @@ function QRPage() {
     <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">QR Codes</h1>
       <p className="text-sm text-muted-foreground">Um QR Code é gerado automaticamente para cada tag.</p>
+      <A4LabelExport count={tags.length} getTexts={() => tags.map((t) => `${window.location.origin}/t/${t.id}`)} />
       {tags.length === 0 ? (
         <div className="text-sm text-muted-foreground">Crie uma tag primeiro.</div>
       ) : (
