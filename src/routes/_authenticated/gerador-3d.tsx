@@ -8,6 +8,7 @@ import { buildQrStl } from "@/lib/qr-stl";
 import { buildEmergencyPlate3mf, buildEmergencyPlateStl } from "@/lib/emergency-plate-3d";
 import { buildNfcTag3mf, buildNfcTagStl } from "@/lib/nfc-tag-3d";
 import { BatchGenerator } from "@/components/batch-generator";
+import { useRegisteredLabel } from "@/hooks/use-registered-label";
 import { A4LabelExport } from "@/components/a4-label-export";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
@@ -54,6 +55,10 @@ function Gerador3dPage() {
   const [emHole, setEmHole] = useState("0");
   const [nfcQuietMm, setNfcQuietMm] = useState("1.5");
   const [text, setText] = useState("https://www.3dqr.com.br");
+  const [qrPurpose, setQrPurpose] = useState<"activation" | "custom">("activation");
+  const labelModel = model === "emergencia" ? "Etiqueta Emergência" : model === "nfc" ? "QR + NFC" : "QR 3D";
+  const category = model === "emergencia" ? "idoso" : undefined;
+  const registered = useRegisteredLabel(labelModel, category);
   const [level, setLevel] = useState<Level>("M");
   const [sizeMm, setSizeMm] = useState("50");
   const [quietMm, setQuietMm] = useState("2");
@@ -72,20 +77,20 @@ function Gerador3dPage() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    QRCode.toCanvas(canvas, text || " ", {
+    QRCode.toCanvas(canvas, (qrPurpose === "activation" ? registered.url || "https://www.3dqr.com.br/ativar" : text) || " ", {
       width: 260,
       margin: 2,
       errorCorrectionLevel: level,
       color: { dark: codeColor, light: fillColor },
     }).catch(() => undefined);
-  }, [text, level, codeColor, fillColor]);
+  }, [text, level, codeColor, fillColor, qrPurpose, registered.url]);
 
   const options = () => {
     const size = num(sizeMm);
     const quiet = num(quietMm);
     const base = num(fillMm);
     const mod = num(codeMm);
-    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (qrPurpose === "custom" && !text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     if (!(size > 0) || !(base > 0) || !(mod > 0) || !(quiet >= 0)) {
       throw new Error("Informe medidas válidas em milímetros.");
     }
@@ -103,7 +108,7 @@ function Gerador3dPage() {
     const w = num(emWidth);
     const h = num(emHeight);
     const t = num(emThickness);
-    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (qrPurpose === "custom" && !text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     if (!(w > 0) || !(h > 0) || !(t > 0)) {
       throw new Error("Informe medidas válidas em milímetros.");
     }
@@ -146,7 +151,8 @@ function Gerador3dPage() {
   const download = async (format: "3mf" | "stl") => {
     setBusy(true);
     try {
-      const blob = await buildModel(text, format);
+      const content = qrPurpose === "activation" ? await registered.getText() : text;
+      const blob = await buildModel(content, format);
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = href;
@@ -202,6 +208,13 @@ function Gerador3dPage() {
           </div>
 
           <div className="space-y-1.5">
+            <Label>Destino do QR Code</Label>
+            <Select value={qrPurpose} onValueChange={(v) => setQrPurpose(v as "activation" | "custom")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="activation">Ativação pelo cliente</SelectItem><SelectItem value="custom">Conteúdo personalizado (sem ativação)</SelectItem></SelectContent>
+            </Select>
+          </div>
+          {qrPurpose === "custom" && <div className="space-y-1.5">
             <Label htmlFor="conteudo">Conteúdo do QR Code</Label>
             <Textarea
               id="conteudo"
@@ -210,7 +223,7 @@ function Gerador3dPage() {
               onChange={(e) => setText(e.target.value)}
               placeholder="https://… , texto, WIFI:T:WPA;S:rede;P:senha;;"
             />
-          </div>
+          </div>}
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
@@ -328,13 +341,14 @@ function Gerador3dPage() {
             </Button>
             <A4LabelExport
               count={1}
-              getTexts={() => {
+              getTexts={async () => {
+                if (qrPurpose === "activation") return [await registered.getText()];
                 if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
                 return [text];
               }}
               initialSize={a4Size}
               level={level}
-              disabled={busy || !text.trim()}
+              disabled={busy || (qrPurpose === "custom" && !text.trim())}
             />
           </div>
         </div>
@@ -358,6 +372,8 @@ function Gerador3dPage() {
         filename={filename || "qrcode-3d"}
         build={(content, format) => buildModel(content, format)}
         a4={{ sizeMm: a4Size, level }}
+        activation={qrPurpose === "activation" ? { model: labelModel, category } : undefined}
+        getSameText={registered.getText}
       />
     </div>
   );

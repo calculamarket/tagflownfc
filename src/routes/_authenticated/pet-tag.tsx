@@ -10,6 +10,7 @@ import {
   type PetTagOptions,
 } from "@/lib/pet-tag-3d";
 import { BatchGenerator } from "@/components/batch-generator";
+import { useRegisteredLabel } from "@/hooks/use-registered-label";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,9 @@ type Level = "L" | "M" | "Q" | "H";
 const num = (v: string) => parseFloat(v.replace(",", "."));
 
 function PetTagPage() {
-  const [text, setText] = useState("https://www.3dqr.com.br/t/pet");
+  const [text, setText] = useState("https://www.3dqr.com.br");
+  const [qrPurpose, setQrPurpose] = useState<"activation" | "custom">("activation");
+  const registered = useRegisteredLabel("Pet Tag", "pet");
   const [level, setLevel] = useState<Level>("Q");
   const [widthMm, setWidthMm] = useState("50");
   const [depthMm, setDepthMm] = useState("32");
@@ -73,13 +76,13 @@ function PetTagPage() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    QRCode.toCanvas(canvas, text || " ", {
+    QRCode.toCanvas(canvas, (qrPurpose === "activation" ? registered.url || "https://www.3dqr.com.br/ativar" : text) || " ", {
       width: 220,
       margin: 2,
       errorCorrectionLevel: level,
       color: { dark: codeColor, light: bodyColor },
     }).catch(() => undefined);
-  }, [text, level, codeColor, bodyColor]);
+  }, [text, level, codeColor, bodyColor, qrPurpose, registered.url]);
 
   const options = (): PetTagOptions => {
     const values = {
@@ -94,7 +97,7 @@ function PetTagPage() {
       codeMm: num(codeMm),
       qrMarginMm: num(qrMarginMm),
     };
-    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (qrPurpose === "custom" && !text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     for (const [key, v] of Object.entries(values)) {
       if (!Number.isFinite(v) || v < 0) throw new Error(`Medida inválida: ${key}.`);
     }
@@ -131,6 +134,7 @@ function PetTagPage() {
     setBusy(true);
     try {
       const opts = options();
+      opts.text = qrPurpose === "activation" ? await registered.getText() : text;
       const blob =
         format === "3mf"
           ? await buildPetTag3mf({ ...opts, bodyColor, codeColor, bodySlot, codeSlot })
@@ -165,6 +169,13 @@ function PetTagPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
           <div className="space-y-1.5">
+            <Label>Destino do QR Code</Label>
+            <Select value={qrPurpose} onValueChange={(v) => setQrPurpose(v as "activation" | "custom")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="activation">Ativação pelo cliente</SelectItem><SelectItem value="custom">Conteúdo personalizado (sem ativação)</SelectItem></SelectContent>
+            </Select>
+          </div>
+          {qrPurpose === "custom" && <div className="space-y-1.5">
             <Label htmlFor="conteudo">Conteúdo do QR Code</Label>
             <Textarea
               id="conteudo"
@@ -173,7 +184,7 @@ function PetTagPage() {
               onChange={(e) => setText(e.target.value)}
               placeholder="https://… , telefone, texto do contato"
             />
-          </div>
+          </div>}
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
@@ -315,6 +326,8 @@ function PetTagPage() {
       </div>
 
       <BatchGenerator
+        activation={qrPurpose === "activation" ? { model: "Pet Tag", category: "pet" } : undefined}
+        getSameText={registered.getText}
         sameText={text}
         filename={filename || "pet-tag-qr"}
         build={(content, format) => {

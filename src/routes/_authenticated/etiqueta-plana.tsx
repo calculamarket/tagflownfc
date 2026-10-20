@@ -11,6 +11,7 @@ import {
 } from "@/lib/flat-tag-3d";
 import { textToMask } from "@/lib/relief-raster";
 import { BatchGenerator } from "@/components/batch-generator";
+import { useRegisteredLabel } from "@/hooks/use-registered-label";
 import { MaterialSlotFields, SlotCountField } from "@/components/material-slots";
 import type { MaterialSlot } from "@/lib/three-mf";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,9 @@ const PRESETS: Preset[] = [
 
 
 function FlatTagPage() {
-  const [text, setText] = useState("https://www.3dqr.com.br/t/tag");
+  const [text, setText] = useState("https://www.3dqr.com.br");
+  const [qrPurpose, setQrPurpose] = useState<"activation" | "custom">("activation");
+  const registered = useRegisteredLabel("Etiqueta Plana");
   const [level, setLevel] = useState<Level>("Q");
   const [widthMm, setWidthMm] = useState("49");
   const [depthMm, setDepthMm] = useState("33");
@@ -105,13 +108,13 @@ function FlatTagPage() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    QRCode.toCanvas(canvas, text || " ", {
+    QRCode.toCanvas(canvas, (qrPurpose === "activation" ? registered.url || "https://www.3dqr.com.br/ativar" : text) || " ", {
       width: 220,
       margin: 2,
       errorCorrectionLevel: level,
       color: { dark: codeColor, light: bodyColor },
     }).catch(() => undefined);
-  }, [text, level, codeColor, bodyColor]);
+  }, [text, level, codeColor, bodyColor, qrPurpose, registered.url]);
 
   const applyPreset = (id: string) => {
     const p = PRESETS.find((x) => x.id === id);
@@ -145,7 +148,7 @@ function FlatTagPage() {
       codeMm: num(codeMm),
       labelBandMm: num(labelBandMm),
     };
-    if (!text.trim()) throw new Error("Informe o conteúdo do QR Code.");
+    if (qrPurpose === "custom" && !text.trim()) throw new Error("Informe o conteúdo do QR Code.");
     for (const [key, v] of Object.entries(values)) {
       if (!Number.isFinite(v) || v < 0) throw new Error(`Medida inválida: ${key}.`);
     }
@@ -187,6 +190,7 @@ function FlatTagPage() {
     setBusy(true);
     try {
       const opts = options();
+      opts.text = qrPurpose === "activation" ? await registered.getText() : text;
       const blob =
         format === "3mf"
           ? await buildFlatTag3mf({ ...opts, bodyColor, codeColor, bodySlot, codeSlot })
@@ -220,6 +224,13 @@ function FlatTagPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-lg border border-border bg-card p-5">
           <div className="space-y-1.5">
+            <Label>Destino do QR Code</Label>
+            <Select value={qrPurpose} onValueChange={(v) => setQrPurpose(v as "activation" | "custom")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="activation">Ativação pelo cliente</SelectItem><SelectItem value="custom">Conteúdo personalizado (sem ativação)</SelectItem></SelectContent>
+            </Select>
+          </div>
+          {qrPurpose === "custom" && <div className="space-y-1.5">
             <Label htmlFor="conteudo">Conteúdo do QR Code</Label>
             <Textarea
               id="conteudo"
@@ -228,7 +239,7 @@ function FlatTagPage() {
               onChange={(e) => setText(e.target.value)}
               placeholder="https://… , telefone, texto do contato"
             />
-          </div>
+          </div>}
 
           <div className="space-y-1.5">
             <Label>Modelo pronto</Label>
@@ -422,6 +433,8 @@ function FlatTagPage() {
       </div>
 
       <BatchGenerator
+        activation={qrPurpose === "activation" ? { model: "Etiqueta Plana" } : undefined}
+        getSameText={registered.getText}
         sameText={text}
         filename={filename || "etiqueta-qr"}
         build={(content, format) => {
