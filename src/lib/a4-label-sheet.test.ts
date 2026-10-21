@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { A4, a4Layout, pngAt300Dpi } from "./a4-label-sheet";
+import { A4, a4Layout, pngAt300Dpi, QR_SCHEME_COLORS } from "./a4-label-sheet";
 
 describe("A4 300 dpi labels", () => {
   it("uses A4 physical dimensions", () => {
@@ -26,5 +26,9 @@ describe("A4 300 dpi labels", () => {
     assert.equal(layout.capacity, 35);
     assert.equal(layout.pages, 2);
     assert.ok(layout.marginMm + layout.columns * 35 + (layout.columns - 1) * layout.gapMm <= 202);
+  });
+  it("offers white and black background schemes", () => {
+    assert.deepEqual(QR_SCHEME_COLORS.light, { page: "#ffffff", outline: "#b8b8b8", modules: "#000000" });
+    assert.deepEqual(QR_SCHEME_COLORS.dark, { page: "#000000", outline: "#ffffff", modules: "#ffffff" });
   });
 });
