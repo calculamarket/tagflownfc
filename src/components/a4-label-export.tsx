@@ -34,7 +34,7 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
     try {
       a4Layout(Number(size), count);
       const texts = await getTexts();
-      const sheets = await buildA4Sheets(texts, Number(size), shape, level);
+      const sheets = await buildA4Sheets(texts, Number(size), shape, level, scheme);
       const first = sheets[0];
       if (first) {
         const reader = new FileReader();
@@ -47,7 +47,7 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
   };
 
   return (
-    <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) { setSize(String(initialSize)); setShape(initialShape); clear(); } }}>
+      <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) { setSize(String(initialSize)); setShape(initialShape); setScheme("light"); clear(); } }}>
       <DialogTrigger asChild><Button variant="outline" disabled={disabled || count < 1}><FileImage className="size-4" /> Folha A4 · PNG 300 dpi</Button></DialogTrigger>
       <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
