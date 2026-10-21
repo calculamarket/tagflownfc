@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { a4Layout, buildA4Sheets, deliverA4File, packageA4Sheets } from "@/lib/a4-label-sheet";
+import { a4Layout, buildA4Sheets, deliverA4File, packageA4Sheets, type QrScheme } from "@/lib/a4-label-sheet";
 import type { LabelShape, QrLevel } from "@/lib/round-label";
 
 export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape = "square", level = "Q", disabled = false }: {
@@ -19,6 +19,7 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
 }) {
   const [size, setSize] = useState(String(initialSize));
   const [shape, setShape] = useState<LabelShape>(initialShape);
+  const [scheme, setScheme] = useState<QrScheme>("light");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState<{ blob: Blob; filename: string } | null>(null);
   const [preview, setPreview] = useState("");
