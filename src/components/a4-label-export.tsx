@@ -57,6 +57,7 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2"><Label htmlFor="a4-size">Tamanho (mm)</Label><Input id="a4-size" type="number" min={10} max={100} value={size} disabled={busy} onChange={(e) => { setSize(e.target.value); clear(); }} /></div>
           <div className="space-y-2"><Label>Formato</Label><Select value={shape} disabled={busy} onValueChange={(v) => { setShape(v as LabelShape); clear(); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="square">Quadrada</SelectItem><SelectItem value="round">Redonda</SelectItem></SelectContent></Select></div>
+          <div className="space-y-2"><Label>Cores</Label><Select value={scheme} disabled={busy} onValueChange={(v) => { setScheme(v as QrScheme); clear(); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="light">Fundo branco · QR preto</SelectItem><SelectItem value="dark">Fundo preto · QR branco</SelectItem></SelectContent></Select></div>
         </div>
         <p className="text-sm text-muted-foreground">{count} etiqueta(s){layout ? ` · ${layout.capacity} por folha · ${layout.pages} folha(s)` : ""}</p>
         {preview && <img src={preview} alt="Prévia da primeira folha A4 de etiquetas" className="mx-auto max-h-80 border border-border object-contain" />}
