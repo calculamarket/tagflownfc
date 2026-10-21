@@ -51,7 +51,22 @@ export function pngAt300Dpi(bytes: Uint8Array): Uint8Array {
   return out;
 }
 
-export async function buildA4Sheets(texts: string[], sizeMm: number, shape: LabelShape = "square", level: QrLevel = "Q") {
+export type QrScheme = "light" | "dark";
+
+/** Page background, label outline and module colors for each scheme. */
+export const QR_SCHEME_COLORS: Record<QrScheme, { page: string; outline: string; modules: string }> = {
+  light: { page: "#ffffff", outline: "#b8b8b8", modules: "#000000" },
+  dark: { page: "#000000", outline: "#ffffff", modules: "#ffffff" },
+};
+
+export async function buildA4Sheets(
+  texts: string[],
+  sizeMm: number,
+  shape: LabelShape = "square",
+  level: QrLevel = "Q",
+  scheme: QrScheme = "light",
+) {
+  const colors = QR_SCHEME_COLORS[scheme] ?? QR_SCHEME_COLORS.light;
   const layout = a4Layout(sizeMm, texts.length);
   const sheets: Blob[] = [];
   for (let page = 0; page < layout.pages; page++) {
@@ -60,7 +75,7 @@ export async function buildA4Sheets(texts: string[], sizeMm: number, shape: Labe
     canvas.height = A4.heightPx;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Não foi possível criar a folha.");
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = colors.page;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const items = texts.slice(page * layout.capacity, (page + 1) * layout.capacity);
     for (let i = 0; i < items.length; i++) {
