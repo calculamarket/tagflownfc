@@ -10,15 +10,15 @@ describe("A4 600 dpi labels", () => {
     assert.equal(A4.dpi, 600);
     assert.deepEqual([A4.widthPx, A4.heightPx], [4961, 7016]);
   });
-  it("records 300 dpi in the PNG density chunk", () => {
+  it("records 600 dpi in the PNG density chunk", () => {
     const bytes = new Uint8Array(33);
     new DataView(bytes.buffer).setUint32(8, 13);
     bytes.set(new TextEncoder().encode("IHDR"), 12);
     const out = pngAt300Dpi(bytes);
     const view = new DataView(out.buffer);
     assert.equal(new TextDecoder().decode(out.subarray(37, 41)), "pHYs");
-    assert.equal(view.getUint32(41), 11811);
-    assert.equal(view.getUint32(45), 11811);
+    assert.equal(view.getUint32(41), 23622);
+    assert.equal(view.getUint32(45), 23622);
     assert.equal(out[49], 1);
   });
   it("paginates without clipping labels", () => {
