@@ -82,7 +82,7 @@ export async function buildA4Sheets(
       const x = px(layout.marginMm + (i % layout.columns) * (sizeMm + layout.gapMm));
       const y = px(layout.marginMm + Math.floor(i / layout.columns) * (sizeMm + layout.gapMm));
       const side = px(sizeMm);
-      ctx.strokeStyle = "#b8b8b8";
+      ctx.strokeStyle = colors.outline;
       ctx.lineWidth = 1;
       ctx.beginPath();
       if (shape === "round") ctx.arc(x + side / 2, y + side / 2, side / 2, 0, 2 * Math.PI);
@@ -96,7 +96,7 @@ export async function buildA4Sheets(
       const qrSide = cell * qr.modules.size;
       const ox = x + Math.round((side - qrSide) / 2);
       const oy = y + Math.round((side - qrSide) / 2);
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = colors.modules;
       for (let r = 0; r < qr.modules.size; r++) {
         for (let c = 0; c < qr.modules.size; c++) {
           if (qr.modules.data[r * qr.modules.size + c]) ctx.fillRect(ox + c * cell, oy + r * cell, cell, cell);
