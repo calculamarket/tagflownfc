@@ -48,11 +48,11 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
 
   return (
       <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) { setSize(String(initialSize)); setShape(initialShape); setScheme("light"); clear(); } }}>
-      <DialogTrigger asChild><Button variant="outline" disabled={disabled || count < 1}><FileImage className="size-4" /> Folha A4 · PNG 300 dpi</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline" disabled={disabled || count < 1}><FileImage className="size-4" /> Folha A4 · PNG 600 dpi</Button></DialogTrigger>
       <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Etiquetas em folha A4</DialogTitle>
-          <DialogDescription>210 × 297 mm · 2480 × 3508 pixels · 300 dpi</DialogDescription>
+          <DialogDescription>210 × 297 mm · 4961 × 7016 pixels · 600 dpi</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div className="space-y-2"><Label htmlFor="a4-size">Tamanho (mm)</Label><Input id="a4-size" type="number" min={10} max={100} value={size} disabled={busy} onChange={(e) => { setSize(e.target.value); clear(); }} /></div>
