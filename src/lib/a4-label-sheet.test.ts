@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { A4, a4Layout, pngAt300Dpi } from "./a4-label-sheet";
+import { A4, a4Layout, pngAt300Dpi, QR_SCHEME_COLORS } from "./a4-label-sheet";
 
 describe("A4 300 dpi labels", () => {
   it("uses A4 physical dimensions", () => {
