@@ -27,4 +27,8 @@ describe("A4 300 dpi labels", () => {
     assert.equal(layout.pages, 2);
     assert.ok(layout.marginMm + layout.columns * 35 + (layout.columns - 1) * layout.gapMm <= 202);
   });
+  it("offers white and black background schemes", () => {
+    assert.deepEqual(QR_SCHEME_COLORS.light, { page: "#ffffff", outline: "#b8b8b8", modules: "#000000" });
+    assert.deepEqual(QR_SCHEME_COLORS.dark, { page: "#000000", outline: "#ffffff", modules: "#ffffff" });
+  });
 });
