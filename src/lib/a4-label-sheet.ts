@@ -80,7 +80,7 @@ async function iconImage(icon: LabelIcon, color: string) {
   const drawing = icon === "nfc"
     ? '<g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 8v8m4-11c4 4 4 10 0 14m4-17c6 6 6 14 0 20m4-22c7 7 7 15 0 22"/></g>'
     : `<path fill="currentColor" d="${brands[icon].path}"/>`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="color:${color}">${drawing}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24" style="color:${color}">${drawing}</svg>`;
   const image = new Image();
   image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   await image.decode();
@@ -155,6 +155,22 @@ export async function packageA4Sheets(sheets: Blob[]) {
   if (sheets.length === 1) return { blob: first, filename: `etiquetas-a4-${A4.dpi}dpi.png` };
   const entries = await Promise.all(sheets.map(async (blob, i) => ({ name: `etiquetas-a4-${String(i + 1).padStart(3, "0")}-${A4.dpi}dpi.png`, data: new Uint8Array(await blob.arrayBuffer()) })));
   return { blob: await createZip(entries), filename: `etiquetas-a4-${A4.dpi}dpi.zip` };
+}
+
+/** Reuse the exact rendered sheets so PDF and PNG keep identical codes and artwork. */
+export async function packageA4Pdf(sheets: Blob[]) {
+  if (!sheets.length) throw new Error("Selecione pelo menos uma etiqueta.");
+  const { PDFDocument } = await import("pdf-lib");
+  const pdf = await PDFDocument.create();
+  pdf.setTitle("Etiquetas A4 · 3D QR");
+  const width = A4.widthMm * 72 / 25.4;
+  const height = A4.heightMm * 72 / 25.4;
+  for (const sheet of sheets) {
+    const image = await pdf.embedPng(await sheet.arrayBuffer());
+    const page = pdf.addPage([width, height]);
+    page.drawImage(image, { x: 0, y: 0, width, height });
+  }
+  return { blob: new Blob([new Uint8Array(await pdf.save())], { type: "application/pdf" }), filename: `etiquetas-a4-${A4.dpi}dpi.pdf` };
 }
 
 export async function deliverA4File(blob: Blob, filename: string) {

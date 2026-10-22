@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, FileImage, Loader2 } from "lucide-react";
+import { Download, FileImage, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,29 +7,39 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { a4Layout, buildA4Sheets, deliverA4File, packageA4Sheets, LABEL_ICONS, type A4LabelShape, type LabelIcon, type QrScheme } from "@/lib/a4-label-sheet";
-import type { LabelShape, QrLevel } from "@/lib/round-label";
+import { a4Layout, buildA4Sheets, deliverA4File, packageA4Sheets, packageA4Pdf, LABEL_ICONS, type A4LabelShape, type LabelIcon, type QrScheme } from "@/lib/a4-label-sheet";
+import type { QrLevel } from "@/lib/round-label";
 
-export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape = "square", level = "Q", disabled = false }: {
+export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape = "square", initialIcons = ["instagram", "whatsapp", "google", "nfc"], level = "Q", disabled = false }: {
   getTexts: () => Promise<string[]> | string[];
   count: number;
   initialSize?: number;
-  initialShape?: LabelShape;
+  initialShape?: A4LabelShape;
+  initialIcons?: LabelIcon[];
   level?: QrLevel;
   disabled?: boolean;
 }) {
   const [size, setSize] = useState(String(initialSize));
   const [shape, setShape] = useState<A4LabelShape>(initialShape);
-  const [icons, setIcons] = useState<LabelIcon[]>(["instagram", "whatsapp", "google", "nfc"]);
+  const [icons, setIcons] = useState<LabelIcon[]>(initialIcons);
   const [scheme, setScheme] = useState<QrScheme>("light");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState<{ blob: Blob; filename: string } | null>(null);
+  const [sheets, setSheets] = useState<Blob[]>([]);
   const [preview, setPreview] = useState("");
   const [open, setOpen] = useState(false);
   let layout;
   try { layout = a4Layout(Number(size), count, shape); } catch { /* validation shown on generate */ }
 
-  const clear = () => { setReady(null); setPreview(""); };
+  const clear = () => { setReady(null); setSheets([]); setPreview(""); };
+  const downloadPdf = async () => {
+    setBusy(true);
+    try {
+      const file = await packageA4Pdf(sheets);
+      await deliverA4File(file.blob, file.filename);
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setBusy(false); }
+  };
   const generate = async () => {
     setBusy(true);
     clear();
@@ -37,6 +47,7 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
       a4Layout(Number(size), count, shape);
       const texts = await getTexts();
       const sheets = await buildA4Sheets(texts, Number(size), shape, level, scheme, icons);
+      setSheets(sheets);
       const first = sheets[0];
       if (first) {
         const reader = new FileReader();
@@ -49,8 +60,8 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
   };
 
   return (
-      <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) { setSize(String(initialSize)); setShape(initialShape); setScheme("light"); setIcons(["instagram", "whatsapp", "google", "nfc"]); clear(); } }}>
-      <DialogTrigger asChild><Button variant="outline" disabled={disabled || count < 1}><FileImage className="size-4" /> Folha A4 · PNG 600 dpi</Button></DialogTrigger>
+      <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) { setSize(String(initialSize)); setShape(initialShape); setScheme("light"); setIcons([...initialIcons]); clear(); } }}>
+      <DialogTrigger asChild><Button variant="outline" disabled={disabled || count < 1}><FileImage className="size-4" /> Folha A4 · PNG / PDF</Button></DialogTrigger>
       <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Etiquetas em folha A4</DialogTitle>
@@ -66,7 +77,8 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
         {preview && <img src={preview} alt="Prévia da primeira folha A4 de etiquetas" className="mx-auto max-h-80 border border-border object-contain" />}
         <div className="flex flex-wrap justify-end gap-2">
           <Button disabled={busy || !layout} variant={ready ? "outline" : "default"} onClick={generate}>{busy ? <Loader2 className="size-4 animate-spin" /> : <FileImage className="size-4" />}{busy ? "Gerando…" : "Gerar folha A4"}</Button>
-          {ready && <Button onClick={() => deliverA4File(ready.blob, ready.filename).catch((e) => toast.error((e as Error).message))}><Download className="size-4" />{ready.filename.endsWith(".zip") ? "Baixar PNGs (ZIP)" : "Baixar PNG"}</Button>}
+          {ready && <Button disabled={busy} onClick={() => deliverA4File(ready.blob, ready.filename).catch((e) => toast.error((e as Error).message))}><Download className="size-4" />{ready.filename.endsWith(".zip") ? "Baixar PNGs (ZIP)" : "Baixar PNG"}</Button>}
+          {ready && <Button disabled={busy} variant="outline" onClick={downloadPdf}><FileText className="size-4" />Baixar PDF</Button>}
         </div>
       </DialogContent>
     </Dialog>

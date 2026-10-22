@@ -9,7 +9,8 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Keep A4 label layout, raster export and PNG density metadata in a shared browser-side module, reused by label screens, so print dimensions and pagination remain consistent.
+- Keep A4 label layout, raster export, PNG density metadata and PDF packaging in a shared browser-side module; PDF must reuse rendered PNG sheets at A4 physical size, preserving codes, artwork and pagination without reserving new activation IDs.
+- Pass batch social/NFC selection into the A4 dialog and initialize rectangular layout when selected icons are enabled, so artwork does not silently disappear between formats.
 - Rectangular A4 labels reserve a separate left icon column and calculate pagination from the full label bounds; keep the selected QR footprint and its quiet zone independent of decorations.
 - Optional social artwork for QR plate batches enters the shared QR geometry as cached browser-rasterized masks, so STL and 3MF preserve identical QR dimensions and use the code material for icons; other model generators opt in separately.
 - Enable A4 export in the shared batch control through optional configuration and reuse its batch-content builder, so PNG quantities and same/unique modes match the 3D export settings without affecting other generators.
