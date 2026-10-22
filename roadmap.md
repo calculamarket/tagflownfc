@@ -1,4 +1,5 @@
 # Current tasks
+- [ ] Add rectangular A4 labels with a square QR at the selected size and optional social/NFC icons on the left; verify dimensions and raster export.
 - [x] Register activation QR codes before individual and batch exports across label generators.
 - [x] Test registration failures and same/unique codes: 10 tests pass; app loads without browser errors.
 - [ ] Verify signed-in generation and scan-to-activation flow; blocked because the requester has no matching account session and multiple other users require explicit account approval. Authenticated path: UNVERIFIED.
