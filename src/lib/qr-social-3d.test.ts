@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { inflateRawSync } from "node:zlib";
 import { buildQrGeometry, buildQrStl } from "./qr-stl";
 import { buildQr3mf } from "./qr-3mf";
 import type { SocialIconMask } from "./social-label-icons";
@@ -29,7 +30,24 @@ describe("Optional social icons in 3D QR batches", () => {
     const stl = await buildQrStl("test", opts).arrayBuffer();
     assert.equal(new DataView(stl).getUint32(80, true), (geometry.base.length + geometry.modules.length) * 12);
     const mf = await buildQr3mf("test", opts);
-    assert.equal(mf.type, "model/3mf");
-    assert.ok(mf.size > 1000);
+    const bytes = new Uint8Array(await mf.arrayBuffer());
+    const view = new DataView(bytes.buffer);
+    let offset = 0;
+    let model = "";
+    while (view.getUint32(offset, true) === 0x04034b50) {
+      const method = view.getUint16(offset + 8, true);
+      const length = view.getUint32(offset + 18, true);
+      const nameLength = view.getUint16(offset + 26, true);
+      const extraLength = view.getUint16(offset + 28, true);
+      const name = new TextDecoder().decode(bytes.subarray(offset + 30, offset + 30 + nameLength));
+      const start = offset + 30 + nameLength + extraLength;
+      const payload = bytes.subarray(start, start + length);
+      if (name === "3D/3dmodel.model") model = new TextDecoder().decode(method === 8 ? inflateRawSync(payload) : payload);
+      offset = start + length;
+    }
+    assert.ok(model.includes('<vertex x="61"'));
+    assert.equal((model.match(/<triangle /g) ?? []).length, (geometry.base.length + geometry.modules.length) * 12);
+    assert.ok(model.includes('name="Codigo"'));
+    assert.ok(model.includes('<components>'));
   });
 });
