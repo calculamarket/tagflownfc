@@ -1,8 +1,20 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { A4, a4Layout, labelDimensions, pngAt300Dpi, QR_SCHEME_COLORS } from "./a4-label-sheet";
+import { A4, a4Layout, labelDimensions, pngAt300Dpi, QR_SCHEME_COLORS, packageA4Pdf } from "./a4-label-sheet";
+import { PDFDocument } from "pdf-lib";
 
 describe("A4 600 dpi labels", () => {
+  it("packages every rendered sheet into a PDF at 210 × 297 mm", async () => {
+    const png = new Blob([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64")], { type: "image/png" });
+    const file = await packageA4Pdf([png, png]);
+    const pdf = await PDFDocument.load(await file.blob.arrayBuffer());
+    assert.equal(pdf.getPageCount(), 2);
+    for (const page of pdf.getPages()) {
+      assert.ok(Math.abs(page.getWidth() * 25.4 / 72 - 210) < 0.001);
+      assert.ok(Math.abs(page.getHeight() * 25.4 / 72 - 297) < 0.001);
+    }
+    assert.equal(file.blob.type, "application/pdf");
+  });
   it("keeps the selected square QR dimensions inside a wider rectangular label", () => {
     const dimensions = labelDimensions(35, "rectangle");
     assert.equal(dimensions.qrSizeMm, 35);

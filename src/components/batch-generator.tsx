@@ -152,6 +152,8 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
           count={count}
           getTexts={async () => (await getItems()).map((item) => item.text)}
           initialSize={a4.sizeMm}
+          initialShape={social && withSocial && icons.length ? "rectangle" : "square"}
+          initialIcons={social ? (withSocial ? icons : []) : undefined}
           level={a4.level}
           disabled={busy || !Number.isFinite(count) || count < 1 || count > 500}
         />}

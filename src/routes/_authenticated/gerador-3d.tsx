@@ -29,12 +29,12 @@ export const Route = createFileRoute("/_authenticated/gerador-3d")({
       {
         name: "description",
         content:
-          "Gere QR Codes em 3MF, STL ou folhas A4 em PNG a 600 dpi, com redes sociais e NFC opcionais nos lotes.",
+          "Gere QR Codes em 3MF, STL ou folhas A4 em PNG e PDF a 600 dpi, com redes sociais e NFC opcionais nos lotes.",
       },
       { property: "og:title", content: "Gerador de QR 3D · 3D QR" },
       {
         property: "og:description",
-        content: "Crie QR Codes em 3MF, STL e folhas A4 em PNG a 600 dpi, com tamanho selecionável e ícones opcionais nos lotes.",
+        content: "Crie QR Codes em 3MF, STL e folhas A4 em PNG e PDF a 600 dpi, com tamanho selecionável e ícones opcionais nos lotes.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
