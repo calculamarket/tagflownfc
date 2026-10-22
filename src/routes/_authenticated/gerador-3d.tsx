@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Box, Download } from "lucide-react";
 import { buildQr3mf } from "@/lib/qr-3mf";
 import { buildQrStl } from "@/lib/qr-stl";
+import { socialIconMasks } from "@/lib/social-label-icons";
+import { LABEL_ICONS, type LabelIcon } from "@/lib/a4-label-sheet";
 import { buildEmergencyPlate3mf, buildEmergencyPlateStl } from "@/lib/emergency-plate-3d";
 import { buildNfcTag3mf, buildNfcTagStl } from "@/lib/nfc-tag-3d";
 import { BatchGenerator } from "@/components/batch-generator";
@@ -27,12 +29,12 @@ export const Route = createFileRoute("/_authenticated/gerador-3d")({
       {
         name: "description",
         content:
-          "Gere QR Codes em 3MF, STL ou folhas A4 em PNG a 300 dpi, individualmente ou em lote.",
+          "Gere QR Codes em 3MF, STL ou folhas A4 em PNG a 600 dpi, com redes sociais e NFC opcionais nos lotes.",
       },
       { property: "og:title", content: "Gerador de QR 3D · 3D QR" },
       {
         property: "og:description",
-        content: "Crie QR Codes em 3MF, STL e folhas A4 em PNG a 300 dpi, com quantidade e tamanho selecionáveis.",
+        content: "Crie QR Codes em 3MF, STL e folhas A4 em PNG a 600 dpi, com tamanho selecionável e ícones opcionais nos lotes.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -127,7 +129,7 @@ function Gerador3dPage() {
     };
   };
 
-  const buildModel = (content: string, format: "3mf" | "stl") => {
+  const buildModel = async (content: string, format: "3mf" | "stl", icons: LabelIcon[] = []) => {
     if (model === "emergencia" || model === "nfc") {
       const opts = emergencyOptions();
       if (model === "nfc") {
@@ -142,7 +144,8 @@ function Gerador3dPage() {
         ? buildEmergencyPlate3mf(content, opts)
         : buildEmergencyPlateStl(content, opts);
     }
-    const opts = options();
+    const ordered = LABEL_ICONS.filter((item) => icons.includes(item.id)).map((item) => item.id);
+    const opts = { ...options(), socialIcons: await socialIconMasks(ordered) };
     return format === "3mf"
       ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
       : buildQrStl(content, opts);
@@ -370,7 +373,8 @@ function Gerador3dPage() {
       <BatchGenerator
         sameText={text}
         filename={filename || "qrcode-3d"}
-        build={(content, format) => buildModel(content, format)}
+        build={(content, format, icons) => buildModel(content, format, icons)}
+        social={model === "placa" ? { qrSizeMm: num(sizeMm) || 0, plateSizeMm: total } : undefined}
         a4={{ sizeMm: a4Size, level }}
         activation={qrPurpose === "activation" ? { model: labelModel, category } : undefined}
         getSameText={registered.getText}
