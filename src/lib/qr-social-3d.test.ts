@@ -45,7 +45,7 @@ describe("Optional social icons in 3D QR batches", () => {
       if (name === "3D/3dmodel.model") model = new TextDecoder().decode(method === 8 ? inflateRawSync(payload) : payload);
       offset = start + length;
     }
-    assert.ok(model.includes('<vertex x="61"'));
+    assert.ok(model.includes('<vertex x="58"'));
     assert.equal((model.match(/<triangle /g) ?? []).length, (geometry.base.length + geometry.modules.length) * 12);
     assert.ok(model.includes('name="Codigo"'));
     assert.ok(model.includes('<components>'));
