@@ -63,7 +63,7 @@ function Gerador3dPage() {
   const registered = useRegisteredLabel(labelModel, category);
   const [level, setLevel] = useState<Level>("M");
   const [sizeMm, setSizeMm] = useState("50");
-  const [quietMm, setQuietMm] = useState("2");
+  const [quietMm, setQuietMm] = useState("1");
   const [fillMm, setFillMm] = useState("1");
   const [codeMm, setCodeMm] = useState("0.6");
   const [mode, setMode] = useState<"emboss" | "recess">("emboss");

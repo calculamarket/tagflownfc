@@ -132,7 +132,7 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
       {social && <div className="space-y-3 border-t border-border pt-4">
         <Label className="flex items-center gap-3"><Switch checked={withSocial} disabled={busy} onCheckedChange={setWithSocial} />Redes sociais / NFC à esquerda</Label>
         {withSocial && <div className="grid gap-3 sm:grid-cols-4">{LABEL_ICONS.map((item) => <Label key={item.id} className="flex items-center gap-2"><Checkbox checked={icons.includes(item.id)} disabled={busy} onCheckedChange={(checked) => setIcons((current) => checked === true ? [...current, item.id] : current.filter((id) => id !== item.id))} />{item.label}</Label>)}</div>}
-        <p className="text-xs text-muted-foreground">Peça: {(social.plateSizeMm + (withSocial && icons.length ? 22 : 0)).toFixed(1)} × {social.plateSizeMm.toFixed(1)} mm · QR quadrado: {social.qrSizeMm.toFixed(1)} × {social.qrSizeMm.toFixed(1)} mm</p>
+        <p className="text-xs text-muted-foreground">Peça: {(social.plateSizeMm + (withSocial && icons.length ? 19 : 0)).toFixed(1)} × {social.plateSizeMm.toFixed(1)} mm · QR quadrado: {social.qrSizeMm.toFixed(1)} × {social.qrSizeMm.toFixed(1)} mm</p>
       </div>}
 
       <p className="text-xs text-muted-foreground">

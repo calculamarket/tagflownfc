@@ -114,7 +114,7 @@ export function buildQrGeometry(text: string, options: QrStlOptions = {}): QrGeo
 
   const icons = options.socialIcons ?? [];
   if (icons.length) {
-    const columnMm = 22;
+    const columnMm = 19;
     // Shift the original QR including its quiet zone, then extend one solid base.
     for (const box of modules) { box[0] += columnMm; box[3] += columnMm; }
     base[0] = [0, 0, 0, plateMm + columnMm, plateMm, baseHeightMm];

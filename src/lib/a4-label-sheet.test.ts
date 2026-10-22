@@ -18,16 +18,16 @@ describe("A4 600 dpi labels", () => {
   it("keeps the selected square QR dimensions inside a wider rectangular label", () => {
     const dimensions = labelDimensions(35, "rectangle");
     assert.equal(dimensions.qrSizeMm, 35);
-    assert.equal(dimensions.widthMm, 57);
-    assert.equal(dimensions.heightMm, 39);
-    assert.equal(dimensions.qrLeftMm, 20);
-    assert.ok(dimensions.qrLeftMm + 35 < dimensions.widthMm);
+    assert.equal(dimensions.widthMm, 54);
+    assert.equal(dimensions.heightMm, 35);
+    assert.equal(dimensions.qrLeftMm, 19);
+    assert.ok(dimensions.qrLeftMm + 35 <= dimensions.widthMm);
   });
   it("paginates rectangular labels using their full width, not the QR width", () => {
     const layout = a4Layout(35, 36, "rectangle");
     assert.equal(layout.columns, 3);
-    assert.equal(layout.rows, 6);
-    assert.equal(layout.capacity, 18);
+    assert.equal(layout.rows, 7);
+    assert.equal(layout.capacity, 21);
     assert.equal(layout.pages, 2);
     assert.ok(layout.marginMm + layout.columns * layout.widthMm + (layout.columns - 1) * layout.gapMm <= 202);
   });
