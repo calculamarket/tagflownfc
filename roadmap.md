@@ -1,5 +1,5 @@
 # Current tasks
-- [ ] Correct selected social/NFC icons in A4 batch exports and add a matching multipage PDF download; validate raster and PDF output.
+- [x] Correct selected social/NFC icons in A4 batch exports and add matching multipage PDF download. 17 tests pass; independent batch control preserves selected Instagram/WhatsApp and disabled Google/NFC, downloads 36 labels as two PNGs at 600 dpi and a two-page A4 PDF in both color schemes; all four PDF pages visually inspected without clipping. Account-level check remains blocked below.
 - [x] Add optional left social/NFC icons to rectangular QR plate batches in 3MF/STL, preserving QR size and material slots; 16 tests pass, independent batch control downloads two valid models per format with no browser errors. Signed-in generator remains blocked by the absent requester account.
 - [x] Add rectangular A4 labels with a square QR at the selected size and optional social/NFC icons on the left; 13 tests pass and a 36-label dark export renders 2 sheets at 4961 × 7016 pixels without browser errors. Signed-in page verification remains blocked as noted below.
 - [x] Register activation QR codes before individual and batch exports across label generators.
