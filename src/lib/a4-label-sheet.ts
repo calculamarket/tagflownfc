@@ -16,7 +16,7 @@ export const LABEL_ICONS: { id: LabelIcon; label: string }[] = [
 
 export function labelDimensions(sizeMm: number, shape: A4LabelShape = "square") {
   return shape === "rectangle"
-    ? { widthMm: sizeMm + 22, heightMm: sizeMm + 4, qrSizeMm: sizeMm, qrLeftMm: 20, qrTopMm: 2 }
+    ? { widthMm: sizeMm + 19, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 19, qrTopMm: 0 }
     : { widthMm: sizeMm, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 0, qrTopMm: 0 };
 }
 
@@ -125,7 +125,7 @@ export async function buildA4Sheets(
         const iconSize = Math.min(8, slot * 0.65);
         for (let n = 0; n < images.length; n++) {
           const image = images[n];
-          ctx.drawImage(image, x + px((18 - iconSize) / 2), y + px(2 + n * slot + (slot - iconSize) / 2), px(iconSize), px(iconSize));
+          ctx.drawImage(image, x + px((17 - iconSize) / 2), y + px(2 + n * slot + (slot - iconSize) / 2), px(iconSize), px(iconSize));
         }
       }
       const qr = QRCode.create(items[i], { errorCorrectionLevel: level });

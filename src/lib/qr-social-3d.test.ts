@@ -15,14 +15,14 @@ describe("Optional social icons in 3D QR batches", () => {
   it("adds icons on the left without scaling or changing the QR quiet zone", () => {
     const plain = buildQrGeometry("test", options);
     const decorated = buildQrGeometry("test", { ...options, socialIcons: [icon] });
-    assert.deepEqual(decorated.base[0], [0, 0, 0, 61, 39, 1]);
+    assert.deepEqual(decorated.base[0], [0, 0, 0, 58, 39, 1]);
     plain.modules.forEach((box, i) => {
-      const moved = [...box]; moved[0] += 22; moved[3] += 22;
+      const moved = [...box]; moved[0] += 19; moved[3] += 19;
       assert.deepEqual(decorated.modules[i], moved);
     });
     const artwork = decorated.modules.slice(plain.modules.length);
     assert.equal(artwork.length, 2);
-    assert.ok(artwork.every((box) => box[3] < 22 && box[2] < 1 && box[5] === 1.6));
+    assert.ok(artwork.every((box) => box[3] < 19 && box[2] < 1 && box[5] === 1.6));
   });
   it("includes the same decorated geometry in STL and the two-material 3MF", async () => {
     const opts = { ...options, socialIcons: [icon] };
@@ -45,7 +45,7 @@ describe("Optional social icons in 3D QR batches", () => {
       if (name === "3D/3dmodel.model") model = new TextDecoder().decode(method === 8 ? inflateRawSync(payload) : payload);
       offset = start + length;
     }
-    assert.ok(model.includes('<vertex x="61"'));
+    assert.ok(model.includes('<vertex x="58"'));
     assert.equal((model.match(/<triangle /g) ?? []).length, (geometry.base.length + geometry.modules.length) * 12);
     assert.ok(model.includes('name="Codigo"'));
     assert.ok(model.includes('<components>'));
