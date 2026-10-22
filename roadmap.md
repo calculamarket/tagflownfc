@@ -1,4 +1,5 @@
 # Current tasks
+- [ ] Add optional left social/NFC icons to rectangular QR plate batches in 3MF/STL, preserving QR size and material slots; test geometry and both exports.
 - [x] Add rectangular A4 labels with a square QR at the selected size and optional social/NFC icons on the left; 13 tests pass and a 36-label dark export renders 2 sheets at 4961 × 7016 pixels without browser errors. Signed-in page verification remains blocked as noted below.
 - [x] Register activation QR codes before individual and batch exports across label generators.
 - [x] Test registration failures and same/unique codes: 10 tests pass; app loads without browser errors.
