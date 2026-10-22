@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import type { SocialIconMask } from "./social-label-icons";
 
 /**
  * Generates a binary STL of a QR code for 3D printing.
@@ -31,6 +32,8 @@ export type QrStlOptions = {
   errorCorrectionLevel?: "L" | "M" | "Q" | "H";
   /** Engrave the dark modules instead of embossing them. */
   recessed?: boolean;
+  /** Optional artwork on a separate left extension; never scales the QR. */
+  socialIcons?: SocialIconMask[];
 };
 
 
@@ -66,7 +69,7 @@ export function buildQrGeometry(text: string, options: QrStlOptions = {}): QrGeo
   // (matches the OpenSCAD generator, where SIZE is the code and the plate grows).
   const useMmQuiet = typeof quietZoneMm === "number";
   const moduleMm = useMmQuiet ? sizeMm / qrSize : sizeMm / (qrSize + marginModules * 2);
-  const quietMm = useMmQuiet ? quietZoneMm! : marginModules * moduleMm;
+  const quietMm = typeof quietZoneMm === "number" ? quietZoneMm : marginModules * moduleMm;
   const plateMm = qrSize * moduleMm + quietMm * 2;
   const topZ = baseHeightMm + moduleHeightMm;
 
@@ -109,6 +112,31 @@ export function buildQrGeometry(text: string, options: QrStlOptions = {}): QrGeo
     );
   }
 
+  const icons = options.socialIcons ?? [];
+  if (icons.length) {
+    const columnMm = 22;
+    // Shift the original QR including its quiet zone, then extend one solid base.
+    for (const box of modules) { box[0] += columnMm; box[3] += columnMm; }
+    base[0] = [0, 0, 0, plateMm + columnMm, plateMm, baseHeightMm];
+    const slot = (plateMm - 4) / icons.length;
+    const side = Math.min(10, slot * 0.75);
+    if (side <= 0) throw new Error("Aumente o tamanho do QR para incluir os ícones.");
+    icons.forEach((mask, index) => {
+      const cell = side / Math.max(mask.cols, mask.rows);
+      const ox = (columnMm - mask.cols * cell) / 2;
+      const top = plateMm - 2 - index * slot - (slot - mask.rows * cell) / 2;
+      for (let row = 0; row < mask.rows; row++) {
+        let col = 0;
+        while (col < mask.cols) {
+          if (!mask.data[row * mask.cols + col]) { col++; continue; }
+          let end = col + 1;
+          while (end < mask.cols && mask.data[row * mask.cols + end]) end++;
+          modules.push([ox + col * cell, top - (row + 1) * cell, Math.max(0, baseHeightMm - OVERLAP_MM), ox + end * cell, top - row * cell, topZ]);
+          col = end;
+        }
+      }
+    });
+  }
   return { base, modules, baseHeightMm };
 }
 
