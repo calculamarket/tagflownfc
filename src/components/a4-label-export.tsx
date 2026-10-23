@@ -7,21 +7,23 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { a4Layout, buildA4Sheets, deliverA4File, packageA4Sheets, packageA4Pdf, LABEL_ICONS, type A4LabelShape, type LabelIcon, type QrScheme } from "@/lib/a4-label-sheet";
+import { a4Layout, buildA4Sheets, deliverA4File, packageA4Sheets, packageA4Pdf, LABEL_ICONS, type A4LabelShape, type LabelIcon, type LabelOrientation, type QrScheme } from "@/lib/a4-label-sheet";
 import type { QrLevel } from "@/lib/round-label";
 
-export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape = "square", initialIcons = ["instagram", "whatsapp", "google", "nfc"], level = "Q", disabled = false }: {
+export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape = "square", initialIcons = ["instagram", "whatsapp", "google", "nfc"], initialOrientation = "horizontal", level = "Q", disabled = false }: {
   getTexts: () => Promise<string[]> | string[];
   count: number;
   initialSize?: number;
   initialShape?: A4LabelShape;
   initialIcons?: LabelIcon[];
+  initialOrientation?: LabelOrientation;
   level?: QrLevel;
   disabled?: boolean;
 }) {
   const [size, setSize] = useState(String(initialSize));
   const [shape, setShape] = useState<A4LabelShape>(initialShape);
   const [icons, setIcons] = useState<LabelIcon[]>(initialIcons);
+  const [orientation, setOrientation] = useState<LabelOrientation>(initialOrientation);
   const [scheme, setScheme] = useState<QrScheme>("light");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState<{ blob: Blob; filename: string } | null>(null);
@@ -29,7 +31,7 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
   const [preview, setPreview] = useState("");
   const [open, setOpen] = useState(false);
   let layout;
-  try { layout = a4Layout(Number(size), count, shape); } catch { /* validation shown on generate */ }
+  try { layout = a4Layout(Number(size), count, shape, orientation); } catch { /* validation shown on generate */ }
 
   const clear = () => { setReady(null); setSheets([]); setPreview(""); };
   const downloadPdf = async () => {
@@ -44,9 +46,9 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
     setBusy(true);
     clear();
     try {
-      a4Layout(Number(size), count, shape);
+      a4Layout(Number(size), count, shape, orientation);
       const texts = await getTexts();
-      const sheets = await buildA4Sheets(texts, Number(size), shape, level, scheme, icons);
+      const sheets = await buildA4Sheets(texts, Number(size), shape, level, scheme, icons, orientation);
       setSheets(sheets);
       const first = sheets[0];
       if (first) {
@@ -60,7 +62,7 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
   };
 
   return (
-      <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) { setSize(String(initialSize)); setShape(initialShape); setScheme("light"); setIcons([...initialIcons]); clear(); } }}>
+      <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) { setSize(String(initialSize)); setShape(initialShape); setScheme("light"); setIcons([...initialIcons]); setOrientation(initialOrientation); clear(); } }}>
       <DialogTrigger asChild><Button variant="outline" disabled={disabled || count < 1}><FileImage className="size-4" /> Folha A4 · PNG / PDF</Button></DialogTrigger>
       <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
@@ -72,7 +74,7 @@ export function A4LabelExport({ getTexts, count, initialSize = 35, initialShape 
           <div className="space-y-2"><Label>Formato</Label><Select value={shape} disabled={busy} onValueChange={(v) => { setShape(v as A4LabelShape); clear(); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="square">Quadrada</SelectItem><SelectItem value="round">Redonda</SelectItem><SelectItem value="rectangle">Retangular + ícones</SelectItem></SelectContent></Select></div>
           <div className="space-y-2"><Label>Cores</Label><Select value={scheme} disabled={busy} onValueChange={(v) => { setScheme(v as QrScheme); clear(); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="light">Fundo branco · QR preto</SelectItem><SelectItem value="dark">Fundo preto · QR branco</SelectItem></SelectContent></Select></div>
         </div>
-        {shape === "rectangle" && <fieldset className="space-y-3"><legend className="mb-2 text-sm font-medium">Ícones à esquerda</legend><div className="grid grid-cols-2 gap-3">{LABEL_ICONS.map((item) => <Label key={item.id} className="flex items-center gap-2"><Checkbox disabled={busy} checked={icons.includes(item.id)} onCheckedChange={(checked) => { setIcons((current) => checked === true ? [...current, item.id] : current.filter((id) => id !== item.id)); clear(); }} />{item.label}</Label>)}</div>{layout && <p className="text-sm text-muted-foreground">Etiqueta: {layout.widthMm} × {layout.heightMm} mm · QR: {size} × {size} mm</p>}</fieldset>}
+        {shape === "rectangle" && <fieldset className="space-y-3"><legend className="mb-2 text-sm font-medium">Ícones</legend><div className="space-y-2"><Label>Orientação</Label><Select value={orientation} disabled={busy} onValueChange={(v) => { setOrientation(v as LabelOrientation); clear(); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="horizontal">Horizontal · ícones à esquerda</SelectItem><SelectItem value="vertical">Vertical · ícones abaixo do QR</SelectItem></SelectContent></Select></div><div className="grid grid-cols-2 gap-3">{LABEL_ICONS.map((item) => <Label key={item.id} className="flex items-center gap-2"><Checkbox disabled={busy} checked={icons.includes(item.id)} onCheckedChange={(checked) => { setIcons((current) => checked === true ? [...current, item.id] : current.filter((id) => id !== item.id)); clear(); }} />{item.label}</Label>)}</div>{layout && <p className="text-sm text-muted-foreground">Etiqueta: {layout.widthMm} × {layout.heightMm} mm · QR: {size} × {size} mm</p>}</fieldset>}
         <p className="text-sm text-muted-foreground">{count} etiqueta(s){layout ? ` · ${layout.capacity} por folha · ${layout.pages} folha(s)` : ""}</p>
         {preview && <img src={preview} alt="Prévia da primeira folha A4 de etiquetas" className="mx-auto max-h-80 border border-border object-contain" />}
         <div className="flex flex-wrap justify-end gap-2">
