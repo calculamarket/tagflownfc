@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { LABEL_ICONS, type LabelIcon } from "@/lib/a4-label-sheet";
+import { LABEL_ICONS, type LabelIcon, type LabelOrientation } from "@/lib/a4-label-sheet";
 import { A4LabelExport } from "@/components/a4-label-export";
 import type { QrLevel } from "@/lib/round-label";
 import {
