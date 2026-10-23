@@ -34,6 +34,8 @@ export type QrStlOptions = {
   recessed?: boolean;
   /** Optional artwork on a separate left extension; never scales the QR. */
   socialIcons?: SocialIconMask[];
+  /** horizontal: icons in a left column; vertical: icons in a row below the QR. */
+  iconsOrientation?: "horizontal" | "vertical";
 };
 
 
@@ -115,16 +117,27 @@ export function buildQrGeometry(text: string, options: QrStlOptions = {}): QrGeo
   const icons = options.socialIcons ?? [];
   if (icons.length) {
     const columnMm = 19;
-    // Shift the original QR including its quiet zone, then extend one solid base.
-    for (const box of modules) { box[0] += columnMm; box[3] += columnMm; }
-    base[0] = [0, 0, 0, plateMm + columnMm, plateMm, baseHeightMm];
+    const vertical = options.iconsOrientation === "vertical";
     const slot = (plateMm - 4) / icons.length;
     const side = Math.min(10, slot * 0.75);
     if (side <= 0) throw new Error("Aumente o tamanho do QR para incluir os ícones.");
+    if (vertical) {
+      // Icons in a row below the QR; the QR stays at the top of a portrait plate.
+      for (const box of modules) { box[1] += columnMm; box[4] += columnMm; }
+      base[0] = [0, 0, 0, plateMm, plateMm + columnMm, baseHeightMm];
+    } else {
+      // Shift the original QR including its quiet zone, then extend one solid base.
+      for (const box of modules) { box[0] += columnMm; box[3] += columnMm; }
+      base[0] = [0, 0, 0, plateMm + columnMm, plateMm, baseHeightMm];
+    }
     icons.forEach((mask, index) => {
       const cell = side / Math.max(mask.cols, mask.rows);
-      const ox = (columnMm - mask.cols * cell) / 2;
-      const top = plateMm - 2 - index * slot - (slot - mask.rows * cell) / 2;
+      const ox = vertical
+        ? 2 + index * slot + (slot - mask.cols * cell) / 2
+        : (columnMm - mask.cols * cell) / 2;
+      const top = vertical
+        ? (columnMm + mask.rows * cell) / 2
+        : plateMm - 2 - index * slot - (slot - mask.rows * cell) / 2;
       for (let row = 0; row < mask.rows; row++) {
         let col = 0;
         while (col < mask.cols) {

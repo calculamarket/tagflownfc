@@ -14,22 +14,25 @@ export const LABEL_ICONS: { id: LabelIcon; label: string }[] = [
   { id: "google", label: "Google · Avaliações" }, { id: "nfc", label: "NFC" },
 ];
 
-export function labelDimensions(sizeMm: number, shape: A4LabelShape = "square") {
-  return shape === "rectangle"
-    ? { widthMm: sizeMm + 19, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 19, qrTopMm: 0 }
-    : { widthMm: sizeMm, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 0, qrTopMm: 0 };
+export type LabelOrientation = "horizontal" | "vertical";
+
+export function labelDimensions(sizeMm: number, shape: A4LabelShape = "square", orientation: LabelOrientation = "horizontal") {
+  if (shape !== "rectangle") return { widthMm: sizeMm, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 0, qrTopMm: 0 };
+  return orientation === "vertical"
+    ? { widthMm: sizeMm, heightMm: sizeMm + 19, qrSizeMm: sizeMm, qrLeftMm: 0, qrTopMm: 0 }
+    : { widthMm: sizeMm + 19, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 19, qrTopMm: 0 };
 }
 
-export function a4Layout(sizeMm: number, quantity: number, shape: A4LabelShape = "square") {
+export function a4Layout(sizeMm: number, quantity: number, shape: A4LabelShape = "square", orientation: LabelOrientation = "horizontal") {
   if (!Number.isFinite(sizeMm) || sizeMm < 10 || sizeMm > 100) throw new Error("Tamanho entre 10 e 100 mm.");
   if (!Number.isInteger(quantity) || quantity < 1) throw new Error("Informe uma quantidade inteira maior que zero.");
   const marginMm = 8;
   const gapMm = 3;
-  const dimensions = labelDimensions(sizeMm, shape);
+  const dimensions = labelDimensions(sizeMm, shape, orientation);
   const columns = Math.floor((A4.widthMm - marginMm * 2 + gapMm) / (dimensions.widthMm + gapMm));
   const rows = Math.floor((A4.heightMm - marginMm * 2 + gapMm) / (dimensions.heightMm + gapMm));
   const capacity = columns * rows;
-  return { columns, rows, capacity, pages: Math.ceil(quantity / capacity), marginMm, gapMm, ...dimensions };
+  return { columns, rows, capacity, pages: Math.ceil(quantity / capacity), marginMm, gapMm, orientation, ...dimensions };
 }
 
 function crc32(bytes: Uint8Array) {
