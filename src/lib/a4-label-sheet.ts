@@ -97,9 +97,10 @@ export async function buildA4Sheets(
   level: QrLevel = "Q",
   scheme: QrScheme = "light",
   icons: LabelIcon[] = ["instagram", "whatsapp", "google", "nfc"],
+  orientation: LabelOrientation = "horizontal",
 ) {
   const colors = QR_SCHEME_COLORS[scheme] ?? QR_SCHEME_COLORS.light;
-  const layout = a4Layout(sizeMm, texts.length, shape);
+  const layout = a4Layout(sizeMm, texts.length, shape, orientation);
   const selectedIcons = LABEL_ICONS.filter((item) => icons.includes(item.id));
   const images = shape === "rectangle" ? await Promise.all(selectedIcons.map((item) => iconImage(item.id, colors.modules))) : [];
   const sheets: Blob[] = [];
@@ -124,11 +125,15 @@ export async function buildA4Sheets(
       else ctx.rect(x, y, px(layout.widthMm), px(layout.heightMm));
       ctx.stroke();
       if (shape === "rectangle") {
-        const slot = (layout.heightMm - 4) / Math.max(1, images.length);
+        const vertical = orientation === "vertical";
+        const slot = ((vertical ? layout.widthMm : layout.heightMm) - 4) / Math.max(1, images.length);
         const iconSize = Math.min(8, slot * 0.65);
         for (let n = 0; n < images.length; n++) {
           const image = images[n];
-          ctx.drawImage(image, x + px((17 - iconSize) / 2), y + px(2 + n * slot + (slot - iconSize) / 2), px(iconSize), px(iconSize));
+          const along = 2 + n * slot + (slot - iconSize) / 2;
+          const across = (17 - iconSize) / 2;
+          if (vertical) ctx.drawImage(image, x + px(along), y + px(sizeMm + 2 + across), px(iconSize), px(iconSize));
+          else ctx.drawImage(image, x + px(across), y + px(along), px(iconSize), px(iconSize));
         }
       }
       const qr = QRCode.create(items[i], { errorCorrectionLevel: level });
