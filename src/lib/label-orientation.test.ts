@@ -1,4 +1,4 @@
-import { describe, it } from "bun:test";
+import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { labelDimensions } from "./a4-label-sheet";
 describe("orientação da etiqueta retangular", () => {
