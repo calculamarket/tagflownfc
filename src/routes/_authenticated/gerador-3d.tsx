@@ -129,7 +129,7 @@ function Gerador3dPage() {
     };
   };
 
-  const buildModel = async (content: string, format: "3mf" | "stl", icons: LabelIcon[] = []) => {
+  const buildModel = async (content: string, format: "3mf" | "stl", icons: LabelIcon[] = [], orientation: "horizontal" | "vertical" = "horizontal") => {
     if (model === "emergencia" || model === "nfc") {
       const opts = emergencyOptions();
       if (model === "nfc") {
@@ -145,7 +145,7 @@ function Gerador3dPage() {
         : buildEmergencyPlateStl(content, opts);
     }
     const ordered = LABEL_ICONS.filter((item) => icons.includes(item.id)).map((item) => item.id);
-    const opts = { ...options(), socialIcons: await socialIconMasks(ordered) };
+    const opts = { ...options(), socialIcons: await socialIconMasks(ordered), iconsOrientation: orientation };
     return format === "3mf"
       ? buildQr3mf(content, { ...opts, baseColor: fillColor, codeColor, baseSlot: bodySlot, codeSlot })
       : buildQrStl(content, opts);
@@ -373,7 +373,7 @@ function Gerador3dPage() {
       <BatchGenerator
         sameText={text}
         filename={filename || "qrcode-3d"}
-        build={(content, format, icons) => buildModel(content, format, icons)}
+        build={(content, format, icons, orientation) => buildModel(content, format, icons, orientation)}
         social={model === "placa" ? { qrSizeMm: num(sizeMm) || 0, plateSizeMm: total } : undefined}
         a4={{ sizeMm: a4Size, level }}
         activation={qrPurpose === "activation" ? { model: labelModel, category } : undefined}

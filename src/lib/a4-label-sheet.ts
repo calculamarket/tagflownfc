@@ -14,22 +14,25 @@ export const LABEL_ICONS: { id: LabelIcon; label: string }[] = [
   { id: "google", label: "Google · Avaliações" }, { id: "nfc", label: "NFC" },
 ];
 
-export function labelDimensions(sizeMm: number, shape: A4LabelShape = "square") {
-  return shape === "rectangle"
-    ? { widthMm: sizeMm + 19, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 19, qrTopMm: 0 }
-    : { widthMm: sizeMm, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 0, qrTopMm: 0 };
+export type LabelOrientation = "horizontal" | "vertical";
+
+export function labelDimensions(sizeMm: number, shape: A4LabelShape = "square", orientation: LabelOrientation = "horizontal") {
+  if (shape !== "rectangle") return { widthMm: sizeMm, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 0, qrTopMm: 0 };
+  return orientation === "vertical"
+    ? { widthMm: sizeMm, heightMm: sizeMm + 19, qrSizeMm: sizeMm, qrLeftMm: 0, qrTopMm: 0 }
+    : { widthMm: sizeMm + 19, heightMm: sizeMm, qrSizeMm: sizeMm, qrLeftMm: 19, qrTopMm: 0 };
 }
 
-export function a4Layout(sizeMm: number, quantity: number, shape: A4LabelShape = "square") {
+export function a4Layout(sizeMm: number, quantity: number, shape: A4LabelShape = "square", orientation: LabelOrientation = "horizontal") {
   if (!Number.isFinite(sizeMm) || sizeMm < 10 || sizeMm > 100) throw new Error("Tamanho entre 10 e 100 mm.");
   if (!Number.isInteger(quantity) || quantity < 1) throw new Error("Informe uma quantidade inteira maior que zero.");
   const marginMm = 8;
   const gapMm = 3;
-  const dimensions = labelDimensions(sizeMm, shape);
+  const dimensions = labelDimensions(sizeMm, shape, orientation);
   const columns = Math.floor((A4.widthMm - marginMm * 2 + gapMm) / (dimensions.widthMm + gapMm));
   const rows = Math.floor((A4.heightMm - marginMm * 2 + gapMm) / (dimensions.heightMm + gapMm));
   const capacity = columns * rows;
-  return { columns, rows, capacity, pages: Math.ceil(quantity / capacity), marginMm, gapMm, ...dimensions };
+  return { columns, rows, capacity, pages: Math.ceil(quantity / capacity), marginMm, gapMm, orientation, ...dimensions };
 }
 
 function crc32(bytes: Uint8Array) {
@@ -94,9 +97,10 @@ export async function buildA4Sheets(
   level: QrLevel = "Q",
   scheme: QrScheme = "light",
   icons: LabelIcon[] = ["instagram", "whatsapp", "google", "nfc"],
+  orientation: LabelOrientation = "horizontal",
 ) {
   const colors = QR_SCHEME_COLORS[scheme] ?? QR_SCHEME_COLORS.light;
-  const layout = a4Layout(sizeMm, texts.length, shape);
+  const layout = a4Layout(sizeMm, texts.length, shape, orientation);
   const selectedIcons = LABEL_ICONS.filter((item) => icons.includes(item.id));
   const images = shape === "rectangle" ? await Promise.all(selectedIcons.map((item) => iconImage(item.id, colors.modules))) : [];
   const sheets: Blob[] = [];
@@ -121,11 +125,15 @@ export async function buildA4Sheets(
       else ctx.rect(x, y, px(layout.widthMm), px(layout.heightMm));
       ctx.stroke();
       if (shape === "rectangle") {
-        const slot = (layout.heightMm - 4) / Math.max(1, images.length);
+        const vertical = orientation === "vertical";
+        const slot = ((vertical ? layout.widthMm : layout.heightMm) - 4) / Math.max(1, images.length);
         const iconSize = Math.min(8, slot * 0.65);
         for (let n = 0; n < images.length; n++) {
           const image = images[n];
-          ctx.drawImage(image, x + px((17 - iconSize) / 2), y + px(2 + n * slot + (slot - iconSize) / 2), px(iconSize), px(iconSize));
+          const along = 2 + n * slot + (slot - iconSize) / 2;
+          const across = (17 - iconSize) / 2;
+          if (vertical) ctx.drawImage(image, x + px(along), y + px(sizeMm + 2 + across), px(iconSize), px(iconSize));
+          else ctx.drawImage(image, x + px(across), y + px(along), px(iconSize), px(iconSize));
         }
       }
       const qr = QRCode.create(items[i], { errorCorrectionLevel: level });

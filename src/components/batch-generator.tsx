@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { LABEL_ICONS, type LabelIcon } from "@/lib/a4-label-sheet";
+import { LABEL_ICONS, type LabelIcon, type LabelOrientation } from "@/lib/a4-label-sheet";
 import { A4LabelExport } from "@/components/a4-label-export";
 import type { QrLevel } from "@/lib/round-label";
 import {
@@ -27,7 +27,7 @@ type Props = {
   /** Base name for the downloaded files. */
   filename: string;
   /** Builds one model for the given QR content. */
-  build: (text: string, format: "3mf" | "stl", icons?: LabelIcon[]) => Promise<Blob> | Blob;
+  build: (text: string, format: "3mf" | "stl", icons?: LabelIcon[], orientation?: LabelOrientation) => Promise<Blob> | Blob;
   social?: { qrSizeMm: number; plateSizeMm: number };
   a4?: { sizeMm: number; level: QrLevel };
   activation?: { model: string; category?: string };
@@ -43,6 +43,7 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [withSocial, setWithSocial] = useState(false);
+  const [orientation, setOrientation] = useState<LabelOrientation>("horizontal");
   const [icons, setIcons] = useState<LabelIcon[]>(["instagram", "whatsapp", "google", "nfc"]);
   const count = Math.round(Number(quantity.replace(",", ".")));
   const getItems = async () => {
@@ -68,7 +69,7 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
         items,
         filename: filename || "etiqueta",
         format,
-        build: (text) => build(text, format, social && withSocial ? icons : []),
+        build: (text) => build(text, format, social && withSocial ? icons : [], orientation),
         onProgress: (done, total) => setProgress({ done, total }),
       });
       const href = URL.createObjectURL(zip);
@@ -130,9 +131,10 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
       </div>
 
       {social && <div className="space-y-3 border-t border-border pt-4">
-        <Label className="flex items-center gap-3"><Switch checked={withSocial} disabled={busy} onCheckedChange={setWithSocial} />Redes sociais / NFC à esquerda</Label>
+        <Label className="flex items-center gap-3"><Switch checked={withSocial} disabled={busy} onCheckedChange={setWithSocial} />Redes sociais / NFC</Label>
+        {withSocial && <div className="max-w-xs space-y-2"><Label>Orientação</Label><Select value={orientation} disabled={busy} onValueChange={(v) => setOrientation(v as LabelOrientation)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="horizontal">Horizontal · ícones à esquerda</SelectItem><SelectItem value="vertical">Vertical · ícones abaixo do QR</SelectItem></SelectContent></Select></div>}
         {withSocial && <div className="grid gap-3 sm:grid-cols-4">{LABEL_ICONS.map((item) => <Label key={item.id} className="flex items-center gap-2"><Checkbox checked={icons.includes(item.id)} disabled={busy} onCheckedChange={(checked) => setIcons((current) => checked === true ? [...current, item.id] : current.filter((id) => id !== item.id))} />{item.label}</Label>)}</div>}
-        <p className="text-xs text-muted-foreground">Peça: {(social.plateSizeMm + (withSocial && icons.length ? 19 : 0)).toFixed(1)} × {social.plateSizeMm.toFixed(1)} mm · QR quadrado: {social.qrSizeMm.toFixed(1)} × {social.qrSizeMm.toFixed(1)} mm</p>
+        <p className="text-xs text-muted-foreground">Peça: {(social.plateSizeMm + (withSocial && icons.length && orientation === "horizontal" ? 19 : 0)).toFixed(1)} × {(social.plateSizeMm + (withSocial && icons.length && orientation === "vertical" ? 19 : 0)).toFixed(1)} mm · QR quadrado: {social.qrSizeMm.toFixed(1)} × {social.qrSizeMm.toFixed(1)} mm</p>
       </div>}
 
       <p className="text-xs text-muted-foreground">
@@ -153,6 +155,7 @@ export function BatchGenerator({ sameText, filename, build, a4, activation, getS
           getTexts={async () => (await getItems()).map((item) => item.text)}
           initialSize={a4.sizeMm}
           initialShape={social && withSocial && icons.length ? "rectangle" : "square"}
+          initialOrientation={orientation}
           initialIcons={social ? (withSocial ? icons : []) : undefined}
           level={a4.level}
           disabled={busy || !Number.isFinite(count) || count < 1 || count > 500}
